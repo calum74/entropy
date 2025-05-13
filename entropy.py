@@ -25,7 +25,7 @@ def expected_naive_convert(range:int) -> float:
     return r*b/range
 
 # Algorithm 2
-def naive_convert(range:int, random): # -> tuple(int,float,int): 
+def naive_convert(range:int, random) -> tuple[int,float,int]: 
     actual_bits_fetched = 0
     expected_bits_fetched = expected_naive_convert(range)
     while True:
@@ -50,8 +50,8 @@ def divide(n_value, n_range, m_range):
 # Algorithm 5
 def downsize(n_value, n_range, m_range):
      assert m_range <= n_range
-     return (n_value, m_range) if n_value<m_range \
-        else (n_value-m_range, n_range-m_range)
+     return (n_value, m_range, True) if n_value<m_range \
+        else (n_value-m_range, n_range-m_range, False)
 
 input_count = 0
 output_count = 0
@@ -67,7 +67,7 @@ def fetch(n_value, n_range):
 total_loss = 0
 
 # fetch, multiply, downsize, divide (FMDD)
-def extract(n_value, n_range, m_range, min_range):
+def extractXXX(n_value, n_range, m_range, min_range):
     first = True  # Work around do-while loops in Python
     if min_range < m_range:
         min_range = m_range
@@ -156,6 +156,19 @@ def divide2(a: U, b: int) -> tuple[U,U]:
     a.reset()
     return U(x_value, x_range), U(y_value, y_range)
 
+def downsize2(a:U, m:int) -> tuple[U,R]:
+    """
+    Reduces entropy of size a to size m.
+    """
+    assert a.range >= m
+    old_range = a.range
+    new_value,new_range,r = downsize(a.value, a.range, m)
+    a.reset()
+    return U(new_value,new_range), R(r, m, old_range)
+
+def upsize(a:U, r:R) -> U:
+    pass
+
 class NaiveEntropySource:
     """
     A naive source of entropy.
@@ -169,6 +182,9 @@ class NaiveEntropySource:
         # Nothing stored here
         return 0
 
+    def entropy_consumed(self):
+        return self.entropy_in
+
     def randint(self, min, max):
         range = max-min+1
         v, expected, actual = naive_convert(range, random)
@@ -176,44 +192,70 @@ class NaiveEntropySource:
         self.expected_entropy_in += expected
         self.entropy_in += actual
         return min + v
+    
+def read(a:U) -> int:
+    v = a.value
+    a.reset()
+    return v
+    
+def read_bit(random) -> U:
+    return U(random.randint(0,1),2)
+
+class EfficientEntropySource:
+    def __init__(self, source, min_range=1<<30):
+        self.source = source
+        self.store = U(0,1)
+        self.entropy_out = 0
+        self.expected_entropy_in = 0
+        self.min_range = min_range
+
+    def entropy_consumed(self):
+        return self.source.entropy_out - self.store.entropy()
+
+    def fetch(self, n:int):
+        # TODO: Update expected entropy
+        first = True
+        while first or self.store.range < n:
+            first = False
+            while self.store.range < self.min_range:
+                self.store = multiply2(self.store, read_bit(self.source))
+            self.store, _ = downsize2(self.store, self.store.range%n)
+        result, self.store = divide2(self.store, n)
+        self.entropy_out += result.entropy()
+        self.expected_entropy_in += result.entropy() * self.min_range/(self.min_range-n);
+        return result
+
+    def randint(self, min, max):
+        return min + read(self.fetch(max-min+1))
+
+def report_store(name, store):
+    print("\nNew store", name)
+    cards = list(range(52))
+    fisher_yates(cards, store)
+
+    input_count = store.expected_entropy_in
+    output_count = store.entropy_out
+    # input_count = input_count - store.entropy()
+
+    print("Output count       ", store.entropy_out)
+    print("Input count        ", store.entropy_consumed())
+
+    print("Expected entropy in", store.expected_entropy_in)
+    print("Expected efficiency", store.entropy_out/store.expected_entropy_in)
+    print("Actual efficiency  ", store.entropy_out/store.entropy_consumed())
+
+report_store("Naive", NaiveEntropySource())
+
+report_store("Efficient", EfficientEntropySource(NaiveEntropySource()))
+
+report_store("Efficient2", EfficientEntropySource(EfficientEntropySource(NaiveEntropySource())))
 
 
-store = U()
-store = NaiveEntropySource()
-cards = list(range(52))
-fisher_yates(cards, store)
-
-input_count = store.expected_entropy_in
-output_count = store.entropy_out
-# input_count = input_count - store.entropy()
-
-print("Output count", store.entropy_out)
-print("Input count", store.entropy_in)
-print("Expected entropy in", store.expected_entropy_in)
-print("Expected efficiency", store.entropy_out/store.expected_entropy_in)
-print("Actual efficiency", store.entropy_out/store.entropy_in)
+# store = EfficientEntropySource(store)
 
 #print("Actual efficiency", output_count/input_count)
 #print("Total estimated loss", total_loss)
 #print("Total estimated input", output_count + total_loss)
 #print("Estimated efficiency", output_count/(output_count + total_loss))
 
-n = 2**32
-m = 6
-p = (n-m)/n
-print(p)
-loss = -math.log2(p) - (1-p)*math.log2(1-p)/p
-print("Loss", loss)
-e = math.log2(m) / (math.log2(m) + loss)
-print("e", e)
 
-def shannon_entropy(p):
-    return -p*math.log2(p) - (1-p)*math.log2(1-p)
-
-print("Original", math.log2(5))
-print("Total", shannon_entropy(1/5) + 2*shannon_entropy(2/5))
-
-print("Expected(4)", expected_naive_convert(4))
-print("Expected(5)", expected_naive_convert(5))
-print("Expected(6)", expected_naive_convert(6))
-print("Expected(8)", expected_naive_convert(8))
