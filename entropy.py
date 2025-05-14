@@ -35,9 +35,48 @@ def naive_convert(range:int, random) -> tuple[int,float,int]:
         if v<range:
             return (v,expected_bits_fetched,actual_bits_fetched)
 
+def shannon_entropy(p: float) -> float:
+    return -p*math.log2(p) - (1-p)*math.log2(1-p)
+
+class U:
+    def __init__(self,value=0,range=1):
+        self.value = value
+        self.range = range
+        self.entropy_out = 0
+    
+    def destroy(self):
+        value = self.value
+        self.value = 0
+        self.range = 1
+        return value
+    
+    def __str__(self):
+        return f"U({self.range})"
+    
+    def entropy(self):
+        return math.log2(self.range)
+    
+class R:
+    def __init__(self, value: bool, numerator: int, denominator: int):
+        self._value = value
+        self.numerator = numerator
+        self.denominator = denominator
+
+    def destroy(self):
+        value = self._value
+        self._value = False
+        self.numerator = 1
+        self.denominator = 1
+        return value
+
+    def entropy(self):
+        return shannon_entropy(self.numerator/self.denominator)
+
 # Algorithm 3
-def multiply(n_value, n_range, m_value, m_range):
-    return n_value * m_range + m_value, n_range * m_range
+def multiply(a: U, b: U) -> U:
+    a_range = a.range
+    b_range = b.range
+    return U(a.destroy()*b_range + b.destroy(), a_range * b_range)
 
 # Algorithm 4
 def divide(n_value, n_range, m_range):
@@ -51,79 +90,11 @@ def downsize(n_value, n_range, m_range):
      return (n_value, m_range, True) if n_value<m_range \
         else (n_value-m_range, n_range-m_range, False)
 
-
-class U:
-    def __init__(self,value=0,range=1):
-        self.value = value
-        self.range = range
-        self.entropy_out = 0
-    
-    def reset(self):
-        self.value = 0
-        self.range = 1
-
-    def fetch(self):
-        v,r = fetch(self.value, self.range)
-        return U(v,r)
-    
-    def factorize(self, b_range):
-        a_value, a_range, b_value, b_range = divide(self.value, self.range, b_range)
-        self.reset()
-        return U(a_value, a_range), U(b_value, b_range)
-    
-    def downsize(self, b_range):
-        a_value, a_range = downsize(self.value, self.range, b_range)
-        self.reset()
-        return U(a_value, a_range)
-    
-    def get(self, range, min_range = 1<<32):
-        '''
-        Gets a random number.
-        '''
-        r_value, r_range, a_value, a_range = extract(self.value, self.range, range, min_range)
-        self.value = a_value
-        self.range = a_range
-        global output_count
-        output_count = output_count + math.log2(r_range)
-        return r_value
-    
-    def randint(self, min, max):
-        return min + self.get(max-min+1)
-
-    def __str__(self):
-        return f"U({self.range})"
-    
-    def entropy(self):
-        return math.log2(self.range)
-    
-def shannon_entropy(p: float) -> float:
-    return -p*math.log2(p) - (1-p)*math.log2(1-p)
-
-class R:
-    def __init__(self, value: bool, numerator: int, denominator: int):
-        self.value = value
-        self.numerator = numerator
-        self.denominator = denominator
-
-    def reset(self):
-        self.value = False
-        self.numerator = 1
-        self.denominator = 1
-
-    def entropy(self):
-        return shannon_entropy(self.numerator/self.denominator)
-
-def multiply2(a: U, b: U) -> U:
-    a_value, a_range = multiply(a.value, a.range, b.value, b.range)
-    a.reset()
-    b.reset()
-    return U(a_value, a_range)
-
 def divide2(a: U, b: int) -> tuple[U,U]:
-    assert a.range % b == 0
-    x_value, x_range, y_value, y_range = divide(a.value, a.range, b)
-    a.reset()
-    return U(x_value, x_range), U(y_value, y_range)
+    a_range = a.range
+    assert a_range % b == 0
+    a_value = a.destroy()
+    return U(a_value%b, b), U(a_value//b, a_range//b)
 
 def downsize2(a:U, m:int) -> tuple[U,R]:
     """
@@ -132,7 +103,7 @@ def downsize2(a:U, m:int) -> tuple[U,R]:
     assert a.range >= m
     old_range = a.range
     new_value,new_range,r = downsize(a.value, a.range, m)
-    a.reset()
+    a.destroy()
     return U(new_value,new_range), R(r, m, old_range)
 
 def upsize(a:U, r:R) -> U:
@@ -163,9 +134,7 @@ class NaiveEntropySource:
         return min + v
     
 def read(a:U) -> int:
-    v = a.value
-    a.reset()
-    return v
+    return a.destroy()
     
 def read_bit(random) -> U:
     """
@@ -197,7 +166,7 @@ class EfficientEntropySource:
         while first or self.store.range < n:
             first = False
             while self.store.range < self.min_range:
-                self.store = multiply2(self.store, read_bit(self.source))
+                self.store = multiply(self.store, read_bit(self.source))
             self.store, _ = downsize2(self.store, self.store.range%n)
         result, self.store = divide2(self.store, n)
         self.entropy_out += result.entropy()
