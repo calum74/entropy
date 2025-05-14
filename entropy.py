@@ -1,6 +1,7 @@
 
 import random
 import math
+import os
 
 # Algorithm 1
 
@@ -167,7 +168,18 @@ def read(a:U) -> int:
     return v
     
 def read_bit(random) -> U:
+    """
+    Reads one bit of randomness from a random source.
+    """
     return U(random.randint(0,1),2)
+
+class HardwareEntropySource:
+    def __init__(self):
+        self.entropy_out = 0
+
+    def fetch(self, min):
+        self.entropy_out += 8
+        return U(os.urandom(1), 256)
 
 class EfficientEntropySource:
     def __init__(self, source, min_range=1<<31):
@@ -216,7 +228,11 @@ def test_entropy_source(name, store):
     print()
 
 # Test a naive entropy source
-test_entropy_source("Naive", NaiveEntropySource())
-test_entropy_source("Efficient", EfficientEntropySource(NaiveEntropySource()))
+test_entropy_source("Naive unbuffered", NaiveEntropySource())
 
+# Test the efficient entropy source in a variety of configurations
+test_entropy_source("Efficient 2**8 buffer", EfficientEntropySource(NaiveEntropySource(), 2**8))
+test_entropy_source("Efficient 2**15 buffer", EfficientEntropySource(NaiveEntropySource(), 2**15))
+test_entropy_source("Efficient 2**31 buffer", EfficientEntropySource(NaiveEntropySource(), 2**31))
+test_entropy_source("Efficient 2**48 buffer", EfficientEntropySource(NaiveEntropySource(), 2**48))
 
