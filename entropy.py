@@ -1,6 +1,3 @@
-# For exposition only.
-# This file is not intended to be used as a random entropy source
-# because it does not source its input from a random device.
 
 import random
 import math
@@ -52,35 +49,6 @@ def downsize(n_value, n_range, m_range):
      assert m_range <= n_range
      return (n_value, m_range, True) if n_value<m_range \
         else (n_value-m_range, n_range-m_range, False)
-
-input_count = 0
-output_count = 0
-
-def random_bit():
-    global input_count
-    input_count = input_count+1
-    return random.randint(0,1)
-
-def fetch(n_value, n_range):
-    return multiply(n_value, n_range, random_bit(), 2)
-
-total_loss = 0
-
-# fetch, multiply, downsize, divide (FMDD)
-def extractXXX(n_value, n_range, m_range, min_range):
-    first = True  # Work around do-while loops in Python
-    if min_range < m_range:
-        min_range = m_range
-    p = (min_range - m_range + 1)/min_range
-    global total_loss
-    total_loss = total_loss + (-math.log2(p) - (1-p)*math.log2(1-p)/p)
-    while n_range<m_range or first:
-        first = False
-        while n_range<min_range:
-            # Get one more bit of entropy
-            n_value, n_range = fetch(n_value, n_range)
-        n_value, n_range = downsize(n_value, n_range, n_range%m_range)
-    return divide(n_value, n_range, m_range)
 
 
 class U:
@@ -202,7 +170,7 @@ def read_bit(random) -> U:
     return U(random.randint(0,1),2)
 
 class EfficientEntropySource:
-    def __init__(self, source, min_range=1<<30):
+    def __init__(self, source, min_range=1<<31):
         self.source = source
         self.store = U(0,1)
         self.entropy_out = 0
@@ -213,7 +181,6 @@ class EfficientEntropySource:
         return self.source.entropy_out - self.store.entropy()
 
     def fetch(self, n:int):
-        # TODO: Update expected entropy
         first = True
         while first or self.store.range < n:
             first = False
@@ -222,40 +189,34 @@ class EfficientEntropySource:
             self.store, _ = downsize2(self.store, self.store.range%n)
         result, self.store = divide2(self.store, n)
         self.entropy_out += result.entropy()
-        self.expected_entropy_in += result.entropy() * self.min_range/(self.min_range-n);
+        # The expected p
+        p = (n-1)/self.min_range/2
+        # We expect to lose the shannon-entropy of the downsize each time, and there are
+        # 1/(1-p) iterations expected. This is an overestimate.
+        self.expected_entropy_in += result.entropy() + shannon_entropy(p)/(1-p)
         return result
 
     def randint(self, min, max):
         return min + read(self.fetch(max-min+1))
 
-def report_store(name, store):
-    print("\nNew store", name)
+def test_entropy_source(name, store):
+    print("Results for store     ", name)
     cards = list(range(52))
     fisher_yates(cards, store)
 
     input_count = store.expected_entropy_in
     output_count = store.entropy_out
-    # input_count = input_count - store.entropy()
 
-    print("Output count       ", store.entropy_out)
-    print("Input count        ", store.entropy_consumed())
+    print("Output entropy        ", store.entropy_out)
+    print("Measured input entropy", store.entropy_consumed())
 
-    print("Expected entropy in", store.expected_entropy_in)
-    print("Expected efficiency", store.entropy_out/store.expected_entropy_in)
-    print("Actual efficiency  ", store.entropy_out/store.entropy_consumed())
+    print("Expected entropy in   ", store.expected_entropy_in)
+    print("Expected efficiency   ", store.entropy_out/store.expected_entropy_in)
+    print("Measured efficiency   ", store.entropy_out/store.entropy_consumed())
+    print()
 
-report_store("Naive", NaiveEntropySource())
-
-report_store("Efficient", EfficientEntropySource(NaiveEntropySource()))
-
-report_store("Efficient2", EfficientEntropySource(EfficientEntropySource(NaiveEntropySource())))
-
-
-# store = EfficientEntropySource(store)
-
-#print("Actual efficiency", output_count/input_count)
-#print("Total estimated loss", total_loss)
-#print("Total estimated input", output_count + total_loss)
-#print("Estimated efficiency", output_count/(output_count + total_loss))
+# Test a naive entropy source
+test_entropy_source("Naive", NaiveEntropySource())
+test_entropy_source("Efficient", EfficientEntropySource(NaiveEntropySource()))
 
 
