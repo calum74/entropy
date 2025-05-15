@@ -3,6 +3,12 @@ import random
 import math
 import os
 
+# TO DO
+# Doc comments
+# Putting entropy back (via U)
+# Putting entropy back (via R)
+# Upsize algorithm
+
 class U:
     """
     Entropy storage using a uniform random distribution.
@@ -178,7 +184,7 @@ class EfficientEntropySource:
             self.store, _ = downsize(self.store, self.store.range%n)
         result, self.store = divide(self.store, n)
         self.entropy_out += result.entropy()
-        # The expected p
+        # The expected p (not the worst-case)
         p = (n-1)/self.min_range/2
         # We expect to lose the shannon-entropy of the downsize each time, and there are
         # 1/(1-p) iterations expected.
@@ -202,15 +208,12 @@ def test_entropy_source(name, store):
     print("Measured efficiency   ", store.entropy_out/store.entropy_consumed())
     print()
 
+def test_efficiency_for_buffer(buffer):
+    test_entropy_source(f"Efficient {buffer} buffer", EfficientEntropySource(SimpleEntropySource(), buffer))
+
 def run_benchmarks():
     # Test a naive entropy source
     test_entropy_source("Naive unbuffered", SimpleEntropySource())
-
-    # Test the efficient entropy source in a variety of configurations
-    test_entropy_source("Efficient 2**8 buffer", EfficientEntropySource(SimpleEntropySource(), 2**8))
-    test_entropy_source("Efficient 2**15 buffer", EfficientEntropySource(SimpleEntropySource(), 2**15))
-    test_entropy_source("Efficient 2**24 buffer", EfficientEntropySource(SimpleEntropySource(), 2**24))
-    test_entropy_source("Efficient 2**31 buffer", EfficientEntropySource(SimpleEntropySource(), 2**31))
-    test_entropy_source("Efficient 2**56 buffer", EfficientEntropySource(SimpleEntropySource(), 2**56))
+    test_efficiency_for_buffer(2**31)
 
 run_benchmarks()
