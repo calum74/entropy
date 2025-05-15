@@ -3,15 +3,12 @@ import random
 import math
 import os
 
-# TODO: rename fetch to get()
-
-
 class U:
     """
     Entropy storage using a uniform random distribution.
     Used for representing entropy >=1
     """
-    def __init__(self,value=0,range=1):
+    def __init__(self, value=0, range=1):
         self.value = value
         self.range = range
         self.entropy_out = 0
@@ -48,13 +45,14 @@ class R:
     def entropy(self):
         return shannon_entropy(self.numerator/self.denominator)
 
-# Algorithm 1
+    def __str__(self):
+        return f"R({self.numerator}/{self.denominator})"
 
 def randint(entropy, min, max):
     """
     Returns a random integer in the range [min,max] using an entropy source.
     """
-    return min + entropy.fetch(max-min+1).destroy()
+    return min + entropy.get(max-min+1).destroy()
 
 def fisher_yates(sequence: list[int], entropy):
     for i in range(1, len(sequence)):
@@ -121,7 +119,7 @@ class HardwareEntropySource:
     def __init__(self):
         self.entropy_out = 0
 
-    def fetch(self, range):
+    def get(self, range):
         assert range == 256
         self.entropy_out += 8
         return U(int.from_bytes(os.urandom(1)), 256)
@@ -132,10 +130,10 @@ class BinaryEntropySource:
         self.entropy_out = 0
         self.buffer = U(0,1)
 
-    def fetch(self, range):
+    def get(self, range):
         assert range == 2
         if self.buffer.range<2:
-            self.buffer = multiply(self.buffer, self.source.fetch(256))
+            self.buffer = multiply(self.buffer, self.source.get(256))
         result, self.buffer = divide(self.buffer, 2)
         self.entropy_out += 1
         return result    
@@ -152,22 +150,16 @@ class SimpleEntropySource:
     def entropy_consumed(self):
         return self.binary_entropy.entropy_out
 
-    def fetch(self, n) -> U:
+    def get(self, n) -> U:
         self.entropy_out += math.log2(n)
         self.expected_entropy_in += expected_simple_convert(n)
         return simple_convert(n, self.binary_entropy)
-    
-def read(a:U) -> int:
-    return a.destroy()
-    
+        
 def read_bit(entropy) -> U:
     """
     Reads one bit of randomness from a random source.
     """
-    tmp = entropy.fetch(2)
-    assert tmp.range==2
-    return tmp
-    return entropy.fetch(2)
+    return entropy.get(2)
 
 class EfficientEntropySource:
     def __init__(self, source, min_range=1<<31):
@@ -180,7 +172,7 @@ class EfficientEntropySource:
     def entropy_consumed(self) -> float:
         return self.source.entropy_out - self.store.entropy()
 
-    def fetch(self, n:int) -> U:
+    def get(self, n:int) -> U:
         first = True
         while first or self.store.range < n:
             first = False
