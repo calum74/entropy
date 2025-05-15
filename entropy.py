@@ -29,6 +29,7 @@ class R:
     """
     Entropy storage using a single bit and a probability p.
     Used for representing entropy <=1
+    The value is a probability that U(1)<=numerator/denominator
     """
     def __init__(self, value: bool, numerator: int, denominator: int):
         self._value = value
@@ -89,27 +90,23 @@ def multiply(a: U, b: U) -> U:
     b_range = b.range
     return U(a.destroy()*b_range + b.destroy(), a_range * b_range)
 
-# delete this one!!!!!
-def downsize(n_value, n_range, m_range):
-     assert m_range <= n_range
-     return (n_value, m_range, True) if n_value<m_range \
-        else (n_value-m_range, n_range-m_range, False)
-
 def divide(a: U, b: int) -> tuple[U,U]:
     a_range = a.range
     assert a_range % b == 0
     a_value = a.destroy()
     return U(a_value%b, b), U(a_value//b, a_range//b)
 
-def downsize2(a:U, m:int) -> tuple[U,R]:
+def downsize(a:U, m:int) -> tuple[U,R]:
     """
     Reduces entropy of size a to size m.
     """
     assert a.range >= m
     old_range = a.range
-    new_value,new_range,r = downsize(a.value, a.range, m)
-    a.destroy()
-    return U(new_value, new_range), R(r, m, old_range)
+    old_value = a.destroy()
+    if old_value < m:
+        return U(old_value, m), R(True, m, old_range)
+    else:
+        return U(old_value-m, old_range-m), R(False, m, old_range)
 
 def upsize(a:U, r:R) -> U:
     # TODO
@@ -178,7 +175,7 @@ class EfficientEntropySource:
             first = False
             while self.store.range < self.min_range:
                 self.store = multiply(self.store, read_bit(self.source))
-            self.store, _ = downsize2(self.store, self.store.range%n)
+            self.store, _ = downsize(self.store, self.store.range%n)
         result, self.store = divide(self.store, n)
         self.entropy_out += result.entropy()
         # The expected p
