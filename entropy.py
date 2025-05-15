@@ -3,42 +3,14 @@ import random
 import math
 import os
 
-# Algorithm 1
+# TODO: rename fetch to get()
 
-def fisher_yates(sequence: list[int], random):
-    for i in range(1, len(sequence)):
-        j = random.randint(0, i)
-        sequence[i], sequence[j] = sequence[j], sequence[i]
-
-def expected_naive_convert(range:int) -> float:
-    """
-    Expected number of bits fetched to convert a number
-    in the range [0, range) to a number in the range [0, range).
-    """
-    r = 1 # The smallest power of 2 >= than range 
-    b = 0 # The number of bits in r
-    while r < range:
-        r *= 2
-        b += 1
-    return r*b/range
-
-# Algorithm 2
-def naive_convert(range:int, random) -> tuple[int,float,int]: 
-    actual_bits_fetched = 0
-    expected_bits_fetched = expected_naive_convert(range)
-    while True:
-        v, r = 0, 1
-        while r < range:
-            actual_bits_fetched = actual_bits_fetched + 1
-            v = v*2 + random.randint(0,1)
-            r = r*2
-        if v<range:
-            return (v,expected_bits_fetched,actual_bits_fetched)
-
-def shannon_entropy(p: float) -> float:
-    return -p*math.log2(p) - (1-p)*math.log2(1-p)
 
 class U:
+    """
+    Entropy storage using a uniform random distribution.
+    Used for representing entropy >=1
+    """
     def __init__(self,value=0,range=1):
         self.value = value
         self.range = range
@@ -57,6 +29,10 @@ class U:
         return math.log2(self.range)
     
 class R:
+    """
+    Entropy storage using a single bit and a probability p.
+    Used for representing entropy <=1
+    """
     def __init__(self, value: bool, numerator: int, denominator: int):
         self._value = value
         self.numerator = numerator
@@ -65,12 +41,49 @@ class R:
     def destroy(self):
         value = self._value
         self._value = False
-        self.numerator = 1
+        self.numerator = 0
         self.denominator = 1
         return value
 
     def entropy(self):
         return shannon_entropy(self.numerator/self.denominator)
+
+# Algorithm 1
+
+def randint(entropy, min, max):
+    """
+    Returns a random integer in the range [min,max] using an entropy source.
+    """
+    return min + entropy.fetch(max-min+1).destroy()
+
+def fisher_yates(sequence: list[int], entropy):
+    for i in range(1, len(sequence)):
+        j = randint(entropy, 0, i)
+        sequence[i], sequence[j] = sequence[j], sequence[i]
+
+def expected_simple_convert(range:int) -> float:
+    """
+    Expected number of bits fetched to convert a number
+    in the range [0, range) to a number in the range [0, range).
+    """
+    r = 1 # The smallest power of 2 >= than range 
+    b = 0 # The number of bits in r
+    while r < range:
+        r *= 2
+        b += 1
+    return r*b/range
+
+def simple_convert(range:int, entropy) -> U: 
+    while True:
+        v, r = 0, 1
+        while r < range:
+            v = v*2 + randint(entropy,0,1)
+            r = r*2
+        if v<range:
+            return U(v,range)
+
+def shannon_entropy(p: float) -> float:
+    return -p*math.log2(p) - (1-p)*math.log2(1-p)
 
 # Algorithm 3
 def multiply(a: U, b: U) -> U:
@@ -78,19 +91,13 @@ def multiply(a: U, b: U) -> U:
     b_range = b.range
     return U(a.destroy()*b_range + b.destroy(), a_range * b_range)
 
-# Algorithm 4
-def divide(n_value, n_range, m_range):
-    assert n_range % m_range == 0
-    return n_value%m_range, m_range, \
-        n_value//m_range, n_range//m_range
-
-# Algorithm 5
+# delete this one!!!!!
 def downsize(n_value, n_range, m_range):
      assert m_range <= n_range
      return (n_value, m_range, True) if n_value<m_range \
         else (n_value-m_range, n_range-m_range, False)
 
-def divide2(a: U, b: int) -> tuple[U,U]:
+def divide(a: U, b: int) -> tuple[U,U]:
     a_range = a.range
     assert a_range % b == 0
     a_value = a.destroy()
@@ -104,51 +111,63 @@ def downsize2(a:U, m:int) -> tuple[U,R]:
     old_range = a.range
     new_value,new_range,r = downsize(a.value, a.range, m)
     a.destroy()
-    return U(new_value,new_range), R(r, m, old_range)
+    return U(new_value, new_range), R(r, m, old_range)
 
 def upsize(a:U, r:R) -> U:
+    # TODO
     pass
-
-class NaiveEntropySource:
-    """
-    A naive source of entropy.
-    """
-    def __init__(self):
-        self.entropy_out = 0
-        self.entropy_in = 0
-        self.expected_entropy_in = 0
-
-    def entropy(self):
-        # Nothing stored here
-        return 0
-
-    def entropy_consumed(self):
-        return self.entropy_in
-
-    def randint(self, min, max):
-        range = max-min+1
-        v, expected, actual = naive_convert(range, random)
-        self.entropy_out += math.log2(range)
-        self.expected_entropy_in += expected
-        self.entropy_in += actual
-        return min + v
-    
-def read(a:U) -> int:
-    return a.destroy()
-    
-def read_bit(random) -> U:
-    """
-    Reads one bit of randomness from a random source.
-    """
-    return U(random.randint(0,1),2)
 
 class HardwareEntropySource:
     def __init__(self):
         self.entropy_out = 0
 
-    def fetch(self, min):
+    def fetch(self, range):
+        assert range == 256
         self.entropy_out += 8
-        return U(os.urandom(1), 256)
+        return U(int.from_bytes(os.urandom(1)), 256)
+
+class BinaryEntropySource:
+    def __init__(self, source):
+        self.source = source
+        self.entropy_out = 0
+        self.buffer = U(0,1)
+
+    def fetch(self, range):
+        assert range == 2
+        if self.buffer.range<2:
+            self.buffer = multiply(self.buffer, self.source.fetch(256))
+        result, self.buffer = divide(self.buffer, 2)
+        self.entropy_out += 1
+        return result    
+
+class SimpleEntropySource:
+    """
+    A naive source of entropy.
+    """
+    def __init__(self):
+        self.entropy_out = 0
+        self.expected_entropy_in = 0
+        self.binary_entropy = BinaryEntropySource(HardwareEntropySource())
+
+    def entropy_consumed(self):
+        return self.binary_entropy.entropy_out
+
+    def fetch(self, n) -> U:
+        self.entropy_out += math.log2(n)
+        self.expected_entropy_in += expected_simple_convert(n)
+        return simple_convert(n, self.binary_entropy)
+    
+def read(a:U) -> int:
+    return a.destroy()
+    
+def read_bit(entropy) -> U:
+    """
+    Reads one bit of randomness from a random source.
+    """
+    tmp = entropy.fetch(2)
+    assert tmp.range==2
+    return tmp
+    return entropy.fetch(2)
 
 class EfficientEntropySource:
     def __init__(self, source, min_range=1<<31):
@@ -158,27 +177,25 @@ class EfficientEntropySource:
         self.expected_entropy_in = 0
         self.min_range = min_range
 
-    def entropy_consumed(self):
+    def entropy_consumed(self) -> float:
         return self.source.entropy_out - self.store.entropy()
 
-    def fetch(self, n:int):
+    def fetch(self, n:int) -> U:
         first = True
         while first or self.store.range < n:
             first = False
             while self.store.range < self.min_range:
                 self.store = multiply(self.store, read_bit(self.source))
             self.store, _ = downsize2(self.store, self.store.range%n)
-        result, self.store = divide2(self.store, n)
+        result, self.store = divide(self.store, n)
         self.entropy_out += result.entropy()
         # The expected p
         p = (n-1)/self.min_range/2
         # We expect to lose the shannon-entropy of the downsize each time, and there are
-        # 1/(1-p) iterations expected. This is an overestimate.
+        # 1/(1-p) iterations expected.
         self.expected_entropy_in += result.entropy() + shannon_entropy(p)/(1-p)
         return result
 
-    def randint(self, min, max):
-        return min + read(self.fetch(max-min+1))
 
 def test_entropy_source(name, store):
     print("Results for store     ", name)
@@ -196,12 +213,15 @@ def test_entropy_source(name, store):
     print("Measured efficiency   ", store.entropy_out/store.entropy_consumed())
     print()
 
-# Test a naive entropy source
-test_entropy_source("Naive unbuffered", NaiveEntropySource())
+def run_benchmarks():
+    # Test a naive entropy source
+    test_entropy_source("Naive unbuffered", SimpleEntropySource())
 
-# Test the efficient entropy source in a variety of configurations
-test_entropy_source("Efficient 2**8 buffer", EfficientEntropySource(NaiveEntropySource(), 2**8))
-test_entropy_source("Efficient 2**15 buffer", EfficientEntropySource(NaiveEntropySource(), 2**15))
-test_entropy_source("Efficient 2**31 buffer", EfficientEntropySource(NaiveEntropySource(), 2**31))
-test_entropy_source("Efficient 2**48 buffer", EfficientEntropySource(NaiveEntropySource(), 2**48))
+    # Test the efficient entropy source in a variety of configurations
+    test_entropy_source("Efficient 2**8 buffer", EfficientEntropySource(SimpleEntropySource(), 2**8))
+    test_entropy_source("Efficient 2**15 buffer", EfficientEntropySource(SimpleEntropySource(), 2**15))
+    test_entropy_source("Efficient 2**24 buffer", EfficientEntropySource(SimpleEntropySource(), 2**24))
+    test_entropy_source("Efficient 2**31 buffer", EfficientEntropySource(SimpleEntropySource(), 2**31))
+    test_entropy_source("Efficient 2**56 buffer", EfficientEntropySource(SimpleEntropySource(), 2**56))
 
+run_benchmarks()
