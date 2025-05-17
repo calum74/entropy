@@ -162,8 +162,29 @@ def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
             u = multiply(u, entropy())
         u, r = downsize(u, u.range%m)
         if not r.read():
-            break
-    return divide(u, m)
+            return divide(u, m)
+
+def optimized_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
+    """
+    Same as entropy_convert() but optimizes the operations.
+    It is less readable but retains the structure of the original algorithm.
+    """
+    assert m <= M
+    u_range = u.range
+    u_value = u.read()
+    while True:
+        while u_range < M:
+            e = entropy()
+            assert e.range == 2
+            u_value = (u_value<<1) | e.read()
+            u_range = u_range<<1
+        x, c = divmod(u_range, m)
+        if u_value < u_range - c:
+            u_value, m_value = divmod(u_value, m)
+            return U(m_value, m), U(u_value, x)
+        else:
+            u_value = u_value - k
+            u_range = c
 
 ######################################
 # Entropy sources
@@ -260,7 +281,7 @@ class EfficientEntropySource:
         return self.get_with_min(n, self.min_range)
 
     def get_with_min(self, n:int, min_range:int) -> U:
-        result, self.store = entropy_convert(self.store, lambda:read_bit(self.source), n, min_range)
+        result, self.store = optimized_convert(self.store, lambda:read_bit(self.source), n, min_range)
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)
@@ -329,6 +350,17 @@ def run_tests():
     print("Expected efficiency", expected_efficiency(s))
     print("Measured efficiency", measured_efficiency(s))
 
+def deck():
+    return list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+def show_shuffle():
+    s = EfficientEntropySource(SimpleEntropySource())
+    d = deck()
+    shuffle(d, s)
+    print(''.join(d))
+
 if __name__ == "__main__":
     run_benchmarks()
     run_tests()
+    for i in range(10):
+        show_shuffle()
