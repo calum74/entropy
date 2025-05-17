@@ -1,50 +1,52 @@
-
 import random
 import math
 import os
 
-# TO DO:
-# Doc comments
-# Putting entropy back (via U)
-# Putting entropy back (via R)
-# Upsize algorithm
-# Tests of individual algorithms
-# Name of the selective_discard algorithm
+####################################################
+# Probability distributions used for entropy storage
 
 class U:
     """
     Entropy storage using a uniform random distribution.
     Used for representing entropy >=1
     """
-    def __init__(self, value=0, range=1):
-        self.value = value
+    def __init__(self, value:int=0, range:int=1):
+        self._value = value
         self.range = range
         self.entropy_out = 0
     
-    def destroy(self):
-        value = self.value
-        self.value = 0
+    def read(self) -> int:
+        """
+        Reads the stored value, but destroys the stored entropy in the process.
+        """
+        value = self._value
+        self._value = 0
         self.range = 1
         return value
     
-    def __str__(self):
+    def __str__(self) -> str:
         return f"U({self.range})"
     
-    def entropy(self):
+    def entropy(self) -> float:
+        """
+        Gets the amount of entropy stored in this distribution.
+        """
         return math.log2(self.range)
     
-class R:
+class B:
     """
-    Entropy storage using a single bit and a probability p.
-    Used for representing entropy <=1
-    The value is a probability that U(1)<=numerator/denominator
+    Entropy storage using a binary/Bernoulli distribution with
+    p = numerator/denominator. Used for representing entropy <=1
     """
-    def __init__(self, value: bool, numerator: int, denominator: int):
+    def __init__(self, value: bool=False, numerator: int=0, denominator: int=1):
         self._value = value
         self.numerator = numerator
         self.denominator = denominator
 
-    def destroy(self):
+    def read(self) -> bool:
+        """
+        Reads the stored value, but destroys the stored entropy in the process. 
+        """
         value = self._value
         self._value = False
         self.numerator = 0
@@ -52,35 +54,37 @@ class R:
         return value
 
     def entropy(self):
-        return shannon_entropy(self.numerator/self.denominator)
+        """
+        Gets the amount of entropy stored in this distribution.
+        """
+        return binary_entropy(self.numerator/self.denominator)
 
     def __str__(self):
-        return f"R({self.numerator}/{self.denominator})"
+        return f"B({self.numerator}/{self.denominator})"
+
+#######################################
+# Functions
 
 def randint(entropy, min, max):
     """
     Returns a random integer in the range [min,max] using an entropy source.
     """
-    return min + entropy.get(max-min+1).destroy()
+    return min + entropy.get(max-min+1).read()
 
-def fisher_yates(sequence: list[int], entropy):
+def shuffle(sequence: list, entropy):
+    """
+    Shuffles a sequence using random numbers from an entropy source.
+    Uses the Fisher-Yates algorithm.
+    """
     for i in range(1, len(sequence)):
         j = randint(entropy, 0, i)
         sequence[i], sequence[j] = sequence[j], sequence[i]
 
-def expected_selective_discard(range:int) -> float:
+def selective_discard(range:int, entropy) -> U:
     """
-    Expected number of bits fetched to convert a number
-    in the range [0, range) to a number in the range [0, range).
+    Uses a selective discard algorithm to return
+    a uniform distribution of the required range.
     """
-    r = 1 # The smallest power of 2 >= than range 
-    b = 0 # The number of bits in r
-    while r < range:
-        r *= 2
-        b += 1
-    return r*b/range
-
-def selective_discard(range:int, entropy) -> U: 
     while True:
         v, r = 0, 1
         while r < range:
@@ -89,38 +93,88 @@ def selective_discard(range:int, entropy) -> U:
         if v<range:
             return U(v,range)
 
-def shannon_entropy(p: float) -> float:
+def binary_entropy(p: float) -> float:
+    """
+    Calculates the entropy contained in a binary distribution
+    where the probability of the event is p.
+    """
+    if p==0 or p==1:
+        return 0
     return -p*math.log2(p) - (1-p)*math.log2(1-p)
 
-# Algorithm 3
 def multiply(a: U, b: U) -> U:
+    """
+    Combines two uniform random variables into one.
+    The original random variables are destroyed.
+    """
     a_range = a.range
     b_range = b.range
-    return U(a.destroy()*b_range + b.destroy(), a_range * b_range)
+    return U(a.read()*b_range + b.read(), a_range * b_range)
 
 def divide(a: U, b: int) -> tuple[U,U]:
+    """
+    Creates two uniform random variables from one random variable.
+    The original random variable is destroyed.
+    b must divide the range of a exactly.
+    """
     a_range = a.range
     assert a_range % b == 0
-    a_value = a.destroy()
+    a_value = a.read()
     return U(a_value%b, b), U(a_value//b, a_range//b)
 
-def downsize(a:U, m:int) -> tuple[U,R]:
+def downsize(a:U, m:int) -> tuple[U,B]:
     """
-    Reduces entropy of size a to size m.
+    Reduces entropy to size m.
+    The original entropy is destroyed.
     """
     assert a.range >= m
     old_range = a.range
-    old_value = a.destroy()
+    old_value = a.read()
     if old_value < m:
-        return U(old_value, m), R(True, m, old_range)
+        return U(old_value, m), B(True, m, old_range)
     else:
-        return U(old_value-m, old_range-m), R(False, m, old_range)
+        return U(old_value-m, old_range-m), B(False, m, old_range)
+
+def read_bit(entropy) -> U:
+    """
+    Reads one bit of randomness from a random source.
+    """
+    return entropy.get(2)
+
+def entropy_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
+    """
+    Extracts entropy U(m) from a uniform distribution of
+    arbitrary size.
+
+    Parameters:
+    - u is the entropy input (of any range)
+    - entropy is a function that returns entropy, e.g. U(2)
+    - m is the output range
+    - M is the minimum size of our entropy before downsize
+    Returns:
+    - The remaining entropy
+    - U(m)
+    """
+    assert m <= M
+    q, r = divmod(u.range, m)
+    while q == 0 or r != 0:
+        while u.range < M:
+            u = multiply(u, entropy())
+        u, _ = downsize(u, r)
+        q, r = divmod(u.range, m)
+    return divide(u, q)
+
+######################################
+# Entropy sources
 
 class HardwareEntropySource:
+    """
+
+    """
     def __init__(self):
         self.entropy_out = 0
 
-    def get(self, range):
+    def get(self, range) -> U:
         assert range == 256
         self.entropy_out += 8
         return U(int.from_bytes(os.urandom(1)), 256)
@@ -131,7 +185,7 @@ class BinaryEntropySource:
         self.entropy_out = 0
         self.buffer = U(0,1)
 
-    def get(self, range):
+    def get(self, range) -> U:
         assert range == 2
         if self.buffer.range<2:
             self.buffer = multiply(self.buffer, self.source.get(256))
@@ -141,7 +195,8 @@ class BinaryEntropySource:
 
 class SimpleEntropySource:
     """
-    A naive source of entropy.
+    A simple source of entropy, calculated
+    using selective-discard.
     """
     def __init__(self):
         self.entropy_out = 0
@@ -155,14 +210,12 @@ class SimpleEntropySource:
         self.entropy_out += math.log2(n)
         self.expected_entropy_in += expected_selective_discard(n)
         return selective_discard(n, self.binary_entropy)
-        
-def read_bit(entropy) -> U:
-    """
-    Reads one bit of randomness from a random source.
-    """
-    return entropy.get(2)
 
 class EfficientEntropySource:
+    """
+    An efficient entropy source calculated using
+    multiply-downsize-divide.
+    """
     def __init__(self, source, min_range=1<<31):
         self.source = source
         self.store = U(0,1)
@@ -178,36 +231,55 @@ class EfficientEntropySource:
         self.entropy_put += e.entropy()
         self.store = multiply(self.store, e)
 
-    def get_R(self, num:int, den:int) -> R:
+    def get_R(self, num:int, den:int) -> B:
+        """
+        Extract an entropy value <=1
+        expressed as a probability num/den.
+        """
         y, r = downsize(self.get(den), num)
         self.put(y)
         return r
 
-    def put_R(self, r:R):
+    def put_R(self, r:B):
+        """
+        Put an B entropy value into the store
+        """
         num = r.numerator
         den = r.denominator
-        if r.destroy():
-            self.put(U(self.get(num).destroy(), den))
+        if r.read():
+            self.put(U(self.get_with_min(num, den).read(), den))
         else:
-            self.put(U(num+self.get(den-num).destroy(), den))
+            self.put(U(num+self.get_with_min(den-num, den).read(), den))
 
     def get(self, n:int) -> U:
-        first = True
-        while first or self.store.range < n:
-            first = False
-            # Ensure that the store has enough entropy for an efficient downsize
-            while self.store.range < self.min_range:
-                self.store = multiply(self.store, read_bit(self.source))
-            # Discard the extra R entropy generated by the downsize
-            self.store, _ = downsize(self.store, self.store.range%n)
-        result, self.store = divide(self.store, n)
+        return self.get_with_min(n, self.min_range)
+
+    def get_with_min(self, n:int, min_range:int) -> U:
+        self.store, result = entropy_convert(self.store, lambda:read_bit(self.source), n, min_range)
+
         self.entropy_out += result.entropy()
-        # The expected p (not the worst-case)
+        # The expected p (not the worst-case p)
         p = (n-1)/self.min_range/2
         # We expect to lose the shannon-entropy of the downsize each time, and there are
         # 1/(1-p) iterations expected.
-        self.expected_entropy_in += result.entropy() + shannon_entropy(p)/(1-p)
+        self.expected_entropy_in += result.entropy() + binary_entropy(p)/(1-p)
+
         return result
+
+######################################
+# Tests
+
+def expected_selective_discard(range:int) -> float:
+    """
+    Expected number of bits fetched to convert a number
+    in the range [0, range) to a number in the range [0, range).
+    """
+    r = 1 # The smallest power of 2 >= than range 
+    b = 0 # The number of bits in r
+    while r < range:
+        r *= 2
+        b += 1
+    return r*b/range
 
 def expected_efficiency(store):
     return store.entropy_out/store.expected_entropy_in
@@ -218,7 +290,7 @@ def measured_efficiency(store):
 def test_entropy_source(name, store):
     print("Results for store     ", name)
     cards = list(range(52))
-    fisher_yates(cards, store)
+    shuffle(cards, store)
 
     input_count = store.expected_entropy_in
     output_count = store.entropy_out
@@ -227,8 +299,8 @@ def test_entropy_source(name, store):
     print("Measured input entropy", store.entropy_consumed())
 
     print("Expected entropy in   ", store.expected_entropy_in)
-    print("Expected efficiency   ", store.entropy_out/store.expected_entropy_in)
-    print("Measured efficiency   ", store.entropy_out/store.entropy_consumed())
+    print("Expected efficiency   ", expected_efficiency(store))
+    print("Measured efficiency   ", measured_efficiency(store))
     print()
 
 def test_efficiency_for_buffer(buffer):
@@ -248,9 +320,13 @@ def run_tests():
 
     s = EfficientEntropySource(SimpleEntropySource())
     r = s.get_R(1,10)
+    print("r has entropy", r.entropy())
+    print("Store has entropy", s.store.entropy())
     s.put_R(r)
+    print("Store has entropy", s.store.entropy())
     print("Expected efficiency", expected_efficiency(s))
     print("Measured efficiency", measured_efficiency(s))
 
-run_benchmarks()
-run_tests()
+if __name__ == "__main__":
+    run_benchmarks()
+    run_tests()
