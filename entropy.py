@@ -1,6 +1,7 @@
 import random
 import math
 import os
+from typing import Callable
 
 ####################################################
 # Probability distributions used for entropy storage
@@ -141,7 +142,7 @@ def read_bit(entropy) -> U:
     """
     return entropy.get(2)
 
-def entropy_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
+def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     """
     Extracts entropy U(m) from a uniform distribution of
     arbitrary size.
