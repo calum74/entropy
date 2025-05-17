@@ -81,7 +81,7 @@ def shuffle(sequence: list, entropy):
         j = randint(entropy, 0, i)
         sequence[i], sequence[j] = sequence[j], sequence[i]
 
-def selective_discard(range:int, entropy) -> U:
+def rejection_sampling(range:int, entropy) -> U:
     """
     Uses a selective discard algorithm to return
     a uniform distribution of the required range.
@@ -222,7 +222,7 @@ class BinaryEntropySource:
 class SimpleEntropySource:
     """
     A simple source of entropy, calculated
-    using selective-discard.
+    using rejection sampling.
     """
     def __init__(self):
         self.entropy_out = 0
@@ -234,8 +234,8 @@ class SimpleEntropySource:
 
     def get(self, n) -> U:
         self.entropy_out += math.log2(n)
-        self.expected_entropy_in += expected_selective_discard(n)
-        return selective_discard(n, self.binary_entropy)
+        self.expected_entropy_in += expected_rejection_sampling(n)
+        return rejection_sampling(n, self.binary_entropy)
 
 class EfficientEntropySource:
     """
@@ -296,7 +296,7 @@ class EfficientEntropySource:
 ######################################
 # Tests
 
-def expected_selective_discard(range:int) -> float:
+def expected_rejection_sampling(range:int) -> float:
     r = 1 # The smallest power of 2 >= than range 
     b = 0 # The number of bits in r
     while r < range:
@@ -321,7 +321,7 @@ def test_entropy_source(name, store):
     print("Output entropy        ", store.entropy_out)
     print("Measured input entropy", store.entropy_consumed())
 
-    print("Expected entropy in   ", store.expected_entropy_in)
+    print("Expected input entropy", store.expected_entropy_in)
     print("Expected efficiency   ", expected_efficiency(store))
     print("Measured efficiency   ", measured_efficiency(store))
     print()
