@@ -149,28 +149,29 @@ def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
 
     Parameters:
     - u is the entropy input (of any range)
-    - entropy is a function that returns entropy, e.g. U(2)
+    - entropy is a function that returns entropy, of any range
     - m is the output range
     - M is the minimum size of our entropy before downsize
     Returns:
-    - The remaining entropy
     - U(m)
+    - The remaining entropy
     """
     assert m <= M
-    q, r = divmod(u.range, m)
-    while q == 0 or r != 0:
+    while True:
         while u.range < M:
             u = multiply(u, entropy())
-        u, _ = downsize(u, r)
-        q, r = divmod(u.range, m)
-    return divide(u, q)
+        u, r = downsize(u, u.range%m)
+        if not r.read():
+            break
+    return divide(u, m)
 
 ######################################
 # Entropy sources
 
 class HardwareEntropySource:
     """
-
+    A source of entropy in the form U(256),
+    reading one byte of entropy each time.
     """
     def __init__(self):
         self.entropy_out = 0
@@ -181,6 +182,9 @@ class HardwareEntropySource:
         return U(int.from_bytes(os.urandom(1)), 256)
 
 class BinaryEntropySource:
+    """
+    A source of entropy in the form U(2).
+    """
     def __init__(self, source):
         self.source = source
         self.entropy_out = 0
@@ -215,7 +219,7 @@ class SimpleEntropySource:
 class EfficientEntropySource:
     """
     An efficient entropy source calculated using
-    multiply-downsize-divide.
+    fetch-multiply-downsize-divide.
     """
     def __init__(self, source, min_range=1<<31):
         self.source = source
@@ -256,11 +260,12 @@ class EfficientEntropySource:
         return self.get_with_min(n, self.min_range)
 
     def get_with_min(self, n:int, min_range:int) -> U:
-        self.store, result = entropy_convert(self.store, lambda:read_bit(self.source), n, min_range)
+        result, self.store = entropy_convert(self.store, lambda:read_bit(self.source), n, min_range)
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)
-        p = (n-1)/self.min_range/2
+        p = (n-1)/self.min_range/2  # Average-case
+        # p = (n-1)/self.min_range    # Worst-case
         # We expect to lose the shannon-entropy of the downsize each time, and there are
         # 1/(1-p) iterations expected.
         self.expected_entropy_in += result.entropy() + binary_entropy(p)/(1-p)
@@ -271,10 +276,6 @@ class EfficientEntropySource:
 # Tests
 
 def expected_selective_discard(range:int) -> float:
-    """
-    Expected number of bits fetched to convert a number
-    in the range [0, range) to a number in the range [0, range).
-    """
     r = 1 # The smallest power of 2 >= than range 
     b = 0 # The number of bits in r
     while r < range:
