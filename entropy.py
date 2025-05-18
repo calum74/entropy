@@ -94,14 +94,22 @@ def rejection_sampling(range:int, entropy) -> U:
         if v<range:
             return U(v,range)
 
-def binary_entropy(p: float) -> float:
+def fast_dice_roller(n:int, entropy) -> U:
     """
-    Calculates the entropy contained in a binary distribution
-    where the probability of the event is p.
+    Implements Lumbroso's fast-dice-roller algorithm
+    https://arxiv.org/pdf/1304.1916
     """
-    if p==0 or p==1:
-        return 0
-    return -p*math.log2(p) - (1-p)*math.log2(1-p)
+    v = 1
+    c = 0
+    while True:
+        v = v*2
+        c = c*2+randint(entropy,0,1)
+        if v>=n:
+            if c<n:
+                return U(c,n)
+            else:
+                v = v-n
+                c = c-n
 
 def multiply(a: U, b: U) -> U:
     """
@@ -206,7 +214,9 @@ class BinaryEntropySource:
     """
     A source of entropy in the form U(2).
     """
-    def __init__(self, source):
+    def __init__(self, source = None):
+        if source is None:
+            source = HardwareEntropySource()
         self.source = source
         self.entropy_out = 0
         self.buffer = U(0,1)
@@ -217,17 +227,19 @@ class BinaryEntropySource:
             self.buffer = multiply(self.buffer, self.source.get(256))
         result, self.buffer = divide(self.buffer, 2)
         self.entropy_out += 1
-        return result    
+        return result
 
-class SimpleEntropySource:
+class RejectionSamplingEntropySource:
     """
     A simple source of entropy, calculated
     using rejection sampling.
     """
-    def __init__(self):
+    def __init__(self, source = None):
+        if source is None:
+            source = BinaryEntropySource()
         self.entropy_out = 0
         self.expected_entropy_in = 0
-        self.binary_entropy = BinaryEntropySource(HardwareEntropySource())
+        self.binary_entropy = BinaryEntropySource()
 
     def entropy_consumed(self):
         return self.binary_entropy.entropy_out
@@ -236,6 +248,26 @@ class SimpleEntropySource:
         self.entropy_out += math.log2(n)
         self.expected_entropy_in += expected_rejection_sampling(n)
         return rejection_sampling(n, self.binary_entropy)
+
+class FastDiceRollerEntropySource:
+    """
+    Entropy source using FDR
+    """
+    def __init__(self, source = None):
+        self.entropy_out = 0
+        self.expected_entropy_in = 0
+        if source is None:
+            source = BinaryEntropySource()
+        self.binary_entropy = source
+
+    def entropy_consumed(self):
+        return self.binary_entropy.entropy_out
+
+    def get(self, n) -> U:
+        self.entropy_out += math.log2(n)
+        self.expected_entropy_in += expected_fast_dice_roller(n)
+        return fast_dice_roller(n, self.binary_entropy)
+
 
 class EfficientEntropySource:
     """
@@ -296,6 +328,15 @@ class EfficientEntropySource:
 ######################################
 # Tests
 
+def binary_entropy(p: float) -> float:
+    """
+    Calculates the entropy contained in a binary distribution
+    where the probability of the event is p.
+    """
+    if p==0 or p==1:
+        return 0
+    return -p*math.log2(p) - (1-p)*math.log2(1-p)
+
 def expected_rejection_sampling(range:int) -> float:
     r = 1 # The smallest power of 2 >= than range 
     b = 0 # The number of bits in r
@@ -303,6 +344,13 @@ def expected_rejection_sampling(range:int) -> float:
         r *= 2
         b += 1
     return r*b/range
+
+def expected_fast_dice_roller(n:int) -> float:
+    r = 1 # The smallest power of 2 >= than range 
+    while r < n:
+        r *= 2
+    p = n/r
+    return math.log2(n) + binary_entropy(p)/p 
 
 def expected_efficiency(store):
     return store.entropy_out/store.expected_entropy_in
@@ -324,24 +372,46 @@ def test_entropy_source(name, store):
     print("Expected input entropy", store.expected_entropy_in)
     print("Expected efficiency   ", expected_efficiency(store))
     print("Measured efficiency   ", measured_efficiency(store))
-    print()
+
+def measure_entropy_source_efficiency(generator, iterations=1000):
+    total_in = 0
+    total_out = 0
+    for i in range(iterations):
+        store = generator()
+        cards = list(range(52))
+        shuffle(cards, store)
+        total_in += store.entropy_consumed()
+        total_out += store.entropy_out
+    return total_out/total_in
+
+def measure_entropy_source(name:str, gen:Callable):
+    print("Average efficiency for", name, "is", measure_entropy_source_efficiency(gen))
 
 def test_efficiency_for_buffer(buffer):
-    test_entropy_source(f"Efficient {buffer} buffer", EfficientEntropySource(SimpleEntropySource(), buffer))
+    test_entropy_source(f"Efficient {buffer} buffer", EfficientEntropySource(RejectionSamplingEntropySource(), buffer))
+    measure_entropy_source(f"Efficient {buffer} buffer", lambda: EfficientEntropySource(RejectionSamplingEntropySource(), buffer))
+    print()
 
 def run_benchmarks():
     # Test a naive entropy source
-    test_entropy_source("Naive unbuffered", SimpleEntropySource())
+    test_entropy_source("Rejection sampling", RejectionSamplingEntropySource())
+    measure_entropy_source("Rejection sampling", lambda: RejectionSamplingEntropySource())
+    print()
+
+    test_entropy_source("Fast dice roller", FastDiceRollerEntropySource())
+    measure_entropy_source("Fast dice roller", lambda: FastDiceRollerEntropySource())
+    print()
+
     test_efficiency_for_buffer(2**31)
 
 def run_tests():
-    s = EfficientEntropySource(SimpleEntropySource())
+    s = EfficientEntropySource(RejectionSamplingEntropySource())
     u = s.get(10)
     s.put(u)
     print("Expected efficiency", expected_efficiency(s))
     print("Measured efficiency", measured_efficiency(s))
 
-    s = EfficientEntropySource(SimpleEntropySource())
+    s = EfficientEntropySource(BinaryEntropySource(HardwareEntropySource()))
     r = s.get_R(1,10)
     print("r has entropy", r.entropy())
     print("Store has entropy", s.store.entropy())
@@ -354,7 +424,7 @@ def deck():
     return list("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 def show_shuffle():
-    s = EfficientEntropySource(SimpleEntropySource())
+    s = EfficientEntropySource(RejectionSamplingEntropySource())
     d = deck()
     shuffle(d, s)
     print(''.join(d))
