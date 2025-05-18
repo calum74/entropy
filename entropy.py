@@ -176,22 +176,21 @@ def optimized_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     """
     Same as entropy_convert() but optimizes the operations.
     It is less readable but retains the structure of the original algorithm.
+    In this case, entropy must return 0 or 1.
     """
     assert m <= M
     u_range = u.range
     u_value = u.read()
     while True:
         while u_range < M:
-            e = entropy()
-            assert e.range == 2
-            u_value = (u_value<<1) | e.read()
+            u_value = (u_value<<1) | entropy().read()
             u_range = u_range<<1
         x, c = divmod(u_range, m)
         if u_value < u_range - c:
             u_value, m_value = divmod(u_value, m)
             return U(m_value, m), U(u_value, x)
         else:
-            u_value = u_value - k
+            u_value -= k
             u_range = c
 
 ######################################
@@ -328,9 +327,19 @@ class EfficientEntropySource:
 ######################################
 # Tests
 
+# TODO: Use this to measure things
+class MeasuringStore:
+    def __init__(self, store):
+        self.store = store
+        self.entropy = 0
+
+    def get(self, n:int):
+        self.entropy += math.log2(n)
+        return self.store.get(n)
+
 def binary_entropy(p: float) -> float:
     """
-    Calculates the entropy contained in a binary distribution
+    Calculates the entropy contained in a binary/Bernoulli distribution
     where the probability of the event is p.
     """
     if p==0 or p==1:
