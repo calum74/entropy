@@ -172,7 +172,7 @@ def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
         if not r.read():
             return divide(u, m)
 
-def optimized_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
+def optimized_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
     """
     Same as entropy_convert() but optimizes the operations.
     It is less readable but retains the structure of the original algorithm.
@@ -183,7 +183,7 @@ def optimized_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     u_value = u.read()
     while True:
         while u_range < M:
-            u_value = (u_value<<1) | entropy().read()
+            u_value = (u_value<<1) | randint(entropy, 0, 1)
             u_range = u_range<<1
         x, c = divmod(u_range, m)
         if u_value < u_range - c:
@@ -312,7 +312,7 @@ class EfficientEntropySource:
         return self.get_with_min(n, self.min_range)
 
     def get_with_min(self, n:int, min_range:int) -> U:
-        result, self.store = optimized_convert(self.store, lambda:read_bit(self.source), n, min_range)
+        result, self.store = optimized_convert(self.store, self.source, n, min_range)
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)
@@ -355,11 +355,16 @@ def expected_rejection_sampling(range:int) -> float:
     return r*b/range
 
 def expected_fast_dice_roller(n:int) -> float:
-    r = 1 # The smallest power of 2 >= than range 
+    r = 1 # The smallest power of 2 >= n
     while r < n:
         r *= 2
     p = n/r
-    return math.log2(n) + binary_entropy(p)/p 
+    # This is an underestimate because the number v can contain numbers greater than a power of 2
+    # Entropy is between 
+    # math.log2(n) + binary_entropy(p) 
+    # and 
+    # math.log2(n) + binary_entropy(p)/p 
+    return math.log2(n) + binary_entropy(p) #/p 
 
 def expected_efficiency(store):
     return store.entropy_out/store.expected_entropy_in
@@ -382,7 +387,7 @@ def test_entropy_source(name, store):
     print("Expected efficiency   ", expected_efficiency(store))
     print("Measured efficiency   ", measured_efficiency(store))
 
-def measure_entropy_source_efficiency(generator, iterations=1000):
+def measure_entropy_source_efficiency(generator, iterations=100):
     total_in = 0
     total_out = 0
     for i in range(iterations):
@@ -396,7 +401,7 @@ def measure_entropy_source_efficiency(generator, iterations=1000):
 def measure_entropy_source(name:str, gen:Callable):
     print("Average efficiency for", name, "is", measure_entropy_source_efficiency(gen))
 
-def test_efficiency_for_buffer(buffer):
+def test_efficiency_for_buffer(buffer:int):
     test_entropy_source(f"Efficient {buffer} buffer", EfficientEntropySource(RejectionSamplingEntropySource(), buffer))
     measure_entropy_source(f"Efficient {buffer} buffer", lambda: EfficientEntropySource(RejectionSamplingEntropySource(), buffer))
     print()
