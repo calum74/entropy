@@ -172,46 +172,22 @@ def entropy_convert(s:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
         if not r.read():
             return divide(s, m)
 
-def optimized_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
-    """
-    Same as entropy_convert() but optimizes the operations.
-    It is less readable but retains the structure of the original algorithm.
-    In this case, entropy must return 0 or 1.
-    """
-    assert m <= M
+def convert_entropy(s_value:int, s_range:int, fetch, out_range:int, M:int):
+    while True:
+        while s_range < M:
+            s_value = (s_value<<1) | fetch()
+            s_range = s_range<<1
+        s_range, r = divmod(s_range, out_range)
+        if s_value >= r:
+            s_value, out_value = divmod(s_value-r, out_range)
+            return out_value, s_value, s_range
+        else:
+            s_range = r
+
+def convert_entropy_wrapper(u:U, entropy, m:int, M:int) -> tuple[U,U]:
     u_range = u.range
     u_value = u.read()
-    while True:
-        while u_range < M:
-            u_value = (u_value<<1) | randint(entropy, 0, 1)
-            u_range = u_range<<1
-        x, r = divmod(u_range, m)
-        if u_value < u_range - r:
-            u_value, m_value = divmod(u_value, m)
-            return U(m_value, m), U(u_value, x)
-        else:
-            u_value -= r
-            u_range = r
-
-# Exposition only
-# Write this out more fully to make it self-contained
-def long_convert(u_value:int, u_range:int, fetch:Callable[[],int], m:int, M:int) \
-        -> tuple[int,int,int]:
-    while True:
-        while u_range < M:
-            u_value = (u_value<<1) | fetch()
-            u_range = u_range<<1
-        u2_range, r = divmod(u_range, m)
-        if u_value >= r:
-            u2_value, m_value = divmod(u_value-r, m)
-            return m_value, u2_value, u2_range
-        else:
-            u_range = r
-
-def long_convert_wrapper(u:U, entropy, m:int, M:int) -> tuple[U,U]:
-    u_range = u.range
-    u_value = u.read()
-    m_value, u_value, u_range = long_convert(u_value, u_range, lambda: randint(entropy,0,1), m, M)
+    m_value, u_value, u_range = convert_entropy(u_value, u_range, lambda: randint(entropy,0,1), m, M)
     return U(m_value, m), U(u_value, u_range)
 
 ######################################
@@ -333,7 +309,7 @@ class EfficientEntropySource:
         return self.get_with_min(n, self.min_range)
 
     def get_with_min(self, n:int, min_range:int) -> U:
-        result, self.store = long_convert_wrapper(self.store, self.source, n, min_range)
+        result, self.store = convert_entropy_wrapper(self.store, self.source, n, min_range)
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)
@@ -375,7 +351,7 @@ def expected_rejection_sampling(range:int) -> float:
         b += 1
     return r*b/range
 
-def expected_fast_dice_roller(n:int) -> float:
+def expected_fast_dice_rollerXX(n:int) -> float:
     r = 1 # The smallest power of 2 >= n
     while r < n:
         r *= 2
@@ -386,6 +362,21 @@ def expected_fast_dice_roller(n:int) -> float:
     # and 
     # math.log2(n) + binary_entropy(p)/p 
     return math.log2(n) + binary_entropy(p) #/p 
+
+# Measures the exact entropy consumption of the FDR to a number of iterations
+def expected_fast_dice_roller(n:int) -> float:
+
+    def calculate_fdr_exact(u, depth):
+        count = 0
+        while u<n:
+            u *= 2
+            count += 1
+        if n==u or depth==1:
+            return count
+        p = n/u
+        return count + (1-p) * calculate_fdr_exact(u-n, depth-1)
+
+    return calculate_fdr_exact(1, 8)
 
 def expected_efficiency(store):
     return store.entropy_out/store.expected_entropy_in
