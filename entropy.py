@@ -150,7 +150,7 @@ def read_bit(entropy) -> U:
     """
     return entropy.get(2)
 
-def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
+def entropy_convert(s:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     """
     Extracts entropy U(m) from a uniform distribution of
     arbitrary size.
@@ -167,10 +167,10 @@ def entropy_convert(u:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     assert m <= M
     while True:
         while u.range < M:
-            u = multiply(u, entropy())
-        u, r = downsize(u, u.range%m)
+            s = multiply(s, entropy())
+        s, r = downsize(s, s.range%m)
         if not r.read():
-            return divide(u, m)
+            return divide(s, m)
 
 def optimized_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
     """
@@ -185,13 +185,34 @@ def optimized_convert(u:U, entropy, m:int, M:int) -> tuple[U,U]:
         while u_range < M:
             u_value = (u_value<<1) | randint(entropy, 0, 1)
             u_range = u_range<<1
-        x, c = divmod(u_range, m)
-        if u_value < u_range - c:
+        x, r = divmod(u_range, m)
+        if u_value < u_range - r:
             u_value, m_value = divmod(u_value, m)
             return U(m_value, m), U(u_value, x)
         else:
-            u_value -= k
-            u_range = c
+            u_value -= r
+            u_range = r
+
+# Exposition only
+# Write this out more fully to make it self-contained
+def long_convert(u_value:int, u_range:int, fetch:Callable[[],int], m:int, M:int) \
+        -> tuple[int,int,int]:
+    while True:
+        while u_range < M:
+            u_value = (u_value<<1) | fetch()
+            u_range = u_range<<1
+        u2_range, r = divmod(u_range, m)
+        if u_value >= r:
+            u2_value, m_value = divmod(u_value-r, m)
+            return m_value, u2_value, u2_range
+        else:
+            u_range = r
+
+def long_convert_wrapper(u:U, entropy, m:int, M:int) -> tuple[U,U]:
+    u_range = u.range
+    u_value = u.read()
+    m_value, u_value, u_range = long_convert(u_value, u_range, lambda: randint(entropy,0,1), m, M)
+    return U(m_value, m), U(u_value, u_range)
 
 ######################################
 # Entropy sources
@@ -312,7 +333,7 @@ class EfficientEntropySource:
         return self.get_with_min(n, self.min_range)
 
     def get_with_min(self, n:int, min_range:int) -> U:
-        result, self.store = optimized_convert(self.store, self.source, n, min_range)
+        result, self.store = long_convert_wrapper(self.store, self.source, n, min_range)
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)

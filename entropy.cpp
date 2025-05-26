@@ -70,14 +70,14 @@ private:
 };
 
 
+template<std::unsigned_integral T = std::uint32_t, T M = (1u<<((sizeof(T)*8)-1))>
 class efficient_entropy_converter
 {
 public:
-    using value_type = std::uint32_t;
-    static const value_type M = 1<<31;
+    using value_type = T;
 
-    template<std::input_iterator It>
-    value_type convert(It & binary_entropy, value_type m)
+    template<std::invocable Fn>
+    value_type convert(Fn fetch, value_type m)
     {
         for(;;)
         {
@@ -85,15 +85,15 @@ public:
             while(s_range < M)
             {
                 s_value <<= 1;
-                s_value |= (*binary_entropy++)&1;
+                s_value |= fetch();
                 s_range <<= 1;
             }
-            // Resize entropy s to a multiple of m
+            // Resample entropy s to a multiple of m
             auto r = s_range / m;
             auto c = s_range % m;
             if(s_value >= c)  [[likely]]
             {
-                // Resize successful
+                // Resample successful
                 s_value -= c;
                 auto a = s_value / m;
                 auto b = s_value % m;
@@ -103,10 +103,16 @@ public:
             }
             else
             {
-                // Resize unsuccessful
+                // Resample unsuccessful
                 s_range = c;
             }
         }
+    }
+
+    template<std::input_iterator It>
+    value_type convert(It & binary_entropy, value_type m)
+    {
+        return convert([&] { return *binary_entropy++; }, m);
     }
 
     efficient_entropy_converter() : s_value(0), s_range(1) {}
@@ -129,6 +135,8 @@ private:
     value_type s_value = 0, s_range = 1;
 };
 
+
+
 int main()
 {
     std::random_device rd;
@@ -137,7 +145,7 @@ int main()
     std::cout << fast_dice_roller<47>(entropy) << std::endl;
 
     binary_entropy_stream<std::random_device> b;
-    efficient_entropy_converter ec;
+    efficient_entropy_converter<std::uint32_t> ec;
 
     for(int i=0; i<100; ++i)
         std::cout << *b++;
