@@ -1,0 +1,79 @@
+\documentclass[12pt]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}   % Math
+\usepackage{graphicx}           % Images
+\usepackage{hyperref}           % Clickable links
+\usepackage{geometry}           % Page margins
+% \usepackage{cite}               % Citation formatting
+
+% BibLaTeX for references (requires biber)
+\usepackage[
+    backend=biber,
+    style=numeric,
+    sorting=nyt
+]{biblatex}
+
+\addbibresource{references.bib}  % Bib file
+
+% Page setup
+\geometry{margin=1in}
+
+% Title
+\title{Algorithms for efficient entropy conversion}
+\author{Calum Grant \\
+OxFORD Asset Management \\
+calum.grant@oxam.com}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This is a short abstract summarizing the main results and contributions of the paper.
+\end{abstract}
+
+\section{Introduction}
+
+This is the introduction to your paper. You can cite sources using \cite{shannon1948}.
+
+\section{Mathematical Background}
+
+Here is a sample equation:
+
+\begin{equation}
+H(p) = -p \log_2 p - (1 - p) \log_2(1 - p)
+\label{eq:entropy}
+\end{equation}
+
+As shown in Equation~\ref{eq:entropy}, the binary entropy function measures the uncertainty of a Bernoulli variable.
+
+\section{Methodology}
+
+Describe your method here. Equations can be aligned:
+
+\begin{align}
+f(x) &= x^2 + 1 \\
+f'(x) &= 2x
+\end{align}
+
+\section{Results}
+
+Include results, tables, or figures:
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.5\textwidth]{example-image}
+\caption{An example figure.}
+\label{fig:example}
+\end{figure}
+
+\section{Conclusion}
+
+Summarize your findings and potential future work.
+
+\printbibliography
+
+\end{document}

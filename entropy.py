@@ -313,8 +313,8 @@ class EfficientEntropySource:
 
         self.entropy_out += result.entropy()
         # The expected p (not the worst-case p)
-        p = (n-1)/self.min_range/2  # Average-case
-        # p = (n-1)/self.min_range    # Worst-case
+        # p = (n-1)/self.min_range/2  # Average-case
+        p = (n-1)/self.min_range    # Worst-case
         # We expect to lose the shannon-entropy of the downsize each time, and there are
         # 1/(1-p) iterations expected.
         self.expected_entropy_in += result.entropy() + binary_entropy(p)/(1-p)
@@ -460,3 +460,10 @@ if __name__ == "__main__":
     run_tests()
     for i in range(10):
         show_shuffle()
+    p = 50/(2**31)
+    l = binary_entropy(p)/(1-p)
+    out = math.log2(50)
+    print(p)
+    print(l)
+    print(out/(out+l))
+
