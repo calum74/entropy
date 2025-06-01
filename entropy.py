@@ -420,7 +420,7 @@ class EfficientEntropySource:
 
         return result
 
-def worst_case_convert(n:int,N:int=1<<31):
+def worst_case_eec(n:int,N:int=1<<31):
     # Technically, (n-1)/N
     # Make sure the paper uses this bound
     p = (n-1)/N
@@ -430,7 +430,7 @@ def worst_case_convert(n:int,N:int=1<<31):
 # Tests
 
 # TODO: Use this to measure things
-class MeasuringStore:
+class MeasuringSource:
     def __init__(self, store):
         self.store = store
         self.entropy = 0
@@ -458,18 +458,6 @@ def expected_rejection_sampling(range:int) -> float:
         r *= 2
         b += 1
     return r*b/range
-
-def expected_fast_dice_rollerXX(n:int) -> float:
-    r = 1 # The smallest power of 2 >= n
-    while r < n:
-        r *= 2
-    p = n/r
-    # This is an underestimate because the number v can contain numbers greater than a power of 2
-    # Entropy is between 
-    # math.log2(n) + binary_entropy(p) 
-    # and 
-    # math.log2(n) + binary_entropy(p)/p 
-    return math.log2(n) + binary_entropy(p) #/p 
 
 # Measures the exact entropy consumption of the FDR to a number of iterations
 def expected_fast_dice_roller(n:int) -> float:
