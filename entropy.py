@@ -4,6 +4,77 @@ import os
 from typing import Callable
 
 ####################################################
+# Building blocks for entropy conversion
+
+def multiply(U_n:int, n:int, U_m:int, m:int) -> tuple[int,int]:
+    '''
+    Combines two uniform distributions into one.
+
+    Inputs:
+        U_n    uniformly distributed in 0..n-1
+        n
+        U_m    uniformly distributed in 0..m-1
+        m
+    Outputs:
+        U_nm   uniformly distributed in 0..nm-1
+        nm     n*m
+    '''
+    return U_m * n + U_n, n * m
+
+def divide(U_nm:int, nm:int, m:int) -> tuple[int,int,int,int]:
+    '''
+    Divides a uniform distribution into two, if
+    nm can be factorised.
+
+    Inputs:
+        U_nm    uniformly distributed in 0..nm-1
+        nm
+        m       a factor of nm
+    Outputs:
+        U_n     uniformly distributed in 0..n-1
+        n       nm/m
+    '''
+    return U_nm%m, m, U_nm//m, nm//m
+
+def downsample(U_nm:int, nm:int, n:int) -> tuple[int,int,bool]:
+    '''
+    Creates a smaller uniform distribution from a larger uniform distribution
+    and returns the additional Bernoulli entropy.
+
+    Inputs:
+        U_nm    uniformly distributed in 0..nm-1
+        nm
+        n       the sample size
+    Outputs:
+        U_x     uniformly distributed in 0..x-1
+        x       either n or nm-m
+        B       the result of the Bernoulli trial n/(n+m)
+    '''
+    if U_nm < n:
+        return U_nm, n, True
+    else:
+        return U_nm - n, nm - n, False
+
+def upsample(U_x:int, x:int, nm:int, B:bool) -> tuple[int,int]:
+    '''
+    Creates a larger uniform distribution from a smaller
+    distribution by reading Bernoulli entropy.
+
+    Inputs:
+        U_x     uniformly distributed in 0..x-1
+        x       n if B else m
+        nm      n+m
+        B       The result of a Bernoulli trial n/(n+m)
+    Outputs:
+        U_nm
+        nm      n+m
+    '''
+    if B:
+        return U_x, nm
+    else:
+        return U_x + nm - x, nm
+
+####################################################
 # Probability distributions used for entropy storage
 
 class U:
@@ -25,15 +96,43 @@ class U:
         self.range = 1
         return value
     
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return f"U({self.range})"
-    
+
+
     def entropy(self) -> float:
         """
         Gets the amount of entropy stored in this distribution.
         """
         return math.log2(self.range)
-    
+
+    def multiply(self, u):
+        u_range = u.range
+        u_value = u.read()
+        self_range = self.range
+        self_value = self.read()
+        U_nm, nm = multiply(self_value, self_range, u_value, u_range)
+        return U(U_nm, nm)
+
+    def divide(self, m:int):
+        self_range = self.range
+        assert self_range % m == 0
+        self_value = self.read()
+        U_n, n = divide(self_value, self_range, m)
+        return U(U_n, n)
+
+    def downsample(self, m:int):
+        self_range = self.range
+        self_value = self.read()
+        U_x, x, b = downsample(self_value, self_range, m)
+        return U(U_x, x), B(b, m, self_range)
+
+    def upsample(self, nm:int, b):
+        self_range = self.range
+        self_value = self.read()
+        U_nm = upsample(self_value, self_range, b)
+        return U(U_nm, nm)
+
 class B:
     """
     Entropy storage using a binary/Bernoulli distribution with
@@ -60,7 +159,7 @@ class B:
         """
         return binary_entropy(self.numerator/self.denominator)
 
-    def __str__(self):
+    def __repr__(self):
         return f"B({self.numerator}/{self.denominator})"
 
 #######################################
@@ -111,7 +210,7 @@ def fast_dice_roller(n:int, entropy) -> U:
                 v = v-n
                 c = c-n
 
-def multiply(a: U, b: U) -> U:
+def multiplyU(a: U, b: U) -> U:
     """
     Combines two uniform random variables into one.
     The original random variables are destroyed.
@@ -120,7 +219,7 @@ def multiply(a: U, b: U) -> U:
     b_range = b.range
     return U(a.read()*b_range + b.read(), a_range * b_range)
 
-def divide(a: U, b: int) -> tuple[U,U]:
+def divideU(a: U, b: int) -> tuple[U,U]:
     """
     Creates two uniform random variables from one random variable.
     The original random variable is destroyed.
@@ -167,10 +266,10 @@ def entropy_convert(s:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     assert m <= M
     while True:
         while u.range < M:
-            s = multiply(s, entropy())
+            s = multiplyU(s, entropy())
         s, r = downsize(s, s.range%m)
         if not r.read():
-            return divide(s, m)
+            return divideU(s, m)
 
 def convert_entropy(s_value:int, s_range:int, fetch, out_range:int, M:int):
     while True:
@@ -220,8 +319,8 @@ class BinaryEntropySource:
     def get(self, range) -> U:
         assert range == 2
         if self.buffer.range<2:
-            self.buffer = multiply(self.buffer, self.source.get(256))
-        result, self.buffer = divide(self.buffer, 2)
+            self.buffer = multiplyU(self.buffer, self.source.get(256))
+        result, self.buffer = divideU(self.buffer, 2)
         self.entropy_out += 1
         return result
 
@@ -235,7 +334,7 @@ class RejectionSamplingEntropySource:
             source = BinaryEntropySource()
         self.entropy_out = 0
         self.expected_entropy_in = 0
-        self.binary_entropy = BinaryEntropySource()
+        self.binary_entropy = source
 
     def entropy_consumed(self):
         return self.binary_entropy.entropy_out
@@ -283,7 +382,7 @@ class EfficientEntropySource:
 
     def put(self, e:U):
         self.entropy_put += e.entropy()
-        self.store = multiply(self.store, e)
+        self.store = multiplyU(self.store, e)
 
     def get_R(self, num:int, den:int) -> B:
         """
@@ -321,6 +420,12 @@ class EfficientEntropySource:
 
         return result
 
+def worst_case_convert(n:int,N:int=1<<31):
+    # Technically, (n-1)/N
+    # Make sure the paper uses this bound
+    p = (n-1)/N
+    return math.log2(n) + binary_entropy(p)/(1-p)
+
 ######################################
 # Tests
 
@@ -333,6 +438,9 @@ class MeasuringStore:
     def get(self, n:int):
         self.entropy += math.log2(n)
         return self.store.get(n)
+
+    def reset(self):
+        self.entropy = 0
 
 def binary_entropy(p: float) -> float:
     """
@@ -466,4 +574,3 @@ if __name__ == "__main__":
     print(p)
     print(l)
     print(out/(out+l))
-
