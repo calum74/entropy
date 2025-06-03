@@ -2,11 +2,13 @@
 
 % Packages
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath, amssymb}   % Math
+\usepackage{amsmath, amssymb, amsthm}   % Math
 \usepackage{graphicx}           % Images
 \usepackage{hyperref}           % Clickable links
 \usepackage{geometry}           % Page margins
 % \usepackage{cite}               % Citation formatting
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 
 % BibLaTeX for references (requires biber)
 \usepackage[
@@ -27,6 +29,8 @@ OxFORD Asset Management \\
 calum.grant@oxam.com}
 \date{\today}
 
+\newtheorem{lemma}{Lemma}
+
 \begin{document}
 
 \maketitle
@@ -37,24 +41,90 @@ This is a short abstract summarizing the main results and contributions of the p
 
 \section{Introduction}
 
-This is the introduction to your paper. You can cite sources using \cite{shannon1948}.
+Generating uniform random integers has many applications, and there are scenarios where we want random integers that are perfectly random and perfectly distributed. True randomness comes from an external source, generally delivered as a string of random bits. The external entropy must then be converted to a different base that is not a power of 2, whilst consuming as few random bits as possible.
+
+One of the first algorithms for generating uniformly distributed integers was developed by von Neumann \cite{neumann}, known as rejection sampling, and is still used to this day, for example in []. The rejection sampling algorithm, shown in Algorithm 1, fetches random bits, either from hardware or from a pseudo-random number generator, to create a uniform integer distribution of a power of 2. Then checks if the number is less than the target range n. If the number is less than n, return it, otherwise try again. This algorithm terminates with probability 1 and can be shown to generate perfectly uniform random integers.
+
+\begin{algorithm}
+\caption{Generating uniform integers using rejection sampling}
+\begin{algorithmic}[1]
+\Procedure{rejection-sampling}{$n$}
+    \While{true}
+        \State $r \gets 1$
+        \State $v \gets 0$
+        \While {$r < n$}
+            \State $r \gets r * 2$
+            \State $v \gets v * 2 + fetch()$
+        \EndWhile
+        \If {$v<n$}
+            \State \Return $v$
+        \EndIf
+    \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \section{Related work}
 
+
+
 \section{Fundamental operations on entropy}
 
-Storing entropy
+Algorithm \ref{alg:multiplication} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
+
+\begin{algorithm}
+\caption{Multiplication of uniformly distributed integers}
+\label{alg:multiplication}
+\begin{algorithmic}[1]
+    \Require Integers $n>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
+    \Require $U_n$ is uniformly distributed in $0..n-1$
+    \Require $U_m$ is uniformly distributed in $0..m-1$
+\Ensure $nm$ is $n * m$
+\Ensure $U_{nm}$ is uniformly distributed in $0..nm-1$
+\Procedure{multiply}{$U_n, n, U_m, m$} 
+  \State $U_{nm} \gets U_n * m + U_m$
+  \State $nm \gets n * m$
+  \State \Return $U_{nm}, nm$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \begin{lemma}
-\label{multiplication}
-If we have a uniform integer distribution U(n) and a uniform integer distribution U(m), then we can
-construct a uniform integer distribution U(nm).
+In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed in $0..nm-1$.
 \end{lemma}
 
 \begin{proof}
 \end{proof}
 
-\section{}
+\begin{algorithm}
+\caption{Division of uniformly distributed integers}
+\label{alg:division}
+\begin{algorithmic}[1]
+    \Require Integers $nm>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
+    \Require $nm$ is divisible by $n$
+    \Require $U_{mn}$ is uniformly distributed in $0..mn-1$
+\Ensure $n * m = nm$
+\Ensure $U_{n}$ is uniformly distributed in $0..n-1$
+\Ensure $U_{m}$ is uniformly distributed in $0..m-1$
+\Procedure{divide}{$U_{mn}, mn, n$} 
+  \State $U_m \gets U_{mn} / n$
+  \State $m \gets nm / n$
+  \State $U_{n} \gets U_{nm} \mod n$
+  \State \Return $U_n, U_m, m$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{lemma}
+In Algorithm \ref{alg:division}, $U_n$ is uniformly distributed in $0..n-1$ and $U_m$ is uniformly distributed in $0..m-1$
+\end{lemma}
+
+\begin{proof}
+\end{proof}
+
+The \em divide \em algorithm (Algorithm \ref{alg:divide} is essentially the inverse of multiple, allowing us to factorise a uniform integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
+
+The \em downsample \em algorithm converts a uniform distribution and 
 
 \section{Mathematical Background}
 
