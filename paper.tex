@@ -67,20 +67,19 @@ One of the first algorithms for generating uniformly distributed integers was de
 \section{Related work}
 
 
+\section{Algorithms for entropy conversion}
 
-\section{Fundamental operations on entropy}
-
-Algorithm \ref{alg:multiplication} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
+Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
 \begin{algorithm}
 \caption{Multiplication of uniformly distributed integers}
-\label{alg:multiplication}
+\label{alg:multiply}
 \begin{algorithmic}[1]
     \Require Integers $n>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
-    \Require $U_n$ is uniformly distributed in $0..n-1$
-    \Require $U_m$ is uniformly distributed in $0..m-1$
+    \Require $U_n$ is uniformly distributed in $[0,n)$
+    \Require $U_m$ is uniformly distributed in $[0,m)$
 \Ensure $nm$ is $n * m$
-\Ensure $U_{nm}$ is uniformly distributed in $0..nm-1$
+\Ensure $U_{nm}$ is uniformly distributed in $[0,nm)$
 \Procedure{multiply}{$U_n, n, U_m, m$} 
   \State $U_{nm} \gets U_n * m + U_m$
   \State $nm \gets n * m$
@@ -96,9 +95,11 @@ In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed in $0..nm-1$.
 \begin{proof}
 \end{proof}
 
+Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
+
 \begin{algorithm}
 \caption{Division of uniformly distributed integers}
-\label{alg:division}
+\label{alg:divide}
 \begin{algorithmic}[1]
     \Require Integers $nm>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
     \Require $nm$ is divisible by $n$
@@ -106,6 +107,7 @@ In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed in $0..nm-1$.
 \Ensure $n * m = nm$
 \Ensure $U_{n}$ is uniformly distributed in $0..n-1$
 \Ensure $U_{m}$ is uniformly distributed in $0..m-1$
+\Ensure $U_n$ and $U_m$ are independent
 \Procedure{divide}{$U_{mn}, mn, n$} 
   \State $U_m \gets U_{mn} / n$
   \State $m \gets nm / n$
@@ -116,15 +118,114 @@ In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed in $0..nm-1$.
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:division}, $U_n$ is uniformly distributed in $0..n-1$ and $U_m$ is uniformly distributed in $0..m-1$
+In Algorithm \ref{alg:divide}, $U_n$ is uniformly distributed in $[0,n)$ and $U_m$ is uniformly distributed in $[0,m)$.
+$U_m$ and $U_n$ are independent.
 \end{lemma}
 
 \begin{proof}
 \end{proof}
 
-The \em divide \em algorithm (Algorithm \ref{alg:divide} is essentially the inverse of multiple, allowing us to factorise a uniform integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
+The \em downsample \em algorithm converts a uniform distribution into an uniformly distributed integer with a smaller range, as a Bernoulli distribution. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value.
 
-The \em downsample \em algorithm converts a uniform distribution and 
+\begin{algorithm}
+\caption{Downsampling uniformly distributed integers}
+\label{alg:downsample}
+\begin{algorithmic}[1]
+    \Require Integers $nm>0$, $nm \ge n>0$, $U_{nm}$
+    \Require $U_{nm}$ is uniformly distributed in $[0,n+m)$
+\Ensure $U_{x}$ is uniformly distributed in $[0,x)$
+\Ensure $x = n$ or $x=nm-m$
+\Ensure $B$ is a Boolean value Bernoulli distributed with $p={n\over n+m}$
+\Ensure $U_x$ and $B$ are independent
+\Procedure{downsample}{$U_{nm}, nm, n$} 
+  \If{$U_{nm} < n$}
+    \State $B \gets True$  
+    \State $x \gets n$
+    \State $U_x \gets U_{nm}$
+  \Else
+    \State $B \gets False$  
+    \State $x \gets nm-n$
+    \State $U_x \gets U_{nm}-n$
+  \EndIf
+  \State \Return $U_x, x, B$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+Algorithm \ref{alg:downsample} actually does not lose entropy according to Lemma \ref{lem:downsample}. The reason for this is that we have accounted for the entropy of the decision itself, and we are able to use and quantify this term. This will be important later when come to minimise the $B$ term.
+
+\begin{lemma}
+\label{lem:downsample}
+Algorithm \ref{alg:downsample} does not lose entropy.
+\end{lemma}
+
+\begin{proof}
+\end{proof}
+
+Algorithm \ref{alg:upsample} increases the size of a uniform distribution by incorporating Bernoulli entropy. This can be useful in harnessing entropy from biassed Bernoulli sources for example.
+
+\begin{algorithm}
+\caption{Upsampling uniformly distributed integers}
+\label{alg:upsample}
+\begin{algorithmic}[1]
+\Require $U_x$ is uniformly distributed in $[0,x)$
+\Require $B$ is a Boolean value Bernoulli distributed with $p={n\over n+m}$
+\Require $nm = n+m$
+\Require $x=n$ if $B$ else $x=m$
+\Ensure $U_{nm}$ is uniformly distributed over $[0,n+m)$.
+\Procedure{upsample}{$U_x, x, nm, B$} 
+  \If{$B$}
+    \State $U_{nm} \gets U_x$  
+  \Else
+    \State $U_{nm} \gets nm-x+U_x$  
+  \EndIf
+  \State \Return $U_{nm}$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{lemma}
+In Algorithm \ref{alg:upsample}, $U_nm$ is uniformly distributed over $[0,nm)$.
+\end{lemma}
+
+\begin{proof}
+\end{proof}
+
+
+\begin{lemma}
+Algorithm \ref{alg:upsample} does not lose entropy.
+\end{lemma}
+
+\begin{proof}
+\end{proof}
+
+\begin{algorithm}
+\caption{Generating uniformly distributed integers}
+\label{alg:convertbinu}
+\begin{algorithmic}[1]
+\Require Integers $0 < n\le N$
+\Require $fetch$ returns Bernoulli entropy with $p=0.5$
+\Ensure $U_n$ is uniformly distributed over $[0,n)$
+\Procedure{generate-uniform}{$n, N$} 
+  \State \Return $U_{n}$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{lemma}
+$U_n$ is uniformly distributed over $[0,n)$.
+\end{lemma}
+
+\begin{proof}
+\end{proof}
+
+\begin{lemma}
+Algorithm \ref{alg:convertbinu} is expected to lose no more than $...$ bits of entrop.
+\end{lemma}
+
+\begin{proof}
+
+\end{proof}
 
 \section{Mathematical Background}
 
