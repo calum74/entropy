@@ -4,7 +4,7 @@
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath, amssymb, amsthm}   % Math
 \usepackage{graphicx}           % Images
-\usepackage{hyperref}           % Clickable links
+% \usepackage{hyperref}           % Clickable links
 \usepackage{geometry}           % Page margins
 % \usepackage{cite}               % Citation formatting
 \usepackage{algorithm}
@@ -30,6 +30,7 @@ calum.grant@oxam.com}
 \date{\today}
 
 \newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
 
 \begin{document}
 
@@ -43,11 +44,13 @@ This is a short abstract summarizing the main results and contributions of the p
 
 Generating uniform random integers has many applications, and there are scenarios where we want random integers that are perfectly random and perfectly distributed. True randomness comes from an external source, generally delivered as a string of random bits. The external entropy must then be converted to a different base that is not a power of 2, whilst consuming as few random bits as possible.
 
-One of the first algorithms for generating uniformly distributed integers was developed by von Neumann \cite{neumann}, known as rejection sampling, and is still used to this day, for example in []. The rejection sampling algorithm, shown in Algorithm 1, fetches random bits, either from hardware or from a pseudo-random number generator, to create a uniform integer distribution of a power of 2. Then checks if the number is less than the target range n. If the number is less than n, return it, otherwise try again. This algorithm terminates with probability 1 and can be shown to generate perfectly uniform random integers.
+One of the first algorithms for generating uniformly distributed integers was developed by von Neumann \cite{neumann}, known as rejection sampling, and is still used to this day, for example in []. The rejection sampling algorithm, shown in Algorithm \ref{alg:rejection-sampling}, fetches random bits, either from hardware or from a pseudo-random number generator, to create a uniform integer distribution of a power of 2. Then checks if the number is less than the target range n. If the number is less than n, return it, otherwise try again. This algorithm terminates with probability 1 and can be shown to generate perfectly uniform random integers.
 
 \begin{algorithm}
 \caption{Generating uniform integers using rejection sampling}
 \begin{algorithmic}[1]
+    \label{alg:rejection-sampling}
+    \Ensure $v$ is uniformly distributed over $[0,r)$
 \Procedure{rejection-sampling}{$n$}
     \While{true}
         \State $r \gets 1$
@@ -64,10 +67,36 @@ One of the first algorithms for generating uniformly distributed integers was de
 \end{algorithmic}
 \end{algorithm}
 
+\begin{algorithm}
+\caption{Generating uniform integers with Fast Dice Roller}
+\begin{algorithmic}[1]
+    \label{alg:fast-dice-roller}
+    \Ensure $v$ is uniformly distributed over $[0,r)$
+    \Procedure{fast-dice-roller}{$n$}
+    \State $r \gets 1$
+    \State $v \gets 0$
+    \Loop
+        \While {$r < n$}
+            \State $r \gets r * 2$
+            \State $v \gets v * 2 + fetch()$
+        \EndWhile
+        \If {$v<n$}
+            \State \Return $v$
+        \EndIf
+        \State $r \gets r-n$
+        \State $v \gets v-n$
+    \EndLoop
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
 \section{Related work}
 
 
 \section{Algorithms for entropy conversion}
+
+In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use this to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, and to efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
 
 Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
@@ -76,10 +105,10 @@ Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random var
 \label{alg:multiply}
 \begin{algorithmic}[1]
     \Require Integers $n>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
-    \Require $U_n$ is uniformly distributed in $[0,n)$
-    \Require $U_m$ is uniformly distributed in $[0,m)$
+    \Require $U_n$ is uniformly distributed over $[0,n)$
+    \Require $U_m$ is uniformly distributed over $[0,m)$
 \Ensure $nm$ is $n * m$
-\Ensure $U_{nm}$ is uniformly distributed in $[0,nm)$
+\Ensure $U_{nm}$ is uniformly distributed over $[0,nm)$
 \Procedure{multiply}{$U_n, n, U_m, m$} 
   \State $U_{nm} \gets U_n * m + U_m$
   \State $nm \gets n * m$
@@ -89,10 +118,12 @@ Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random var
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed in $0..nm-1$.
+In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed over $[0,nm)$.
 \end{lemma}
 
 \begin{proof}
+
+    
 \end{proof}
 
 Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
@@ -103,10 +134,10 @@ Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allow
 \begin{algorithmic}[1]
     \Require Integers $nm>0$, $m>0$, $nm$, $U_n$, $U_m$, $U_{nm}$
     \Require $nm$ is divisible by $n$
-    \Require $U_{mn}$ is uniformly distributed in $0..mn-1$
+    \Require $U_{mn}$ is uniformly distributed over $[0,nm)$
 \Ensure $n * m = nm$
-\Ensure $U_{n}$ is uniformly distributed in $0..n-1$
-\Ensure $U_{m}$ is uniformly distributed in $0..m-1$
+\Ensure $U_{n}$ is uniformly distributed over $[0,n)$
+\Ensure $U_{m}$ is uniformly distributed over $[0,m)$
 \Ensure $U_n$ and $U_m$ are independent
 \Procedure{divide}{$U_{mn}, mn, n$} 
   \State $U_m \gets U_{mn} / n$
@@ -118,34 +149,33 @@ Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allow
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:divide}, $U_n$ is uniformly distributed in $[0,n)$ and $U_m$ is uniformly distributed in $[0,m)$.
-$U_m$ and $U_n$ are independent.
+In Algorithm \ref{alg:divide}, $U_n$ is uniformly distributed over $[0,n)$ and $U_m$ is uniformly distributed over $[0,m)$. $U_m$ and $U_n$ are independent.
 \end{lemma}
 
 \begin{proof}
 \end{proof}
 
-The \em downsample \em algorithm converts a uniform distribution into an uniformly distributed integer with a smaller range, as a Bernoulli distribution. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value.
+The \em downsample \em algorithm converts a uniform distribution into a smaller uniformly distributed integer, and a Bernoulli distribution. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. Unlike the \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), 
 
 \begin{algorithm}
 \caption{Downsampling uniformly distributed integers}
 \label{alg:downsample}
 \begin{algorithmic}[1]
-    \Require Integers $nm>0$, $nm \ge n>0$, $U_{nm}$
-    \Require $U_{nm}$ is uniformly distributed in $[0,n+m)$
-\Ensure $U_{x}$ is uniformly distributed in $[0,x)$
-\Ensure $x = n$ or $x=nm-m$
-\Ensure $B$ is a Boolean value Bernoulli distributed with $p={n\over n+m}$
+    \Require Integers $0 \le m \le n$, $U_{m}$
+    \Require $U_{m}$ is uniformly distributed over $[0,m)$
+\Ensure $U_{x}$ is uniformly distributed over $[0,x)$
+\Ensure $x = m$ or $x=m-n$
+\Ensure $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
 \Ensure $U_x$ and $B$ are independent
-\Procedure{downsample}{$U_{nm}, nm, n$} 
-  \If{$U_{nm} < n$}
+\Procedure{downsample}{$U_m, m, n$} 
+  \If{$U_m < n$}
     \State $B \gets True$  
     \State $x \gets n$
-    \State $U_x \gets U_{nm}$
+    \State $U_x \gets U_n$
   \Else
     \State $B \gets False$  
-    \State $x \gets nm-n$
-    \State $U_x \gets U_{nm}-n$
+    \State $x \gets m-n$
+    \State $U_x \gets U_m-n$
   \EndIf
   \State \Return $U_x, x, B$
 \EndProcedure
@@ -168,18 +198,17 @@ Algorithm \ref{alg:upsample} increases the size of a uniform distribution by inc
 \caption{Upsampling uniformly distributed integers}
 \label{alg:upsample}
 \begin{algorithmic}[1]
-\Require $U_x$ is uniformly distributed in $[0,x)$
-\Require $B$ is a Boolean value Bernoulli distributed with $p={n\over n+m}$
-\Require $nm = n+m$
-\Require $x=n$ if $B$ else $x=m$
-\Ensure $U_{nm}$ is uniformly distributed over $[0,n+m)$.
-\Procedure{upsample}{$U_x, x, nm, B$} 
+\Require $U_x$ is uniformly distributed over $[0,x)$
+\Require $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
+\Require $x=m$ if $B$ else $x=n-m$
+\Ensure $U_n$ is uniformly distributed over $[0,n)$.
+\Procedure{upsample}{$U_x, x, n, B$} 
   \If{$B$}
-    \State $U_{nm} \gets U_x$  
+    \State $U_n \gets U_x$  
   \Else
-    \State $U_{nm} \gets nm-x+U_x$  
+    \State $U_n \gets n-x+U_x$  
   \EndIf
-  \State \Return $U_{nm}$
+  \State \Return $U_n$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -199,15 +228,34 @@ Algorithm \ref{alg:upsample} does not lose entropy.
 \begin{proof}
 \end{proof}
 
+Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. 
+
+The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty with $U_s = 0$ and $s=1$.
+
+The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $downsample$ (Algorithm \ref{alg:downsample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $downsample$ is very small.
+
+The $downsample$ on line 6 resizes $s$ to a multiple of $n$. It is overwhelmingly likely that $b$ is false because $n$ is much smaller than $s$, so we can then proceed to line 8 where we divide $U_s$ into $U_n$ and the new $U_s$. On line 9, return $U_n$ as the result and $U_s$ and $s$ as the input to the next invocation.
+
 \begin{algorithm}
 \caption{Generating uniformly distributed integers}
-\label{alg:convertbinu}
+\label{alg:generate-uniform}
 \begin{algorithmic}[1]
 \Require Integers $0 < n\le N$
-\Require $fetch$ returns Bernoulli entropy with $p=0.5$
+\Require $fetch()$ returns Bernoulli entropy with $p=0.5$
+\Require $U_s$ is uniformly distributed over $[0,s)$
 \Ensure $U_n$ is uniformly distributed over $[0,n)$
-\Procedure{generate-uniform}{$n, N$} 
-  \State \Return $U_{n}$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Procedure{generate-uniform}{$U_s, s, n, N$} 
+  \While {True}
+    \While {$s < N$}
+        \State $U_s, s \gets multiply(U_s, s, fetch(), 2)$
+    \EndWhile
+    \State $U_s, s, b \gets downsample(U_s, s, s \mod n)$ 
+    \If{$ \neg b$}
+        \State $U_n, U_s, s \gets divide(U_s, s, n)$
+        \State \Return $U_s, s, U_n$
+    \EndIf
+  \EndWhile
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -220,12 +268,140 @@ $U_n$ is uniformly distributed over $[0,n)$.
 \end{proof}
 
 \begin{lemma}
-Algorithm \ref{alg:convertbinu} is expected to lose no more than $...$ bits of entrop.
+Algorithm \ref{alg:generate-uniform} terminates with probability 1.
+\end{lemma}
+
+\begin{lemma}
+    \label{lem:efficiencybinu}
+If $p = \frac{n-1}{N}$, Algorithm \ref{alg:generate-uniform} is expected to lose at most
+
+\begin{equation}
+-\frac{p}{1-p}\log_2p - \log_2(1-p)
+\end{equation}
+
+bits of entropy.
+
 \end{lemma}
 
 \begin{proof}
 
 \end{proof}
+
+\begin{corollary}
+The efficiency of Algorithm \ref{alg:generate-uniform} is at least
+
+\begin{equation}
+123
+\end{equation}
+\end{corollary}
+
+To illustrate Lemma \ref{lem:efficiencybinu}, we can set $N=2^{31}$ and $n=6$. Then we lose $xxx$ bits of entropy.
+
+Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store.
+
+\begin{algorithm}
+\caption{Converting uniform integers}
+\label{alg:convert_u_u}
+\begin{algorithmic}[1]
+    \Require Integers $0 < m \le N$, $U_s$, $s$
+    \Require $U_s$ is uniformly distributed over $[0,s)$
+    \Require $U_n$ is uniformly distributed over $[0,n)$
+    \Ensure  $U_s$ is uniformly distributed over $[0,s)$
+    \Ensure  $U_m$ is uniformly distributed over $[0,m)$
+\Procedure{convert-uniform}{$U_s, s, U_n, n, m, N$} 
+    \State $U_s, s \gets multiply(U_s, s, U_n, n)$
+    \State $U_s, s, U_m \gets convertuniform(U_s, s, n, N)$
+    \State \Return $U_s, s, U_m, m$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+
+Whereas Algorithm \ref{alg:generate-uniform} discards the $B$ term from $downsample$ operation, we can instead , 
+
+Algorithm \ref{alg:generate-bernoulli}
+
+\begin{algorithm}
+\caption{Generating biassed bits}
+\label{alg:generate-bernoulli}
+\begin{algorithmic}[1]
+\Require Integers $0 < n \le m \le N$
+\Require $U_s$ is uniformly distributed over $[0,s)$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Ensure $B$ has a Bernoulli distribution with $p = m/n$.
+\Procedure{generate-bit}{$U_s, s, m, n, N$} 
+    \State $U_s, s, U_n \gets generateuniform(U_s, s, n, N)$
+    \State $U_x, x, B \gets downsample(U_n, n, m)$
+    \State $U_s, s \gets multiply(U_s, s, U_x, x)$
+    \State \Return $U_s, s, B$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+\caption{Consuming biassed bits}
+\label{alg:consume_b}
+\begin{algorithmic}[1]
+\Procedure{consume-bit}{$U_s, s, B, m, n, N$} 
+    \If {B}
+        \State $x \gets m$
+    \Else
+        \State $x \gets n-m$
+    \EndIf
+    \State $U_x, U_s, s \gets generateuniform(U_s, s, x, N)$
+    \State $U_s, s \gets multiply(U_s, s, U_x, x)$
+    \State \Return $U_s, s$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{corollary}
+The entropy efficiency of Algorithm \ref{alg:convert_u_u} is given by ....
+\end{corollary}
+
+Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but it is perfectly possible to do this efficiently via an entropy store.
+
+\begin{algorithm}
+\caption{Converting biassed bits}
+\label{alg:convert_b_b}
+\begin{algorithmic}[1]
+    \Require Integers ...
+    \Require $U_s$ is uniformly distributed over $[0,s)$
+    \Require $B_1$ is Bernoulli distributed with $p=\frac{m1}{n1}$
+    \Ensure $U_s$ is uniformly distributed over $[0,s)$
+    \Ensure $B_2$ is Bernoulli distributed with $p=\frac{m2}{n2}$
+\Procedure{convert-bit}{$U_s, s, B_1, n1, m1, n2, m2, N$}
+    \State $U_s, s = consumebit(U_s, s, n1, m1, B, N)$
+    \State $U_s, s, B_2 = generatebit(U_s, s, n2, m2, N)$
+    \State \Return $U_s, s, B_2$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+\begin{lemma}
+The entropy efficiency of Algorithm \ref{alg:convert_b_b} is given by 
+
+\begin{equation}
+$$123$$
+\end{equation}
+
+\end{lemma}
+
+\begin{proof}
+(Sum up the entropy lost by 
+
+\end{proof}
+
+\section {Comparison of integer generation methods}
+
+We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}).
+
+To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
+
+
+\section{Discussion}
+
 
 \section{Mathematical Background}
 
@@ -251,7 +427,7 @@ f'(x) &= 2x
 
 Include results, tables, or figures:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \includegraphics[width=0.5\textwidth]{example-image}
 \caption{An example figure.}
