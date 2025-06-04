@@ -9,4 +9,7 @@ The plan
 - Use a retry depth of N
 - Think about this as a Jupyter notebook
 
+More things to think about
+- Algorithm to convert uniform to binary
+- Is this more efficient?
 
