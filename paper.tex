@@ -96,7 +96,7 @@ One of the first algorithms for generating uniformly distributed integers was de
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use this to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, and to efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
+In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use this to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{alg:convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, combine uniform and Bernoulli distribugions using Algorithm \ref{alg:consume_b} and to efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
 
 Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
@@ -123,7 +123,7 @@ In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed over $[0,nm)$
 
 \begin{proof}
 
-    
+
 \end{proof}
 
 Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
