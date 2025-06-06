@@ -173,28 +173,28 @@ X = \lfloor Z/n \rfloor, Y = Z \mod n
 Since $X$ and $Y$ are the original random variables, they are independent and uniformly distributed.
 \end{proof}
 
-Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a smaller range, and also returns a Bernoulli distribution. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. 
+Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. 
 
 \begin{algorithm}
 \caption{Downsampling uniformly distributed integers}
 \label{alg:downsample}
 \begin{algorithmic}[1]
-    \Require $U_{m}$, $m$ and $n$ are integers 
-    \Require $0 \le m \le n$, $U_{m}$
-    \Require $U_{m}$ is uniformly distributed over $[0,m)$
+    \Require $U_{n}$, $m$ and $n$ are integers 
+    \Require $0 \le m \le n$
+    \Require $U_{n}$ is uniformly distributed over $[0,n)$
 \Ensure $U_{x}$ is uniformly distributed over $[0,x)$
-\Ensure $x = m$ or $x=m-n$
+\Ensure $x = m$ or $x=n-m$
 \Ensure $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
 \Ensure $U_x$ and $B$ are independent
-\Procedure{downsample}{$U_m, m, n$} 
-  \If{$U_m < n$}
+\Procedure{downsample}{$U_n, n, m$} 
+  \If{$U_n < n$}
     \State $B \gets True$  
-    \State $x \gets n$
+    \State $x \gets m$
     \State $U_x \gets U_n$
   \Else
     \State $B \gets False$  
     \State $x \gets m-n$
-    \State $U_x \gets U_m-n$
+    \State $U_x \gets U_n-m$
   \EndIf
   \State \Return $U_x, x, B$
 \EndProcedure
@@ -206,11 +206,15 @@ In Algorithm \ref{alg:downsample}, $U_x$ is uniformly distributed over $[0,x)$.
 \end{lemma}
 
 \begin{proof}
-Consider the case $U_m < n$. Then 
-    
+    Let $y = U_n$.
+    $P(y<m) = \frac{m}{n}$ so $B \sim Bernoulli\{\frac{m}{n}\}$.
+
+If $y < m$, then $y$ is uniformly distributed between $[0,m)$.
+
+If $y \ge m$, then $y$ is uniformly distributed between $[m, n)$, so $y-m$ is uniformly distributed between $[0, n-m)$.
 \end{proof}
 
-Algorithm \ref{alg:upsample} increases the size of a uniform distribution by incorporating Bernoulli entropy. This can be useful in harnessing entropy from biassed Bernoulli sources for example.
+Algorithm \ref{alg:upsample} increases the size of a uniform distribution by incorporating Bernoulli entropy. This could be used to harness entropy from biassed Bernoulli sources.
 
 \begin{algorithm}
 \caption{Upsampling uniformly distributed integers}
@@ -232,10 +236,30 @@ Algorithm \ref{alg:upsample} increases the size of a uniform distribution by inc
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:upsample}, $U_nm$ is uniformly distributed over $[0,nm)$.
+In Algorithm \ref{alg:upsample}, $U_{n}$ is uniformly distributed over $[0,n)$.
 \end{lemma}
 
 \begin{proof}
+Let $x = U_{n} \sim X$. The possible values of $X$ are $\{0 ... n-1\}$.
+
+Case 1: $x<n$
+
+\begin{align}
+P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
+       & = \frac{m}{n}\frac{1}{m} + 0 \\
+       & = \frac{1}{n}
+\end{align}
+
+Case 2: $x \ge n$
+
+\begin{align}
+P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
+       & = 0 + (1 - \frac{m}{n})\frac{1}{n-m}  \\
+       & = \frac{n - m}{n}\frac{1}{n-m} \\
+       & = \frac{1}{n}
+\end{align}
+
+This means that $x \sim Uniform\{0...n-1\}$.
 \end{proof}
 
 \begin{lemma}
@@ -247,7 +271,7 @@ Algorithms \ref{alg:multiply}-\ref{alg:upsample} conserve entropy.
 We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:multiply} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
 \end{proof}
 
-Algorithm \ref{alg:downsample} actually does not lose entropy according to Lemma \ref{lem:conservation}. The reason for this is that we have accounted for the entropy of the decision itself, and we are able to quantify this term and potentially use it (see Algorithm \ref{alg:generate-bernoulli}). This will be important later when come to minimise the $B$ term.
+Algorithm \ref{alg:downsample} actually does not lose entropy according to Lemma \ref{lem:conservation}. The reason for this is that we have accounted for the entropy of the decision itself, and we are able to quantify this term and potentially use it (for example in Algorithm \ref{alg:generate-bernoulli}). This will be important later when come to minimise the $B$ term.
 
 The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), and Fast Dice Roller (Algorithm \ref{alg:fast-dice-roller}) use a form of Algorithm \ref{alg:downsample}, but lose entropy by discarding its outputs.
 
