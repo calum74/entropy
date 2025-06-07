@@ -9,6 +9,12 @@
 % \usepackage{cite}               % Citation formatting
 \usepackage{algorithm}
 \usepackage{algpseudocode}
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
 
 % BibLaTeX for references (requires biber)
 \usepackage[
@@ -34,6 +40,22 @@ calum.grant@oxam.com}
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 
+\lstset{
+  language=C,        % choose the language
+  basicstyle=\ttfamily\small, % font style and size
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray},
+  stringstyle=\color{orange},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=5pt,
+  showstringspaces=false,
+  breaklines=true,
+  frame=single,
+  captionpos=b
+}
+
 \begin{document}
 
 \maketitle
@@ -55,7 +77,7 @@ One of the first algorithms for generating uniformly distributed integers was de
     \Require $n$ is an integer $>0$
     \Require $fetch()$ returns an unbounded stream of unbiassed bits
     \Ensure $v$ is uniformly distributed over $[0,n)$
-\Procedure{rejection-sampling}{$n$}
+\Procedure{rejection\_sampling}{$n$}
     \While{true}
         \State $r \gets 1$
         \State $v \gets 0$
@@ -76,7 +98,7 @@ One of the first algorithms for generating uniformly distributed integers was de
     \label{alg:fast-dice-roller}
 \begin{algorithmic}[1]
     \Ensure $v$ is uniformly distributed over $[0,n)$
-    \Procedure{fast-dice-roller}{$n$}
+    \Procedure{fast\_dice\_roller}{$n$}
     \State $r \gets 1$
     \State $v \gets 0$
     \Loop
@@ -100,13 +122,15 @@ One of the first algorithms for generating uniformly distributed integers was de
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{alg:convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, combine uniform and Bernoulli distributions using Algorithm \ref{alg:consume_b} and efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
+In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{alg:convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, combine uniform and Bernoulli distributions using Algorithm \ref{alg:consume_b} and efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
 
-Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
+These algorithms are engineered to minimise entropy loss, and the analysis of their entropy efficiency will come in the following section.
+
+Algorithm \ref{alg:combine} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
 \begin{algorithm}
 \caption{Combining uniformly distributed integers}
-\label{alg:multiply}
+\label{alg:combine}
 \begin{algorithmic}[1]
     \Require $n$, $m$, $U_n$, $U_m$ are integers
     \Require $n>0$, $m>0$
@@ -114,7 +138,7 @@ Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random var
     \Require $U_m$ is uniformly distributed over $[0,m)$
     \Ensure $nm$ is $n * m$
     \Ensure $U_{nm}$ is uniformly distributed over $[0,nm)$
-\Procedure{multiply}{$U_n, n, U_m, m$} 
+\Procedure{combine}{$U_n, n, U_m, m$} 
   \State $U_{nm} \gets U_n * m + U_m$
   \State $nm \gets n * m$
   \State \Return $U_{nm}, nm$
@@ -123,8 +147,8 @@ Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random var
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:multiply}, $U_{nm}$ is uniformly distributed over $[0,nm)$.
-\label{lem:multiply}
+In Algorithm \ref{alg:combine}, $U_{nm}$ is uniformly distributed over $[0,nm)$.
+\label{lem:combine}
 \end{lemma}
 
 \begin{proof}
@@ -141,7 +165,7 @@ Z \sim Uniform \{0 ... nm-1\}
 \end{equation}
 \end{proof}
 
-Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:multiply}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
+Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
 
 \begin{algorithm}
 \caption{Division of uniformly distributed integers}
@@ -178,7 +202,7 @@ X = \lfloor Z/n \rfloor, Y = Z \mod n
 Since $X$ and $Y$ are the original random variables, they are independent and uniformly distributed.
 \end{proof}
 
-Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:multiply} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. The biassed bit also contains entropy, and in fact the total entropy returned by this algorithm is the same as its input entropy.
+Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:combine} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. The biassed bit also contains entropy, and in fact the total entropy returned by this algorithm is the same as its input entropy.
 
 \begin{algorithm}
 \caption{Downsampling uniformly distributed integers}
@@ -285,10 +309,10 @@ An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix 
 \Require $U_s$ is uniformly distributed over $[0,s)$
 \Ensure $U_n$ is uniformly distributed over $[0,n)$
 \Ensure $U_s$ is uniformly distributed over $[0,s)$
-\Procedure{generate-uniform}{$U_s, s, n, N$} 
+\Procedure{generate\_uniform}{$U_s, s, n, N$} 
   \While {True}
     \While {$s < N$}
-        \State $U_s, s \gets multiply(U_s, s, fetch(), 2)$
+        \State $U_s, s \gets combine(U_s, s, fetch(), 2)$
     \EndWhile
     \State $U_s, s, b \gets downsample(U_s, s, s \mod n)$ 
     \If{$ \neg b$}
@@ -307,7 +331,7 @@ $U_s$ is uniformly distributed over $[0,s)$.
 \end{lemma}
 
 \begin{proof}
-The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:multiply}, \ref{alg:divide} and \ref{alg:downsample}. By Lemmas \ref{lem:multiply}, \ref{lem:divide} and \ref{lem:downsample}, $U_n$ and $U_s$ are uniformly distributed.
+The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:downsample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:downsample}, $U_n$ and $U_s$ are uniformly distributed.
 \end{proof}
 
 \begin{lemma}
@@ -319,7 +343,7 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
 \end{proof}
 
 
-Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store. This is just a two-step process, where the first \em multiply \em step is used to add the entropy from $U_n$ into $U_s$ before we generate a number $U_m$ from the same store. We'll ignore the potential overflow of $s$.
+Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store. This is just a two-step process, where the first \em combine \em step is used to add the entropy from $U_n$ into $U_s$ before we generate a number $U_m$ from the same store. We'll ignore the potential overflow of $s$.
 
 \begin{algorithm}
 \caption{Converting uniform integers}
@@ -327,18 +351,18 @@ Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em ent
 \begin{algorithmic}[1]
     \Require Integers $0 < m \le N$, $U_s$, $s$
     \Require $U_s$ is uniformly distributed over $[0,s)$
-    \Require $U_n$ is uniformly distributed over $[0,n)$
+    \Require $U_m$ is uniformly distributed over $[0,m)$
     \Ensure  $U_s$ is uniformly distributed over $[0,s)$
-    \Ensure  $U_m$ is uniformly distributed over $[0,m)$
-\Procedure{convert-uniform}{$U_s, s, U_n, n, m, N$} 
-    \State $U_s, s \gets multiply(U_s, s, U_n, n)$
-    \State $U_s, s, U_m \gets generateuniform(U_s, s, n, N)$
+    \Ensure  $U_n$ is uniformly distributed over $[0,n)$
+\Procedure{convert\_uniform}{$U_s, s, U_m, m, n, N$} 
+    \State $U_s, s \gets combine(U_s, s, U_m, m)$
+    \State $U_s, s, U_m \gets generate\_uniform(U_s, s, n, N)$
     \State \Return $U_s, s, U_m, m$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm \ref{alg:generate-bernoulli} can be used to generate biassed bits of any rational $p=\frac{m}{n}$ value. Firstly it obtains a uniform integer $U_n$ in the range $[0,n)$, then uses \em downsample \em which compares $U_n<m$ to generate a Bernoulli distribution $B$. The remaining uniform entropy $U_x$ is added back to the entropy store using \em multiply \em so that this entropy can be reused.
+Algorithm \ref{alg:generate-bernoulli} can be used to generate biassed bits of any rational $p=\frac{m}{n}$ value. Firstly it obtains a uniform integer $U_n$ in the range $[0,n)$, then uses \em downsample \em which compares $U_n<m$ to generate a Bernoulli distribution $B$. The remaining uniform entropy $U_x$ is added back to the entropy store using \em combine \em so that this entropy can be reused.
 
 \begin{algorithm}
 \caption{Generating biassed bits}
@@ -347,37 +371,37 @@ Algorithm \ref{alg:generate-bernoulli} can be used to generate biassed bits of a
 \Require Integers $0 < n \le m \le N$
 \Require $U_s$ is uniformly distributed over $[0,s)$
 \Ensure $U_s$ is uniformly distributed over $[0,s)$
-\Ensure $B$ has a Bernoulli distribution with $p = m/n$.
-\Procedure{generate-bit}{$U_s, s, m, n, N$} 
-    \State $U_s, s, U_n \gets generateuniform(U_s, s, n, N)$
+\Ensure $B$ has a Bernoulli distribution with $p = \frac{m}{n}$.
+\Procedure{generate\_bit}{$U_s, s, m, n, N$} 
+    \State $U_s, s, U_n \gets generate\_uniform(U_s, s, n, N)$
     \State $U_x, x, B \gets downsample(U_n, n, m)$
-    \State $U_s, s \gets multiply(U_s, s, U_x, x)$
+    \State $U_s, s \gets combine(U_s, s, U_x, x)$
     \State \Return $U_s, s, B$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm \ref{alg:consume_b} can be used to read biassed bits and convert them to a uniformly distributed variable. This allows us to exploit biassed entropy sources. For a bit with bias $\frac{m}{n}$, we first generate a uniform variable of size $m$ or $n-m$, then call \em upsample \em to turn this into a uniform variable of size $n$. Then we \em multiply \em to combine the entropy in $U_s$ with $U_n$.
+Algorithm \ref{alg:consume_b} can be used to read biassed bits and convert them to a uniformly distributed variable. This allows us to exploit biassed entropy sources. For a bit with bias $\frac{m}{n}$, we first generate a uniform variable of size $m$ or $n-m$, then call \em upsample \em to turn this into a uniform variable of size $n$. Then we \em combine \em to combine the entropy in $U_s$ with $U_n$.
 
 \begin{algorithm}
 \caption{Consuming biassed bits}
 \label{alg:consume_b}
 \begin{algorithmic}[1]
-\Procedure{consume-bit}{$U_s, s, B, m, n, N$} 
+\Procedure{consume\_bit}{$U_s, s, B, m, n, N$} 
     \If {B}
         \State $x \gets m$
     \Else
         \State $x \gets n-m$
     \EndIf
-    \State $U_x, U_s, s \gets generateuniform(U_s, s, x, N)$
+    \State $U_x, U_s, s \gets generate\_uniform(U_s, s, x, N)$
     \State $U_n, n \gets upsample(U_x, x, n, B)$
-    \State $U_s, s \gets multiply(U_s, s, U_x, x)$
+    \State $U_s, s \gets combine(U_s, s, U_x, x)$
     \State \Return $U_s, s$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but via an entropy store it is possible. Algorithm \ref{alg:convert_b_b} has two parts: firstly read the input into the entropy store, then generate a biassed bit from the entropy store. It is possible to output more entropy than input, in which case the additional entropy comes from the $fetch$ function embedded within $generateuniform$.
+Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but via an entropy store it is possible. Algorithm \ref{alg:convert_b_b} has two parts: firstly read the input into the entropy store, then generate a biassed bit from the entropy store. It is possible to output more entropy than input, in which case the additional entropy comes from the $fetch$ function embedded within $generate\_uniform$. On the other hand, if the input entropy is larger, then the excess is saved in the entropy store.
 
 \begin{algorithm}
 \caption{Converting biassed bits}
@@ -388,9 +412,9 @@ Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distrib
     \Require $B_1$ is Bernoulli distributed with $p=\frac{m1}{n1}$
     \Ensure $U_s$ is uniformly distributed over $[0,s)$
     \Ensure $B_2$ is Bernoulli distributed with $p=\frac{m2}{n2}$
-\Procedure{convert-bit}{$U_s, s, B_1, n1, m1, n2, m2, N$}
-    \State $U_s, s = consumebit(U_s, s, n1, m1, B, N)$
-    \State $U_s, s, B_2 = generatebit(U_s, s, n2, m2, N)$
+\Procedure{convert\_bit}{$U_s, s, B_1, n1, m1, n2, m2, N$}
+    \State $U_s, s = consume\_bit(U_s, s, n1, m1, B, N)$
+    \State $U_s, s, B_2 = generate\_bit(U_s, s, n2, m2, N)$
     \State \Return $U_s, s, B_2$
 \EndProcedure
 \end{algorithmic}
@@ -403,13 +427,15 @@ Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distrib
 
 \section {Efficiency of entropy conversion}
 
+In this section we'll calculate bounds on the entropy efficiency of Algortithms \ref{alg:combine}-\ref{alg:convert_b_b}, and prove that these algorithms have entropy efficiency 1 or arbitrarily close to 1.
+
 \begin{lemma}
 \label{lem:conservation}
-Algorithms \ref{alg:multiply}-\ref{alg:upsample} conserve entropy.
+Algorithms \ref{alg:combine}-\ref{alg:upsample} conserve entropy.
 \end{lemma}
 
 \begin{proof}
-We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:multiply} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
+We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:combine} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
 \end{proof}
 
 The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), and Fast Dice Roller (Algorithm \ref{alg:fast-dice-roller}) use a form of Algorithm \ref{alg:downsample}, but do lose entropy because they throw away the $B$ term. The entropy of the internal decision is exactly the entropy that is lost by these algorithms.
@@ -417,7 +443,7 @@ The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}
 \begin{lemma}
     \label{lem:shannon-inequality}
 
-For $p,q \in \mathbb{R}$, where $0 < p\le q < 0.5$, 
+For $p,q \in \mathbb{R}$, where $0 \le p\le q \le 0.5$, 
 
 \begin{equation}
 -p\log_2 p - (1-p)\log_2(1-p) \le -q\log_2 q - (1-q)\log_2(1-q)
@@ -428,7 +454,7 @@ For $p,q \in \mathbb{R}$, where $0 < p\le q < 0.5$,
     Let
     \begin{align}
         g(p) & = -p\log_2 p - (1-p)\log_2(1-p) \\
-        \implies g'(p) & = \log_2\frac{1-p}{p} = \log_2(\frac{1}{p}-1) > \log_21 = 0 
+        \implies g'(p) & = \log_2\frac{1-p}{p} = \log_2(\frac{1}{p}-1) \ge \log_21 = 0 
     \end{align}
 Since the derivative of $g>0$ it means that $g$ is monotonic.
 \end{proof}
@@ -448,7 +474,7 @@ If $p = \frac{n-1}{N} < 0.5$,
 \end{theorem}
 
 \begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution []:
+For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \ref{todo}:
 
 \begin{equation}
 H(b_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
@@ -470,14 +496,14 @@ by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $N$ is 
 \implies & N \le \frac{1}{1-p}
 \end{align}
 
-The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration
+The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration.
 
 \begin{align}
 0 \le NH(b_i) \le & \frac{1}{1-p}(-p\log_2p - (1-p)\log_2(1-p) ) \\
 = & -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 
-We can also end up in the situation where $(s \mod n) = 0$, in which the \em downsample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
+We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em downsample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
 \end{proof}
 
 The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values are found in $U_s$ and $s$, so we can only give an upper bound.
@@ -487,8 +513,8 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded
 
 \begin{equation}
 \frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})} \le \eta \le 1
+\label{eq:generate-uniform-efficiency}
 \end{equation}
-\label{cor:generate-uniform-efficiency}
 \end{corollary}
 
 \begin{proof}
@@ -504,7 +530,7 @@ Therefore
 from Theorem \ref{thm:loss}.
 \end{proof}
 
-To illustrate Corollary \ref{cor:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
+To illustrate Equation \ref{eq:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
 
 \begin{corollary}
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
@@ -516,75 +542,127 @@ $H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$. Therefore $\e
 
 
 \begin{corollary}
-The entropy efficiency of Algorithm \ref{alg:convert_u_u} is given by Corollary \ref{cor:generate-uniform-efficiency}.
+The entropy loss of Algorithm \ref{alg:convert_u_u} is $H_{loss}(\frac{n-1}{N})$.
 \end{corollary}
 
+\begin{proof}
+    Algorithm \ref{alg:convert_u_u} only loses entropy through $generate\_uniform$ which loses $H_{loss}(\frac{n-1}{N})$. The $combine$ operation does not lose entropy by Lemma \ref{lem:conservation}.
+\end{proof}
+
+\begin{corollary}
+The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $H_{loss}(\frac{n-1}{N})$.
+\end{corollary}
+
+\begin{proof}
+    Algorithm \ref{alg:generate-bernoulli} only loses entropy through $generate\_uniform$ which loses $H_{loss}(n)$. The $downsample$ $combine$ operations do not lose entropy by Lemma \ref{lem:conservation}.
+\end{proof}
+
 \begin{lemma}
-The entropy efficiency of Algorithm \ref{alg:convert_b_b} is given by 
+    \label{lem:hloss_monotonic}
+    $H_{loss}(p)$ is monotonically increasing in the range $0 < p < 1$.
+\end{lemma}
 
-\begin{equation}
-$$123$$
-\end{equation}
+\begin{proof}The derivative of $H_{loss}$ is
+    \begin{equation}
+        \frac{-\log_2p}{(1-p)^2}
+    \end{equation}
+    which is positive in the range $0 < p < 1$.
+\end{proof}
 
+\begin{lemma}
+The entropy loss of Algorithm \ref{alg:consume_b} is no more than than $H_{loss}(\frac{n-1}{N})$
 \end{lemma}
 
 \begin{proof}
-(Sum up the entropy lost by both operations)
+    The entropy-losing step in Algorithm \ref{alg:consume_b} is $generate\_uniform$ which loses $H_{loss}(\frac{x-1}{N})$ bits. $x \le n$, so from Lemma \ref{lem:hloss_monotonic}, this means that $H_{loss}(\frac{x-1}{N}) \le H_{loss}(\frac{n-1}{N})$.
+\end{proof}
 
+\begin{corollary}
+The amortised entropy lost by Algorithm \ref{alg:convert_b_b} is no more than $H_{loss}(\frac{n_1-1}{N}) + H_{loss}(\frac{n_2-1}{N})$
+\end{corollary}
+
+\begin{proof}
+    $consume\_bit$ loses $H_{loss}(\frac{n_1-1}{N})$ bits of entropy, and $generate\_bit$ loses $H_{loss}(\frac{n_2-1}{N})$ bits of entropy.
 \end{proof}
 
 
+\section {Comparing uniform integer generation algorithms}
 
+We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}). To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
 
+Figure \ref{fig:uniform} shows the entropy efficiency when generating a single integer in the range $[0,n)$.  Algorithms that do not store entropy are much less efficient, and as observed by Backer et al \cite{todo}, the efficiency depends on the number being generated. For Algorithm \ref{alg:generate-uniform}, efficiency does decrease with the number generated according to Equation \ref{eq:generate-uniform-efficiency}, but it is not visible on this graph.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{uniform_efficiency.png}
+\caption{Entropy efficiency for uniform integer generation.}
+\label{fig:uniform}
+\end{figure}
 
+Figure \ref{fig:shuffle} shows the entropy efficiency when shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisher-yates}.
 
-\section {Comparing integer generation methods}
-
-We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}).
-
-To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.5\textwidth]{shuffling_efficiency.png}
+\caption{Entropy efficiency for card shuffling.}
+\label{fig:shuffle}
+\end{figure}
 
 
 \section{Discussion}
 
 - Other types of entropy. For example, 
 
-\section{Mathematical Background}
-
-Here is a sample equation:
-
-\begin{equation}
-H(p) = -p \log_2 p - (1 - p) \log_2(1 - p)
-\label{eq:entropy}
-\end{equation}
-
-As shown in Equation~\ref{eq:entropy}, the binary entropy function measures the uncertainty of a Bernoulli variable.
-
-\section{Methodology}
-
-Describe your method here. Equations can be aligned:
-
-\begin{align}
-f(x) &= x^2 + 1 \\
-f'(x) &= 2x
-\end{align}
-
-\section{Results}
-
-Include results, tables, or figures:
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=0.5\textwidth]{example-image}
-\caption{An example figure.}
-\label{fig:example}
-\end{figure}
-
 \section{Conclusion}
 
-Summarize your findings and potential future work.
+We showed that entropy can be converted between different forms much more efficiently if we are able to pre-fetch and store entropy between invocations. Then we can exploit the large value in the entropy store to make an extremely asymmetrical descision that loses a minimum of entropy.
+
+We have shown that the amortised entropy conversion efficiency can be arbitrarily close to 1, and the efficiency depends on the the size of the entropy store relative to the integer being generated. For applications like dice-rolling or card-shuffling, we can store the entropy in a 32-bit integer and can achieve an amortised entropy efficiency of $> 0.999999924$.
+
+As well a generating uniform integers, we can read and generate entropy values $<1$ in the form of Bernoulli entropy, with near 1 efficiency.
+
+This can have practical applications where the numbers generated must genuinely random and not from a pseudo-random number generator.
 
 \printbibliography
+
+\section {Appendix A}
+Here is the source code for $generate\_uniform$, written in C.
+
+\begin{verbatim}
+    static const uint32_t N = 1<<31;
+    uint32_t s_value = 0, s_range = 1;
+
+    uint32_t generate_uniform(uint32_t n)
+    {
+        for(;;)
+        {
+            // Preload entropy one bit at a time into s
+            while(s_range < N)
+            {
+                s_value <<= 1;
+                s_value |= fetch();
+                s_range <<= 1;
+            }
+            // Resample entropy s to a multiple of n
+            uint32_t r = s_range / n;
+            uint32_t c = s_range % n;
+            if(s_value >= c)
+            {
+                // Resample successful
+                s_value -= c;
+                uint32_t a = s_value / n;
+                uint32_t b = s_value % n;
+                s_value = a;
+                s_range = r; 
+                return b;
+            }
+            else
+            {
+                // Resample unsuccessful
+                s_range = c;
+            }
+        }
+    }
+\end{verbatim}
 
 \end{document}
