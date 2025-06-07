@@ -75,7 +75,7 @@ One of the first algorithms for generating uniformly distributed integers was de
 \caption{Generating uniform integers with Fast Dice Roller}
     \label{alg:fast-dice-roller}
 \begin{algorithmic}[1]
-    \Ensure $v$ is uniformly distributed over $[0,r)$
+    \Ensure $v$ is uniformly distributed over $[0,n)$
     \Procedure{fast-dice-roller}{$n$}
     \State $r \gets 1$
     \State $v \gets 0$
@@ -105,7 +105,7 @@ In this section we'll start with some basic operations (Algorithm \ref{alg:multi
 Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
 \begin{algorithm}
-\caption{Multiplication of uniformly distributed integers}
+\caption{Combining uniformly distributed integers}
 \label{alg:multiply}
 \begin{algorithmic}[1]
     \Require $n$, $m$, $U_n$, $U_m$ are integers
@@ -268,11 +268,13 @@ P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
 This means that $x \sim Uniform\{0...n-1\}$.
 \end{proof}
 
-Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing 0 entropy) with $U_s = 0$ and $s=1$.
+Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
 
 The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $downsample$ (Algorithm \ref{alg:downsample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $downsample$ is very small.
 
 The $downsample$ on line 6 resizes $s$ to a multiple of $n$. It is overwhelmingly likely that $b$ is false because $n$ is much smaller than $s$, so we can then proceed to line 8 where we divide $U_s$ into $U_n$ and the new $U_s$. On line 9, return $U_n$ as the result and $U_s$ and $s$ as the input to the next invocation.
+
+An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{adx:source}.
 
 \begin{algorithm}
 \caption{Generating uniformly distributed integers}
@@ -317,7 +319,7 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
 \end{proof}
 
 
-Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store.
+Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store. This is just a two-step process, where the first \em multiply \em step is used to add the entropy from $U_n$ into $U_s$ before we generate a number $U_m$ from the same store. We'll ignore the potential overflow of $s$.
 
 \begin{algorithm}
 \caption{Converting uniform integers}
@@ -330,15 +332,13 @@ Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em ent
     \Ensure  $U_m$ is uniformly distributed over $[0,m)$
 \Procedure{convert-uniform}{$U_s, s, U_n, n, m, N$} 
     \State $U_s, s \gets multiply(U_s, s, U_n, n)$
-    \State $U_s, s, U_m \gets convertuniform(U_s, s, n, N)$
+    \State $U_s, s, U_m \gets generateuniform(U_s, s, n, N)$
     \State \Return $U_s, s, U_m, m$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Whereas Algorithm \ref{alg:generate-uniform} discards the $B$ term from $downsample$ operation, we can instead return it 
-
-Algorithm \ref{alg:generate-bernoulli}
+Algorithm \ref{alg:generate-bernoulli} can be used to generate biassed bits of any rational $p=\frac{m}{n}$ value. Firstly it obtains a uniform integer $U_n$ in the range $[0,n)$, then uses \em downsample \em which compares $U_n<m$ to generate a Bernoulli distribution $B$. The remaining uniform entropy $U_x$ is added back to the entropy store using \em multiply \em so that this entropy can be reused.
 
 \begin{algorithm}
 \caption{Generating biassed bits}
@@ -357,6 +357,8 @@ Algorithm \ref{alg:generate-bernoulli}
 \end{algorithmic}
 \end{algorithm}
 
+Algorithm \ref{alg:consume_b} can be used to read biassed bits and convert them to a uniformly distributed variable. This allows us to exploit biassed entropy sources. For a bit with bias $\frac{m}{n}$, we first generate a uniform variable of size $m$ or $n-m$, then call \em upsample \em to turn this into a uniform variable of size $n$. Then we \em multiply \em to combine the entropy in $U_s$ with $U_n$.
+
 \begin{algorithm}
 \caption{Consuming biassed bits}
 \label{alg:consume_b}
@@ -368,13 +370,14 @@ Algorithm \ref{alg:generate-bernoulli}
         \State $x \gets n-m$
     \EndIf
     \State $U_x, U_s, s \gets generateuniform(U_s, s, x, N)$
+    \State $U_n, n \gets upsample(U_x, x, n, B)$
     \State $U_s, s \gets multiply(U_s, s, U_x, x)$
     \State \Return $U_s, s$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but it is perfectly possible to do this efficiently via an entropy store.
+Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but via an entropy store it is possible. Algorithm \ref{alg:convert_b_b} has two parts: firstly read the input into the entropy store, then generate a biassed bit from the entropy store. It is possible to output more entropy than input, in which case the additional entropy comes from the $fetch$ function embedded within $generateuniform$.
 
 \begin{algorithm}
 \caption{Converting biassed bits}
@@ -501,7 +504,7 @@ Therefore
 from Theorem \ref{thm:loss}.
 \end{proof}
 
-To illustrate Corollary \ref{cor:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$.
+To illustrate Corollary \ref{cor:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
 
 \begin{corollary}
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
