@@ -32,6 +32,7 @@ calum.grant@oxam.com}
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
 
 \begin{document}
 
@@ -99,7 +100,7 @@ One of the first algorithms for generating uniformly distributed integers was de
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{alg:convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, combine uniform and Bernoulli distributions using Algorithm \ref{alg:consume_b} and efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}. What sets all of these algorithms apart is that they have a 1 or a near-1 entropy efficiency.
+In this section we'll start with some basic operations (Algorithm \ref{alg:multiply}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}). We'll then build on Algorithm \ref{alg:generate-uniform} to create other types of entropy converters, such as converting between arbitrary uniform distributions in Algorithm \ref{alg:convert_u_u}, generate Bernoulli distributions efficiently using Algorithm \ref{alg:generate-bernoulli}, combine uniform and Bernoulli distributions using Algorithm \ref{alg:consume_b} and efficiently convert between uniform and Bernoulli distributions using Algorithm \ref{alg:convert_b_b}.
 
 Algorithm \ref{alg:multiply} combines entropy in two uniform distrete random variables into a single uniform discrete random variable.
 
@@ -267,17 +268,6 @@ P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
 This means that $x \sim Uniform\{0...n-1\}$.
 \end{proof}
 
-\begin{lemma}
-\label{lem:conservation}
-Algorithms \ref{alg:multiply}-\ref{alg:upsample} conserve entropy.
-\end{lemma}
-
-\begin{proof}
-We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:multiply} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
-\end{proof}
-
-The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), and Fast Dice Roller (Algorithm \ref{alg:fast-dice-roller}) use a form of Algorithm \ref{alg:downsample}, but do lose entropy because they throw away the $B$ term. The entropy of the internal decision is exactly the entropy that is lost by these algorithms.
-
 Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing 0 entropy) with $U_s = 0$ and $s=1$.
 
 The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $downsample$ (Algorithm \ref{alg:downsample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $downsample$ is very small.
@@ -326,92 +316,6 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
     If $p$ be the probability that the algorithm loops, where $p<1$, then the probability $q$ that Algorithm \ref{alg:generate-uniform} loops forever is given by $q = (1-p)q \implies q=0$.
 \end{proof}
 
-\begin{lemma}
-    \label{lem:shannon-inequality}
-
-For $p,q \in \mathbb{R}$, where $0 < p\le q < 0.5$, 
-
-\begin{equation}
--p\log_2 p - (1-p)\log_2(1-p) \le -q\log_2 q - (1-q)\log_2(1-q)
-\end{equation}
-\end{lemma}
-
-\begin{proof}
-    \begin{align}
-        f(p) & = -p\log_2 p - (1-p)\log_2(1-p) \\
-        \implies f'(p) & = \log_2{1-p \over p} \ge \log_21 = 0 
-    \end{align}
-Since the derivative of $f>0$ it means that $f$ is monotonic.
-\end{proof}
-
-\begin{lemma}
-    \label{lem:efficiencybinu}
-If $p = \frac{n-1}{N} < 0.5$, Algorithm \ref{alg:generate-uniform} is expected to lose at most
-
-\begin{equation}
--\frac{p}{1-p}\log_2p - \log_2(1-p)
-\end{equation}
-
-bits of entropy.
-
-\end{lemma}
-
-\begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s \mod n}{s}$. But $s \mod n \le n-1$ and $s \ge N$, so $p_i = \frac{s \mod n}{s} \le \frac{n-1}{N} = p$. On each iteration, the entropy lost equals
-
-\begin{equation}
--p_i\log_2p_i - (1-p_i)\log_2(1-p_i) 
-\le -p\log_2p - (1-p)\log_2(1-p) 
-\end{equation}
-
-by Lemma \ref{lem:shannon-inequality}. This is because the $b$ term returned by \em downsample \em is consumed by the algorithm and not returned to the caller.
-
-The number of iterations $N$ is given by
-
-\begin{align}
-& N = 1 + p_iN < 1 + pN \\
-\implies & N-pN \le 1 \\
-\implies & N(1-p) \le 1 \\
-\implies & N \le \frac{1}{1-p}
-\end{align}
-
-The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration
-
-\begin{align}
-& N(-plog_2p - (1-p)\log_2(1-p)) \\
-\le & \frac{1}{1-p}(-plog_2p - (1-p)\log_2(1-p) ) \\
-= & -\frac{p}{1-p}\log_2p - \log_2(1-p)
-\end{align}
-
-\end{proof}
-
-The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values remained in $U_s$ and $s$, so we can only give an upper bound.
-
-\begin{definition}
-    Let the maximum entropy loss function of Algorithm \ref{alg:generate-uniform}, for $p=\frac{n-1}{N}$ be defined as
-    \begin{equation}
-        Maxloss(p) = -\frac{p}{1-p}\log_2p - \log_2(1-p)
-    \end{equation}
-\end{definition}
-
-\begin{corollary}
-The entropy efficiency of Algorithm \ref{alg:generate-uniform} is at least
-
-\begin{equation}
-\eta \ge \frac{\log_2n}{\log_n + MaxLoss(\frac{n-1}{N})}
-\end{equation}
-\label{cor:convert-uniform-efficiency}
-\end{corollary}
-
-To illustrate Corollary \ref{cor:convert-uniform-efficiency}, we can set $N=2^{31}$ and $n=6$. Then $\eta \ge 0.99999997$.
-
-\begin{corollary}
-The efficiency of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
-\end{corollary}
-
-\begin{proof}
-$MaxLoss(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
-\end{proof}
 
 Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store.
 
@@ -470,10 +374,6 @@ Algorithm \ref{alg:generate-bernoulli}
 \end{algorithmic}
 \end{algorithm}
 
-\begin{corollary}
-The entropy efficiency of Algorithm \ref{alg:convert_u_u} is given by ....
-\end{corollary}
-
 Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distributions. In isolation, it makes no sense to convert a bit with bias $\frac{1}{4}$ to a bit with bias $\frac{4}{5}$, but it is perfectly possible to do this efficiently via an entropy store.
 
 \begin{algorithm}
@@ -493,6 +393,129 @@ Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distrib
 \end{algorithmic}
 \end{algorithm}
 
+
+
+
+
+
+\section {Efficiency of entropy conversion}
+
+\begin{lemma}
+\label{lem:conservation}
+Algorithms \ref{alg:multiply}-\ref{alg:upsample} conserve entropy.
+\end{lemma}
+
+\begin{proof}
+We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:multiply} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
+\end{proof}
+
+The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), and Fast Dice Roller (Algorithm \ref{alg:fast-dice-roller}) use a form of Algorithm \ref{alg:downsample}, but do lose entropy because they throw away the $B$ term. The entropy of the internal decision is exactly the entropy that is lost by these algorithms.
+
+\begin{lemma}
+    \label{lem:shannon-inequality}
+
+For $p,q \in \mathbb{R}$, where $0 < p\le q < 0.5$, 
+
+\begin{equation}
+-p\log_2 p - (1-p)\log_2(1-p) \le -q\log_2 q - (1-q)\log_2(1-q)
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+    Let
+    \begin{align}
+        g(p) & = -p\log_2 p - (1-p)\log_2(1-p) \\
+        \implies g'(p) & = \log_2\frac{1-p}{p} = \log_2(\frac{1}{p}-1) > \log_21 = 0 
+    \end{align}
+Since the derivative of $g>0$ it means that $g$ is monotonic.
+\end{proof}
+
+\begin{definition}
+    Let $H_{loss}(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, for $p=\frac{n-1}{N}$.
+\end{definition}
+
+\begin{theorem}
+    \label{thm:loss}
+If $p = \frac{n-1}{N} < 0.5$,
+
+\begin{equation}
+0 \le H_{loss}(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
+\end{equation}
+
+\end{theorem}
+
+\begin{proof}
+For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution []:
+
+\begin{equation}
+H(b_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
+\end{equation}
+
+Therefore, 
+
+\begin{equation}
+0 \le H(b_i) \le -p\log_2p - (1-p)\log_2(1-p) 
+\end{equation}
+
+
+by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $N$ is given by
+
+\begin{align}
+& N = 1 + p_iN \le 1 + pN \\
+\implies & N-pN \le 1 \\
+\implies & N(1-p) \le 1 \\
+\implies & N \le \frac{1}{1-p}
+\end{align}
+
+The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration
+
+\begin{align}
+0 \le NH(b_i) \le & \frac{1}{1-p}(-p\log_2p - (1-p)\log_2(1-p) ) \\
+= & -\frac{p}{1-p}\log_2p - \log_2(1-p)
+\end{align}
+
+We can also end up in the situation where $(s \mod n) = 0$, in which the \em downsample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
+\end{proof}
+
+The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values are found in $U_s$ and $s$, so we can only give an upper bound.
+
+\begin{corollary}
+The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded by
+
+\begin{equation}
+\frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})} \le \eta \le 1
+\end{equation}
+\label{cor:generate-uniform-efficiency}
+\end{corollary}
+
+\begin{proof}
+\begin{align}
+    \eta & = \frac{H_{out}}{H_{in}} \\
+         & = \frac{H_{out}}{H_{out}+H_{loss}} \\
+         & = \frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})}
+\end{align}
+Therefore 
+\begin{equation}
+\frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})} \le \eta \le 1
+\end{equation}
+from Theorem \ref{thm:loss}.
+\end{proof}
+
+To illustrate Corollary \ref{cor:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$.
+
+\begin{corollary}
+The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
+\end{corollary}
+
+\begin{proof}
+$H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
+\end{proof}
+
+
+\begin{corollary}
+The entropy efficiency of Algorithm \ref{alg:convert_u_u} is given by Corollary \ref{cor:generate-uniform-efficiency}.
+\end{corollary}
+
 \begin{lemma}
 The entropy efficiency of Algorithm \ref{alg:convert_b_b} is given by 
 
@@ -507,6 +530,12 @@ $$123$$
 
 \end{proof}
 
+
+
+
+
+
+
 \section {Comparing integer generation methods}
 
 We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}).
@@ -516,6 +545,7 @@ To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
 
 \section{Discussion}
 
+- Other types of entropy. For example, 
 
 \section{Mathematical Background}
 
