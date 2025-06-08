@@ -6,7 +6,7 @@ from typing import Callable
 ####################################################
 # Building blocks for entropy conversion
 
-def multiply(U_n:int, n:int, U_m:int, m:int) -> tuple[int,int]:
+def combine(U_n:int, n:int, U_m:int, m:int) -> tuple[int,int]:
     '''
     Combines two uniform distributions into one.
 
@@ -106,12 +106,12 @@ class U:
         """
         return math.log2(self.range)
 
-    def multiply(self, u):
+    def combine(self, u):
         u_range = u.range
         u_value = u.read()
         self_range = self.range
         self_value = self.read()
-        U_nm, nm = multiply(self_value, self_range, u_value, u_range)
+        U_nm, nm = combine(self_value, self_range, u_value, u_range)
         return U(U_nm, nm)
 
     def divide(self, m:int):
@@ -210,7 +210,7 @@ def fast_dice_roller(n:int, entropy) -> U:
                 v = v-n
                 c = c-n
 
-def multiplyU(a: U, b: U) -> U:
+def combineU(a: U, b: U) -> U:
     """
     Combines two uniform random variables into one.
     The original random variables are destroyed.
@@ -266,7 +266,7 @@ def entropy_convert(s:U, entropy:Callable[[],U], m:int, M:int) -> tuple[U,U]:
     assert m <= M
     while True:
         while u.range < M:
-            s = multiplyU(s, entropy())
+            s = combineU(s, entropy())
         s, r = downsize(s, s.range%m)
         if not r.read():
             return divideU(s, m)
@@ -319,7 +319,7 @@ class BinaryEntropySource:
     def get(self, range) -> U:
         assert range == 2
         if self.buffer.range<2:
-            self.buffer = multiplyU(self.buffer, self.source.get(256))
+            self.buffer = combineU(self.buffer, self.source.get(256))
         result, self.buffer = divideU(self.buffer, 2)
         self.entropy_out += 1
         return result
@@ -367,7 +367,7 @@ class FastDiceRollerEntropySource:
 class EfficientEntropySource:
     """
     An efficient entropy source calculated using
-    fetch-multiply-downsize-divide.
+    fetch-combine-downsize-divide.
     """
     def __init__(self, source, min_range=1<<31):
         self.source = source
@@ -382,7 +382,7 @@ class EfficientEntropySource:
 
     def put(self, e:U):
         self.entropy_put += e.entropy()
-        self.store = multiplyU(self.store, e)
+        self.store = combineU(self.store, e)
 
     def get_R(self, num:int, den:int) -> B:
         """

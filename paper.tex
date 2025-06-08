@@ -61,7 +61,7 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-This is a short abstract summarizing the main results and contributions of the paper. Blah blah.
+    We present practical and efficient algorithms for generating random distributions from binary entropy, using an entropy store. This minimises entropy loss, for example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $>0.99999992$ using a 32-bit entropy cache, compared with state of the art methods that only have a $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per random integer generated, making it significantly slower than other algorithms.
 \end{abstract}
 
 \section{Introduction}
@@ -420,6 +420,25 @@ Algorithm \ref{alg:convert_b_b} can be used to convert between Bernoulli distrib
 \end{algorithmic}
 \end{algorithm}
 
+\begin{algorithm}
+
+\caption{Generating arbitrary distributions}
+\label{alg:generate_discrete}
+\begin{algorithmic}[1]
+    \Require Integers ...
+    \Require $d$ is a list of integers representing weighted outcomes
+    \Require $U_s$ is uniformly distributed over $[0,s)$
+    \Ensure $U_s$ is uniformly distributed over $[0,s)$
+    \Ensure $X$ is distributed with $P(x=X) = d_x/n$
+\Procedure{generate\_distribution}{$U_s, s, d, N$}
+    \State $n \gets \sum dist$
+    \State $U_n, U_s, s = generate\_uniform(U_s, s, n)$
+    \State $X = $
+    \State $U_s, s = combine(U_s, s, U_x - y d)$
+    \State \Return $U_s, s, X$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 
 
@@ -586,7 +605,20 @@ The amortised entropy lost by Algorithm \ref{alg:convert_b_b} is no more than $H
 \end{proof}
 
 
-\section {Comparing uniform integer generation algorithms}
+
+
+
+
+
+
+
+\section {Evaluation}
+
+
+In terms of time, all EEC algorithms are O(1). On modern CPUs, the most expensive operation is integer division, which is usually as expensive as divide and modulus (divmod) \cite{cpudivmod}. This makes the $divide$ algorithm (Algorithm \ref{alg:divide}) the most expensive algorithm using two integer divisions, but it is still O(1).
+
+
+
 
 We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}). To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
 
@@ -609,9 +641,15 @@ Figure \ref{fig:shuffle} shows the entropy efficiency when shuffling a deck of $
 \end{figure}
 
 
+
+
+
+
 \section{Discussion}
 
-- Other types of entropy. For example, 
+
+
+
 
 \section{Conclusion}
 
