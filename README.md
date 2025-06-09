@@ -1,3 +1,44 @@
+# C interface
+
+class entropy_store;
+
+class distribution;
+class uniform_distribution;
+class bernoulli_distribution;
+
+distribution.generate(store);
+distribution.consume(store, value);
+
+Raw functions:
+
+make_distribution
+generate_distribution
+generate_uniform
+generate_bernoulli
+consume_distribution
+consume_uniform
+consume_bernoulli
+
+Algorithm \ref{alg:generate_distribution} is able to generate an arbitrary discrete distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.  We then construct a lookup table (once per distribution in $O(k)$), mapping outcomes from a uniform distribution of size $n$ to an outcome. This could be used to generate uniform and Bernoulli distributions as well, as a special case of the general distribution.
+
+The important step is that when a weighting $w_i>1$, there is additional uniform entropy in the output $U_{w_i}$ which must be recombined with the entropy store, otherwise this entropy will be lost. If $w_i=1$, then the uniform entropy is $0$ and the recombination step is a no-op.
+
+Algorithm \ref{alg:combine_distribution} reads the entropy from any weighted distribution and combines it with an entropy store. This is essentially the inverse of Algorithm \ref{alg:generate_distribution}. This can be used to convert entropy from one distribution to another, as shown in Algorithm \ref{alg:convert_distribution}.
+
+Lemma \ref{lem:generate_distribution_loss} shows that the only entropy losses from Algorithm \ref{alg:generate_distribution} come from the $generate\_uniform$ step, which means that the entropy loss from Algorithm \ref{alg:generate_distribution} is limited to $H_{loss}(n)$.
+
+
+
+
+\begin{lemma}
+For a uniform distribution $U_n \sim Uniform{0,n-1}$, the expected entropy of the output distribution and uniform part equals the original entropy.
+\end{lemma}
+
+\begin{proof}
+H_{RHS} = H_{out} + \sum_{i} p_{i}
+\end{proof}
+
+
 Instructions for viewing ipynb
 
 
