@@ -32,6 +32,12 @@ uint32_t generate_distribution(uint32_t n, const uint32_t * weights, const uint3
     read_uniform(U_n - offsets[U_n], weights[outputs[U_n]]);
     return outputs[U_n];
 }
+
+void read_distribution(uint32_t value, uint32_t n, const uint32_t * weights, const uint32_t * offsets)
+{
+    uint32_t U_x = generate_uniform(weights[value]);
+    read_uniform(offsets[value]+U_x, n);
+}
 ```
 
 Raw functions:
