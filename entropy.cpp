@@ -1,4 +1,5 @@
 #include <iostream>
+#include <vector>
 #include <random>
 
 template<int N, int V=1, typename Src>
@@ -69,6 +70,12 @@ private:
     value_type m_value, m_shift;
 };
 
+struct entropy_store
+{
+    using value_type = std::uint32_t;
+    value_type U_s = 0;
+    value_type s = 1;
+};
 
 template<std::unsigned_integral T = std::uint32_t, T M = (1u<<((sizeof(T)*8)-1))>
 class efficient_entropy_converter
@@ -135,7 +142,29 @@ private:
     value_type s_value = 0, s_range = 1;
 };
 
+class distribution
+{
+public:
+    distribution(std::initializer_list<int> weights) : weights(std::move(weights))
+    {
+        for(int i=0; i<weights.size(); ++i)
+        {
+            auto start = outputs.size();
+            for(int j=0; j<weights[i]; ++j)
+            {
+                outputs.push_back(i);
+                starts.push_back(start);
+            }
+        }
+    }
 
+    std::vector<int> weights, outputs, starts;
+};
+
+int generate_distribution(entropy_store &s, const distribution &d)
+{
+
+}
 
 int main()
 {
@@ -153,4 +182,6 @@ int main()
     for(int i=0; i<100; ++i)
         std::cout << ec.convert(b, 6);
     std::cout << std::endl;
+
+    distribution d = {1,2};
 }
