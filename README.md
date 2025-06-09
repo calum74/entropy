@@ -64,13 +64,17 @@ Write up final algorithms on generating and extracting
 
 # Writeup
 
-Algorithm \ref{alg:generate_distribution} is able to generate an arbitrary discrete distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.  We then construct a lookup table (once per distribution in $O(k)$), mapping outcomes from a uniform distribution of size $n$ to an outcome. This could be used to generate uniform and Bernoulli distributions as well, as a special case of the general distribution.
+Algorithm \ref{alg:generate_distribution} is able to generate an arbitrary discrete distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.  The algorithm works by construct a mapping from the $n$ outcomes of a uniform distribution to the $k$ $outputs$ of the weighted distribution. To generate an output, create a uniform variable of size $n$, and look up its output in the $outputs$ table.
 
-The important step is that when a weighting $w_i>1$, there is additional uniform entropy in the output $U_{w_i}$ which must be recombined with the entropy store, otherwise this entropy will be lost. If $w_i=1$, then the uniform entropy is $0$ and the recombination step is a no-op.
+However, there is extra entropy that is not accounted for. When the weight of an outcome $w_i>0$, then we also get a uniform distribution of size $w_i$. The $combine$ step just adds that extra entropy to the store. If $w_i=1$, then the entropy in the uniform distribution is $0$ because $\log_21 = 0$ and this operation is a no-op.
 
-Algorithm \ref{alg:combine_distribution} reads the entropy from any weighted distribution and combines it with an entropy store. This is essentially the inverse of Algorithm \ref{alg:generate_distribution}. This can be used to convert entropy from one distribution to another, as shown in Algorithm \ref{alg:convert_distribution}.
+Algorithm \ref{alg:combine_distribution} reads the entropy from any weighted distribution into an entropy store. This is essentially the inverse of Algorithm \ref{alg:generate_distribution}.
+
+This can be used to convert entropy between arbitrary discrete distributions.
 
 Lemma \ref{lem:generate_distribution_loss} shows that the only entropy losses from Algorithm \ref{alg:generate_distribution} come from the $generate\_uniform$ step, which means that the entropy loss from Algorithm \ref{alg:generate_distribution} is limited to $H_{loss}(n)$.
+
+The entropy efficiency of 
 
 
 
