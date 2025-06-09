@@ -1,13 +1,38 @@
 # C interface
 
+```c++
 class entropy_store;
 
-class distribution;
-class uniform_distribution;
-class bernoulli_distribution;
+class weighted_distribution { vector<int> weights, outputs, offsets; };
+class uniform_distribution { int min, max };
+class bernoulli_distribution { int m, n; };
+
+template<typename Distribution>
+class entropy
+{
+    Distribution distribution;
+    int value;
+};
 
 distribution.generate(store);
-distribution.consume(store, value);
+distribution.extract(store, value);
+
+int generate_distribution(store, distribution);
+void read_distribution(store, distribution, value);
+void convert(store, distribution1, value, distribution2);
+
+// Specialisations
+
+
+uint32_t U_s, s;
+
+uint32_t generate_distribution(uint32_t n, const uint32_t * weights, const uint32_t * outputs, const uint32_t * offsets)
+{
+    uint32_t U_n = generate_uniform(n);
+    read_uniform(U_n - offsets[U_n], weights[outputs[U_n]]);
+    return outputs[U_n];
+}
+```
 
 Raw functions:
 
@@ -15,9 +40,23 @@ make_distribution
 generate_distribution
 generate_uniform
 generate_bernoulli
-consume_distribution
-consume_uniform
-consume_bernoulli
+extract_distribution
+extract_uniform
+extract_bernoulli(U_s *)
+
+Do the same in Python:
+
+
+
+
+
+# Writeup todo
+
+Move theorems, lemmas and proofs to the appendix, and reference them in the text.
+
+Write up final algorithms on generating and extracting 
+
+# Writeup
 
 Algorithm \ref{alg:generate_distribution} is able to generate an arbitrary discrete distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.  We then construct a lookup table (once per distribution in $O(k)$), mapping outcomes from a uniform distribution of size $n$ to an outcome. This could be used to generate uniform and Bernoulli distributions as well, as a special case of the general distribution.
 
