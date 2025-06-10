@@ -336,3 +336,64 @@ Approximate sampling frameworks enable entropy-optimal performance with finite p
 
 If you'd like more details or pointers to code and implementations — I’d be happy to share!
 
+Great question! Yes — there are practical algorithms designed to extract unbiased bits from samples drawn from an arbitrary integer-valued distribution with some entropy.
+
+What you’re asking about
+You have a random source producing integers with some unknown or arbitrary distribution.
+
+You want to extract unbiased (fair) random bits from this source, i.e., bits that are uniformly distributed and independent.
+
+This is often called randomness extraction or entropy extraction.
+
+Key ideas
+Von Neumann extractor (simple but limited)
+Originally designed for biased coin flips, it looks at pairs of bits:
+
+If the pair is 01, output 0
+
+If the pair is 10, output 1
+
+If 00 or 11, discard and move on.
+This extracts unbiased bits but only works if the source is binary and independent trials. It’s not efficient for arbitrary integer distributions or correlated data.
+
+Generalization to arbitrary alphabets
+For integer distributions with known or unknown bias, several approaches exist:
+
+Elias’ algorithm (1972): Generalizes Von Neumann’s idea to multi-symbol alphabets.
+
+Peres’ algorithm (1992): An improvement over Von Neumann that extracts more entropy from biased coin flips.
+
+Elias–Peres algorithm: For finite alphabets.
+
+Universal randomness extractors
+More generally, randomness extractors (from theoretical CS) convert "weak" sources of entropy into nearly uniform bits, often needing a small truly random seed. But these are mostly theoretical and sometimes complex.
+
+Arithmetic coding-based extractors
+If you know the distribution exactly, you can encode the sequence via arithmetic coding, and the output bits will be nearly uniform. This is close to optimal entropy extraction.
+
+Practical algorithms in the real world
+In practice, a common approach if you can model or estimate the distribution is to use something like:
+
+Hashing (cryptographic hash functions) on blocks of samples — this "mixes" the entropy and can output nearly uniform bits. This is a practical approach in randomness extraction used in cryptography.
+
+Trevisan’s extractor and variants — more theoretical, but some practical constructions exist.
+
+Summary
+Yes, practical algorithms exist, especially if you have some knowledge about or can estimate the distribution.
+
+For arbitrary integer distributions, classical methods generalize Von Neumann’s idea (Elias, Peres).
+
+For known distributions, arithmetic coding or entropy coding can yield nearly uniform bits.
+
+For unknown or complex distributions, universal extractors or cryptographic hash-based extractors are practical.
+
+Example references and algorithms
+Von Neumann (1951) “Various techniques used in connection with random digits”
+
+Elias (1972) “The efficient construction of an unbiased random sequence”
+
+Peres (1992) “Iterating Von Neumann’s procedure for extracting random bits”
+
+R. Canetti, D. Micciancio, M. Naor (2001) “Adaptive extraction and privacy amplification”
+
+If you want, I can help you with a concrete algorithm or code to extract unbiased bits from a specific integer distribution sample you have! Would you like that?
