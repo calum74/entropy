@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <random>
+#include <cassert>
 
 // Binary entropy stream
 
@@ -107,12 +108,11 @@ struct entropy_store
             if(s >= c)  [[likely]]
             {
                 // Resample successful
-                s -= c;
-                auto a = U_s / n;
-                auto b = U_s % n;
-                U_s = a;
-                s = r; 
-                return b;
+                U_s -= c;
+                auto U_n = U_s % n;
+                U_s = U_s / n;
+                s = r;
+                return U_n;
             }
             else
             {
@@ -135,7 +135,6 @@ struct entropy_store
         combine(U_n - offsets[i], weights[i]);
         return i;
     }
-
 
     void combine_distribution(uint32_t i, uint32_t n, const uint32_t * weights, const uint32_t * offsets)
     {
@@ -169,7 +168,7 @@ struct entropy_store
 
 int main()
 {
-    distribution d = {1,9};
+    distribution d = {49,1};
     entropy_store s;
     for(int i=0; i<100; i++)
         std::cout << s.generate_uniform(6);
