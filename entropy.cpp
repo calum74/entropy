@@ -54,6 +54,7 @@ private:
     value_type m_value, m_shift;
 };
 
+// Constructs the lookup tables for a weighted distribution
 class distribution
 {
 public:
@@ -173,6 +174,7 @@ int main()
     for(int i=0; i<100; i++)
         std::cout << s.generate_uniform(6);
     std::cout << std::endl;
+    s.generate_uniform(1);  // Pre-cache entropy
     s.bits_fetched = 0;
     for(int i=0; i<100; i++)
         std::cout << s.generate_distribution(d);
