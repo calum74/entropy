@@ -342,6 +342,63 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
     If $p$ be the probability that the algorithm loops, where $p<1$, then the probability $q$ that Algorithm \ref{alg:generate-uniform} loops forever is given by $q = (1-p)q \implies q=0$.
 \end{proof}
 
+Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.
+
+The algorithm works by construct a mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This is a simple lookup table of size $n$.
+
+To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the lookup table as the result. The novelty is that the resampling operation also generates a uniform distribution which also contains $\log_2w_i$ entropy. In order to be entropy efficient, we must combine this entropy back into the entropy store, which is done in the $combine$ step.
+
+By reclaiming this extra entropy, the entropy loss from Algorithm \ref{alg:generate-distribution} is only caused by the $generate\_uniform$ step, and the entropy loss from this algorithm is $H_{loss}(n)$.
+
+\begin{algorithm}
+\caption{Constructing the lookup tables for a distribution}
+\label{alg:generate-lookup-tables}
+\begin{algorithmic}[1]
+\Require Integers $0 < n\le N$
+\Require $fetch()$ returns Bernoulli entropy with $p=0.5$
+\Require $U_s$ is uniformly distributed over $[0,s)$
+\Ensure $U_n$ is uniformly distributed over $[0,n)$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Procedure{make\_distribution}{$weights$} 
+  \While {True}
+    \While {$s < N$}
+        \State $U_s, s \gets combine(U_s, s, fetch(), 2)$
+    \EndWhile
+    \State $U_s, s, b \gets downsample(U_s, s, s \mod n)$ 
+    \If{$ \neg b$}
+        \State $U_n, U_s, s \gets divide(U_s, s, n)$
+        \State \Return $U_s, s, U_n$
+    \EndIf
+  \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{Generating arbitrary distributions}
+\label{alg:generate-distribution}
+\begin{algorithmic}[1]
+\Require Integers $0 < n\le N$
+\Require $fetch()$ returns Bernoulli entropy with $p=0.5$
+\Require $U_s$ is uniformly distributed over $[0,s)$
+\Ensure $U_n$ is uniformly distributed over $[0,n)$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Procedure{generate\_uniform}{$U_s, s, n, N$} 
+  \While {True}
+    \While {$s < N$}
+        \State $U_s, s \gets combine(U_s, s, fetch(), 2)$
+    \EndWhile
+    \State $U_s, s, b \gets downsample(U_s, s, s \mod n)$ 
+    \If{$ \neg b$}
+        \State $U_n, U_s, s \gets divide(U_s, s, n)$
+        \State \Return $U_s, s, U_n$
+    \EndIf
+  \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
 
 Algorithm \ref{alg:convert_u_u} shows how we can efficiently \em convert \em entropy from one uniform distribution to another, via an entropy store. This is just a two-step process, where the first \em combine \em step is used to add the entropy from $U_n$ into $U_s$ before we generate a number $U_m$ from the same store. We'll ignore the potential overflow of $s$.
 
