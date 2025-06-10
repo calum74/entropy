@@ -78,9 +78,11 @@ struct entropy_store
 {
     using uint32_t = std::uint32_t;
     binary_entropy_stream<std::random_device> input;
+    uint32_t bits_fetched = 0;
 
     uint32_t fetch()
     {
+        ++bits_fetched;
         return *input++;
     }
 
@@ -130,7 +132,7 @@ struct entropy_store
     {
         uint32_t U_n = generate_uniform(n);
         uint32_t i = outputs[U_n];
-        // combine(U_n - offsets[i], weights[i]);
+        combine(U_n - offsets[i], weights[i]);
         return i;
     }
 
@@ -172,7 +174,9 @@ int main()
     for(int i=0; i<100; i++)
         std::cout << s.generate_uniform(6);
     std::cout << std::endl;
+    s.bits_fetched = 0;
     for(int i=0; i<100; i++)
         std::cout << s.generate_distribution(d);
     std::cout << std::endl;
+    std::cout << "Bits fetched = " << s.bits_fetched << std::endl;
 }
