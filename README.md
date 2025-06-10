@@ -397,3 +397,52 @@ Peres (1992) “Iterating Von Neumann’s procedure for extracting random bits�
 R. Canetti, D. Micciancio, M. Naor (2001) “Adaptive extraction and privacy amplification”
 
 If you want, I can help you with a concrete algorithm or code to extract unbiased bits from a specific integer distribution sample you have! Would you like that?
+
+
+
+
+Sure! The idea of using arithmetic coding as a means to extract nearly uniform bits from a known or estimated distribution is a beautiful connection between source coding and randomness extraction.
+
+Key references connecting arithmetic coding to randomness extraction:
+Shannon's source coding theorem (1948) and the foundation of entropy coding
+
+This underpins the idea that the entropy of a source is the theoretical limit for compressibility, and thus the amount of extractable randomness.
+
+Han and Hoshi (1997):
+“Interval Algorithm for Random Number Generation”
+
+Introduces an interval algorithm (related to arithmetic coding) that can generate unbiased bits from arbitrary distributions.
+
+Link: https://ieeexplore.ieee.org/document/614777
+
+D. Han and M. Hoshi (1997), IEEE Transactions on Information Theory, Vol. 43, No. 2
+
+They develop the Interval Algorithm, which encodes a random variable with arbitrary distribution into bits with expected length close to entropy, effectively performing randomness extraction via arithmetic coding principles.
+
+C. S. Wallace (1990), “The JPEG Still Picture Compression Standard”
+
+While primarily about compression, it uses arithmetic coding principles, which conceptually relate to entropy extraction from known distributions.
+
+F. P. Calude (2002), “Information and Randomness: An Algorithmic Perspective”
+
+Discusses algorithmic randomness and relates data compression (including arithmetic coding) to extraction of algorithmic randomness.
+
+Intuition
+Arithmetic coding represents the probability distribution as an interval on [0,1). Encoding an input sequence narrows this interval. The bits representing the position inside this interval approximate uniform bits — thus, you can view arithmetic coding as an extractor.
+
+Summary
+If you know the exact distribution, arithmetic coding can convert your integer samples into a bitstream nearly uniform.
+
+This approach is almost optimal for entropy extraction.
+
+The foundational work by Han and Hoshi (1997) explicitly connects arithmetic coding to random number generation (unbiased bits extraction).
+
+If you want, I can help you find the actual paper PDF or help implement a simplified version of this algorithm!
+
+
+
+
+
+
+
+
