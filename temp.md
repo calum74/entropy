@@ -35,6 +35,17 @@ volume = {43},
 journal = {IEEE Transactions on Information Theory}
 }
 
+@inproceedings{saad2020fldr,
+title           = {The Fast Loaded Dice Roller: A Near-optimal Exact Sampler for Discrete Probability Distributions},
+author          = {Saad, Feras A. and Freer, Cameron E. and Rinard, Martin C. and Mansinghka, Vikash K.},
+booktitle       = {AISTATS 2020: Proceedings of the 23rd International Conference on Artificial Intelligence and Statistics},
+volume          = 108,
+series          = {Proceedings of Machine Learning Research},
+address         = {Palermo, Sicily, Italy},
+publisher       = {PMLR},
+year            = 2020,
+keywords        = {random variate generation, sampling, discrete random variables},
+}
 
 
 Discussion
