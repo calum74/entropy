@@ -1,8 +1,18 @@
+To do on the paper:
+- Section on notation
+    Summarise different strategies
+- Related work, obviously
+- Argue 2 integer divisions
+- Delete section on upsample.
+
 New title:
 Algorithms for efficient entropy conversion using an entropy store
 
 New abstract:
-We present new algorithms for converting random numbers between different forms using an "entropy store". The method can generate random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process. This is much more flexible than state of the art methods such as arithmetic coding, because the asymptotic entropy efficiency is much more easily achieved.
+We present new algorithms for converting random numbers between different forms using an "entropy store". The method can generate random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.
+
+
+This is much more flexible than state of the art methods such as arithmetic coding, because the asymptotic entropy efficiency is much more easily achieved.
 
 The central idea is to capture potentially lost entropy in an entropy store, implemented as a uniform random variable. By  ensuring that the stored entropy is above a minimum size, we guarantee that resampling the entropy store to a multiple of the output number will lose a miniscule quantity of entropy. Once we have the ability to generate and consume uniform integers efficiently, we can build on this to generate and consume entropy from other distributions.
 

@@ -124,9 +124,7 @@ One of the first algorithms for generating uniformly distributed integers was de
 
 In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
 
-We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}, extract entropy from a weighted distribution \ref{alg:consume-distribution}, and use these to convert entropy between arbitrary distributions (Algorithm \ref{alg:convert-distribution}.
-
-All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), and use these to convert entropy between arbitrary distributions (Algorithm \ref{alg:convert-distribution}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
 Algorithm \ref{alg:combine} combines entropy from two uniform distrete random variables into a single uniform random variable.
 
@@ -344,24 +342,36 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
     If $p$ be the probability that the algorithm loops, where $p<1$, then the probability $q$ that Algorithm \ref{alg:generate-uniform} loops forever is given by $q = (1-p)q \implies q=0$.
 \end{proof}
 
-Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n$ is the total weight.
+Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 
-The algorithm works by construct an injective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This is a simple lookup table of size $n$.
+The algorithm works by construct an injective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This is a simple lookup table of size $n$. If $n$ is very large we'll need to implement this differently.
 
 To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the lookup table as the result. 
 
-On its own, the output distribution contains less entropy than the original uniform distribution, so where did this extra entropy disappear to? We ended up discarding the position of $U_n$ in the output bucket, which actually forms a uniform distribution of size $w_i$. So the answer is that a naive sampling algorithm would lose $\log_2 w_i$ bits of entropy.
+Notice though that we also can generate a uniform distribution of size $w_i$, due to the index of $n$ within each output range. Figure \ref{fig:bins} illustrates this. When we perform a multi-way downsample, the output is a distribution $X$ and a uniform distribution $Y \sim Uniform [0,w_i)$. $Y$ is uniformly distributed because it is drawn from a uniform distribution.
 
-If we do the maths, then the expected output entropy of sampling equals the entropy of the output distribution plus the expected entropy in the uniform distribution $w_i$. Algorithm \ref{alg:generate-distribution} simply recycles this excess entropy back into the entropy store using $multiply$.
+% Figure bin: 
 
+Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy in $Y$ then no entropy is lost. So the final step in Algorithm \ref{alg:generate-distribution} is to capture the extra entropy from the uniform distribution $Y$ back into the entropy store.
 
 \begin{lemma}
     \label{lem:distribution-conservation}
-    For a uniform random variable $X \sim Uniform\{0..n-1\}$, injectively mapped to a weighted distribution $Y$, where $Y_i \sim Uniform\{0..w_i\}$, then the entropy of $X$ equals the entropy of $Y$ and the expected entropy of $Y_i$.
+    When we downsample $Uniform\{0..n-1\}$ into weighted distribution $X$ and $Y \sim Uniform\{0,w_i-1\}$, entropy is conserved.
 \end{lemma}
 
 \begin{proof}
-    
+    \begin{align}
+    E(H_{lhs}) & = \log_2 n \\
+    E(H_{rhs}) & = E(H(X)) + E(H(Y)) \\ 
+               & = - \sum_i p_i \log_2p_i + \sum_i p_iH(Y|X=i) \\
+               & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = - \sum_i \frac{w_i}{n}\log_2 w_i + \sum_i \frac{w_i}{n} \log_2 n + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = \sum_i \frac{w_i}{n} \log_2 n \\
+               & = \frac{\log_2 n}{n} \sum_i w_i \\
+               & = \frac{\log_2 n}{n} n \\
+               & = \log_2 n
+    \end{align}
 \end{proof}
 
 \begin{algorithm}
@@ -404,6 +414,8 @@ If we do the maths, then the expected output entropy of sampling equals the entr
 
 Algorithm \ref{alg:combine-distribution} performs the inverse of Algorithm \ref{alg:generate-distribution}. It reconstructs a uniform distribution of size $n$ from the weighted distribution variable, and combines it with a uniform distribution of size $w_i$. This allows the entropy store to absorb the entropy from $i$.
 
+Note that when performing the inverse of Algorithm \ref{alg:generate-distribution}, we don't need to supply it the *same* random variable $U_x$ that was originally used, and we can just get one from our entropy store.
+
 We'll ignore potential integer overflows of $U_s$ and $s$.
 
 \begin{algorithm}
@@ -425,7 +437,7 @@ We'll ignore potential integer overflows of $U_s$ and $s$.
 \end{algorithmic}
 \end{algorithm}
 
-Finally we can compose Algorithm \ref{alg:combine-distribution} and Algorithm \ref{alg:generate-distribution} into a single step in Algorithm \ref{alg:convert-distribution}. This allows entropy to be converted from one form to another via the entropy store.
+Finally we can compose Algorithm \ref{alg:generate-distribution} and Algorithm \ref{alg:combine-distribution} into a single step in Algorithm \ref{alg:convert-distribution}. This allows entropy to be converted from one form to another via the entropy store.
 
 
 \begin{algorithm}
@@ -450,11 +462,11 @@ Finally we can compose Algorithm \ref{alg:combine-distribution} and Algorithm \r
 \end{algorithm}
 
 
-\section {Efficiency of entropy conversion}
+\section {Efficiency of entropy conversion algorithms}
 
-TODO: Incorporate this into previous section.
+In this section we'll calculate bounds on the entropy efficiency of Algortithms \ref{alg:combine}-\ref{alg:convert-distribution}, and prove that these algorithms have entropy efficiency 1 or arbitrarily close to 1.
 
-In this section we'll calculate bounds on the entropy efficiency of Algortithms \ref{alg:combine}-\ref{alg:convert_b_b}, and prove that these algorithms have entropy efficiency 1 or arbitrarily close to 1.
+Insert notation here.
 
 \begin{lemma}
 \label{lem:conservation}
