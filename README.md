@@ -4,6 +4,22 @@ To do on the paper:
 - Related work, obviously
 - Argue 2 integer divisions
 - Delete section on upsample.
+- The convert algorithm needs to read unlimited inputs
+- Argue memoryless
+- Comparison with interval algorithm
+
+```
+> fetch returns an integer with the given distribution
+> Problem is it will probably also draw binary entropy
+
+def convert_distribution(U_s, s, N, w,o,o)
+    while s < N:
+        U_s, s = consume_distribution(U_s, s, N - log2(|o|), W, out, off, fetch())
+    return U_s, s, i
+
+while s <N:
+    U_s, s = fetch(U_s, s)
+```
 
 New title:
 Algorithms for efficient entropy conversion using an entropy store
