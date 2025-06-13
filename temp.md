@@ -40,3 +40,5 @@ $n = \sum_i w_k$
 Initial entropy = $H_{in} = \log_2 n$
 
 Final entropy = $H_{out} = H_{X} + H_Y$ = sum -p_i\logp_i + 
+
+Another idea: Can we avoid division if we are prepared to compromise?
