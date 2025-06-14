@@ -2,6 +2,63 @@
 #include <vector>
 #include <random>
 #include <cassert>
+#include <functional>
+
+// Technically we could use std::uniform_int_distribution here
+template<typename T>
+struct uniform_distribution
+{
+    using value_type = T; 
+    // Inclusive values, min<=max
+    int min, max;
+};
+
+uniform_distribution<std::uint32_t> binary() { return {0,1}; }
+uniform_distribution<std::uint32_t> empty() { return {0,0}; }
+
+struct empty_source
+{
+    using value_type = std::uint32_t;
+    using distribution_type = uniform_distribution<std::uint32_t>;
+    distribution_type get_distribution() const { return empty(); }
+};
+
+struct random_device_source
+{
+    using value_type = std::uint32_t;
+    using distribution_type = uniform_distribution<value_type>;
+    using source_type = empty_source;
+    std::random_device rd;
+
+    value_type operator()()
+    {
+        return rd();
+    }
+};
+
+template<typename Source>
+struct binary_converter
+{
+    using source_type = Source;
+    using value_type = typename Source::value_type;
+    using distribution_type = uniform_distribution<value_type>;
+
+    value_type m_value=0, m_shift=32;
+    Source m_source;
+
+    binary_converter(source_type &&source = {}) : m_source(source) {}
+
+    value_type operator()()
+    {
+        if(++m_shift>=32)
+        {
+            m_value = m_source();
+            m_shift = 0;
+        }
+        return (m_value>>m_shift)&1;
+    }
+};
+
 
 // Binary entropy stream
 
@@ -15,6 +72,10 @@ public:
     using reference = value_type&;
     using iterator_category = std::input_iterator_tag;
     using generator_type = Generator;
+    using distribution_type = uniform_distribution<uint32_t>;
+    distribution_type dist = binary();
+
+    distribution_type distribution() const { return dist; }
 
     binary_entropy_stream() : m_value(m_random()), m_shift(0) {}
     binary_entropy_stream(binary_entropy_stream&&other)
@@ -54,13 +115,14 @@ private:
     value_type m_value, m_shift;
 };
 
+
 // Constructs the lookup tables for a weighted distribution
-class distribution
+class weighted_distribution
 {
 public:
     using uint32_t = std::uint32_t;
-    distribution(std::initializer_list<uint32_t> weights) : distribution(std::vector(weights)) {}
-    distribution(std::vector<uint32_t> w) : weights(std::move(w))
+    weighted_distribution(std::initializer_list<uint32_t> weights) : weighted_distribution(std::vector(weights)) {}
+    weighted_distribution(std::vector<uint32_t> w) : weights(std::move(w))
     {
         for(int i=0; i<weights.size(); ++i)
         {
@@ -142,7 +204,7 @@ struct entropy_store
         combine(offsets[i] + generate_uniform(weights[i]), weights[i]);
     }
 
-    uint32_t generate_distribution(const distribution & distribution)
+    uint32_t generate_distribution(const weighted_distribution & distribution)
     {
         return generate_distribution(
             distribution.outputs.size(), 
@@ -151,7 +213,7 @@ struct entropy_store
             distribution.offsets.data());
     }
 
-    void combine_distribution(const distribution & distribution, uint32_t i)
+    void combine_distribution(const weighted_distribution & distribution, uint32_t i)
     {
         combine_distribution(i,
             distribution.outputs.size(), 
@@ -159,7 +221,8 @@ struct entropy_store
             distribution.offsets.data());
     }
 
-    uint32_t convert_distribution(const distribution &dist_input, const distribution &dist_output, uint32_t i)
+    // !! Wrong!!
+    uint32_t convert_distribution(const weighted_distribution &dist_input, const weighted_distribution &dist_output, uint32_t i)
     {
         combine_distribution(dist_input, i);
         return generate_distribution(dist_output);
@@ -167,9 +230,74 @@ struct entropy_store
 };
 
 
+template<std::integral uint32_t, std::invocable Fetch>
+uint32_t generate_uniform(uint32_t& U_s, uint32_t& s, uint32_t N, uint32_t n, Fetch fetch_entropy)
+{
+    for(;;)
+    {
+        // Preload entropy one bit at a time into U_s
+        while(s < N)
+        {
+            fetch_entropy(U_s, s);
+        }
+        // Resample entropy s to a multiple of m
+        uint32_t r = s / n;
+        uint32_t c = s % n;
+        if(s >= c)  [[likely]]
+        {
+            // Resample successful
+            U_s -= c;
+            auto U_n = U_s % n;
+            U_s = U_s / n;
+            s = r;
+            return U_n;
+        }
+        else
+        {
+            // Resample unsuccessful
+            s = c;
+        }
+    }
+}
+
+template<typename T>
+int generate(const uniform_distribution<T> &, entropy_store&)
+{
+}
+
+int generate(const weighted_distribution &, entropy_store&)
+{
+}
+
+template<typename T>
+void extract(const uniform_distribution<T> &, entropy_store&, int)
+{
+}
+
+void extract(const weighted_distribution&, entropy_store&, int)
+{
+}
+
+template<typename Source, typename OutputDistribution>
+class entropy_converter
+{
+public:
+    entropy_converter(Source &source, OutputDistribution &output)
+    {
+    }
+
+    int fetch()
+    {
+    }
+
+    Source m_source;
+    OutputDistribution distribution;
+};
+
+
 int main()
 {
-    distribution d = {49,1};
+    weighted_distribution d = {49,1};
     entropy_store s;
     for(int i=0; i<100; i++)
         std::cout << s.generate_uniform(6);
