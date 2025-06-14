@@ -11,10 +11,13 @@ struct uniform_distribution
     using value_type = T; 
     // Inclusive values, min<=max
     int min, max;
+
+    uniform_distribution(T a, T b) : min(a), max(b) {}
 };
 
 uniform_distribution<std::uint32_t> binary() { return {0,1}; }
 uniform_distribution<std::uint32_t> empty() { return {0,0}; }
+
 
 struct empty_source
 {
@@ -39,6 +42,30 @@ struct random_device_source
 };
 
 template<typename Source>
+struct counter
+{
+    counter(const Source & source, int & count) : m_source(source), m_count(count) {}
+    Source m_source;
+
+    auto distribution() const { return m_source.distribution(); }
+
+    auto operator()()
+    { 
+        ++m_count;
+        return m_source();
+    }
+
+    template<typename Distribution>
+    auto operator()(const Distribution  & dist)
+    {
+        ++m_count;
+        return m_source(dist);
+    }
+
+    int & m_count;
+};
+
+template<typename Source>
 struct binary_converter
 {
     using source_type = Source;
@@ -50,6 +77,8 @@ struct binary_converter
 
     binary_converter(const source_type &source = {}) : m_source(source) {}
 
+    distribution_type distribution() const { return binary(); }
+
     value_type operator()()
     {
         if(++m_shift>=32)
@@ -60,12 +89,6 @@ struct binary_converter
         return (m_value>>m_shift)&1;
     }
 };
-
-template<typename Source>
-binary_converter<Source> make_binary_converter(const Source &s = random_device_source{})
-{
-    return {s};
-}
 
 // For exposition
 
@@ -111,37 +134,57 @@ uint32_t generate_uniform(uint32_t &U_s, uint32_t &s, uint32_t N, uint32_t n, Fn
      }
 }
 
-
-
-
-
-template<typename Source, typename Distribution>
-struct entropy_converter
+template<typename uint32_t, typename Source, typename T>
+T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const uniform_distribution<uint32_t> & source_dist, const uniform_distribution<T> & output_dist)
 {
-    using value_type = typename Distribution::value_type;
-    using distribution_type = Distribution;
+    auto fetch_entropy = [&](uint32_t & U_s, uint32_t &s)
+    {
+        combine(U_s, s, uint32_t(source() - source_dist.min), uint32_t(source_dist.max - source_dist.min+1), U_s, s); 
+    };
+    return T(generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_entropy)) + output_dist.min;
+} 
+
+
+
+template<typename Source>
+struct entropy_source
+{
+    using value_type = std::uint32_t;
     using source_type = Source;
 
-    entropy_converter(const Source &src, const Distribution & dist) : source(src), dist(dist)
+    entropy_source(const Source &src) : source(src)
     {
     }
 
-    value_type operator()()
+    template<typename Distribution>
+    auto operator()(const Distribution & dist)
     {
-        return generate(U_s, s, N, dist, source);
+        return generate(U_s, s, N, source, source.distribution(), dist);
     }
 
 private:
     value_type N=1<<31, U_s=0, s=1;
-    distribution_type dist;
     source_type source;
 };
 
 template<typename Source, typename Distribution>
-entropy_converter<Source, Distribution> make_entropy_converter(const Source &src, const Distribution & dist)
+struct entropy_converter
 {
-    return {src, dist};
-}
+    using source_type = Source;
+    using distribution_type = Distribution;
+    entropy_converter(const source_type & source, const distribution_type & distribution) :
+        m_source(source), m_distribution(distribution)
+    {
+    }
+
+    auto operator()()
+    {
+        return m_source(m_distribution);
+    }
+
+    source_type m_source;
+    distribution_type m_distribution;
+};
 
 
 // Binary entropy stream
@@ -295,25 +338,15 @@ struct entropy_store
 };
 
 
-template<typename T>
-int generate(const uniform_distribution<T> &, entropy_store&)
+template<typename uint32_t, typename Source, typename SourceDist>
+int generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const SourceDist & source_dist, const weighted_distribution & output_dist)
 {
-    return 0;
-}
+    int n = generate(U_s, s, N, source, source_dist, uniform_distribution{0ul, output_dist.outputs.size()-1});
+    int i = output_dist.outputs[n];
+    combine(U_s, s, n - output_dist.offsets[i], output_dist.weights[i], U_s, s);
+    return i;
+} 
 
-int generate(const weighted_distribution &, entropy_store&)
-{
-    return 0;
-}
-
-template<typename T>
-void extract(const uniform_distribution<T> &, entropy_store&, int)
-{
-}
-
-void extract(const weighted_distribution&, entropy_store&, int)
-{
-}
 
 
 int main()
@@ -330,6 +363,31 @@ int main()
     std::cout << std::endl;
     std::cout << "Bits fetched = " << s.bits_fetched << std::endl;
 
-    auto bs = make_binary_converter(random_device_source());
-    std::cout << bs() << std::endl;
+    // bs generates bits from the random device
+    int bits_fetched=0;
+    auto bits = counter{binary_converter {random_device_source()}, bits_fetched};
+    std::cout << bits() << std::endl;
+
+    auto c1 = entropy_source(bits);
+    auto u = uniform_distribution(3,9);
+    c1(u);
+    bits_fetched=0;
+    for(int i=0; i<100; i++)
+        std::cout << c1(u);
+    std::cout << "\nFetched " << bits_fetched << " bits\n";
+
+    // Convert 
+    auto s1 = entropy_converter {c1, uniform_distribution{'a','z'}};
+    s1();
+    bits_fetched=0;
+    for(int i=0; i<100; i++)
+        std::cout << s1();
+    std::cout << "\nFetched " << bits_fetched << " bits\n";
+
+    auto s2 = entropy_converter {c1, weighted_distribution{49,1}};
+    s2();
+    bits_fetched=0;
+    for(int i=0; i<100; i++)
+        std::cout << s2();
+    std::cout << "\nFetched " << bits_fetched << " bits\n";
 }
