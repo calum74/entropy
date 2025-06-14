@@ -13,6 +13,8 @@ struct uniform_distribution
     int min, max;
 
     uniform_distribution(T a, T b) : min(a), max(b) {}
+
+    uint32_t size() const { return max-min+1; }
 };
 
 uniform_distribution<std::uint32_t> binary() { return {0,1}; }
@@ -107,6 +109,8 @@ void combine(uint32_t U_n, uint32_t n, uint32_t U_m, uint32_t m, uint32_t& U_nm,
 {
     U_nm = m * U_n + U_m;
     nm = m*n;
+    assert(n<=nm);
+    assert(m<=nm);
 }
 
 template<std::integral uint32_t>
@@ -144,14 +148,14 @@ uint32_t generate_uniform(uint32_t &U_s, uint32_t &s, uint32_t N, uint32_t n, Fn
      }
 }
 
-template<typename uint32_t, typename Source, typename T>
-T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const uniform_distribution<uint32_t> & source_dist, const uniform_distribution<T> & output_dist)
+template<typename uint32_t, typename Source, typename U, typename T>
+T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const uniform_distribution<U> & source_dist, const uniform_distribution<T> & output_dist)
 {
     auto fetch_entropy = [&](uint32_t & U_s, uint32_t &s)
     {
         combine(U_s, s, uint32_t(source() - source_dist.min), uint32_t(source_dist.max - source_dist.min+1), U_s, s); 
     };
-    return T(generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_entropy)) + output_dist.min;
+    return T(generate_uniform(U_s, s, N/source_dist.size(), output_dist.size(), fetch_entropy)) + output_dist.min;
 } 
 
 
@@ -369,6 +373,8 @@ T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const weigh
 {
     auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
     {
+        // !! Try to avoid getting here
+        // We need this if we fail to fetch from primary source
         std::cout << "b";
         s <<= 1;
         U_s  = (U_s<<1) | source.fetch_bit();
@@ -376,19 +382,15 @@ T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const weigh
 
     auto fetch_entropy = [&](uint32_t & U_s, uint32_t &s)
     {
-        // std::cout << "f";
         auto i = source();
         // Get an integer of size w_i
 
         uint32_t n = source_dist.outputs.size();
-        // !! We don't want this step to fetch entropy unless it's really necessary
-        uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N/(n*n), (uint32_t)source_dist.weights[i], fetch_binary);
-        // std::cout << "(s0=" << s << ")";
+        uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N/n, (uint32_t)source_dist.weights[i], fetch_binary);
         combine(U_s, s, U_n, n, U_s, s);
-        // std::cout << "(s1=" << s << ")";
     };
 
-    return generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_entropy) + output_dist.min;
+    return generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_binary) + output_dist.min;
 } 
 
 
@@ -435,8 +437,11 @@ int main()
     std::cout << "\nFetched " << bits_fetched << " bits\n";
 
     // Convert s2 back into binary
-    auto s3 = entropy_source {s2};
-    auto s4 = entropy_converter {s3, weighted_distribution{1,1}};
+    // !! Bug: should be able to use any entropy source here (including a
+    auto w1 = entropy_converter {c1, weighted_distribution{1,2,3}};
+    auto s3 = entropy_source {w1};
+    auto s4 = entropy_converter {s3, weighted_distribution{2,1}};
+    s4();
     s4();
     bits_fetched=0;
     for(int i=0; i<100; ++i)
