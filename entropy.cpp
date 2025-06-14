@@ -371,6 +371,7 @@ int generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const Sou
 template<typename uint32_t, typename Source, typename T>
 T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const weighted_distribution & source_dist, const uniform_distribution<T> & output_dist)
 {
+    N /= source_dist.outputs.size();
     auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
     {
         // !! Try to avoid getting here
@@ -383,14 +384,12 @@ T generate(uint32_t & U_s, uint32_t &s, uint32_t N, Source & source, const weigh
     auto fetch_entropy = [&](uint32_t & U_s, uint32_t &s)
     {
         auto i = source();
-        // Get an integer of size w_i
-
         uint32_t n = source_dist.outputs.size();
         uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N/n, (uint32_t)source_dist.weights[i], fetch_binary);
         combine(U_s, s, U_n, n, U_s, s);
     };
 
-    return generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_binary) + output_dist.min;
+    return generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min+1), fetch_entropy) + output_dist.min;
 } 
 
 
@@ -438,7 +437,7 @@ int main()
 
     // Convert s2 back into binary
     // !! Bug: should be able to use any entropy source here (including a
-    auto w1 = entropy_converter {c1, weighted_distribution{1,2,3}};
+    auto w1 = entropy_converter {c1, weighted_distribution{1,20}};
     auto s3 = entropy_source {w1};
     auto s4 = entropy_converter {s3, weighted_distribution{2,1}};
     s4();
