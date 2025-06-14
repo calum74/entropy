@@ -61,66 +61,33 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present practical and efficient algorithms for generating random distributions from binary entropy, using an entropy store. This minimises entropy loss, for example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $>0.99999992$ using a 32-bit entropy cache, compared with state of the art methods that only have a $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per random integer generated, making it significantly slower than other algorithms.
+    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache entropy. The method can generate random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $>0.99999992$ using a 32-bit entropy cache, compared with standard methods that only have a $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per random integer generated, making it significantly slower than other algorithms.
 \end{abstract}
 
 \section{Introduction}
 
-Generating uniform random integers has many applications, and there are scenarios where we want random integers that are perfectly random and perfectly distributed. True randomness comes from an external source, often delivered as a string of random bits. The external entropy must be converted to a different base that is not a power of 2, whilst consuming as few random bits as possible.
+In this paper, we will study the generation of perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but there are practical applications of this such as XX.
 
-One of the first algorithms for generating uniformly distributed integers was developed by von Neumann \cite{neumann}, known as \em rejection sampling \em, and is still used to this day, for example in []. The rejection sampling algorithm, shown in Algorithm \ref{alg:rejection-sampling}, fetches random bits, either from hardware or from a pseudo-random number generator, to give a uniform integer distribution of a power of 2. Then check if the number is less than the target range n. If the number is less than n, return it, otherwise try again. This algorithm terminates with probability 1 and can be shown to generate perfectly uniform random integers.
+The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$ \ref{entropy}. We will be primarily focussed on improving the efficiency of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
 
-\begin{algorithm}
-\caption{Generating uniform integers using rejection sampling}
-    \label{alg:rejection-sampling}
-\begin{algorithmic}[1]
-    \Require $n$ is an integer $>0$
-    \Require $fetch()$ returns an unbounded stream of unbiassed bits
-    \Ensure $v$ is uniformly distributed over $[0,n)$
-\Procedure{rejection\_sampling}{$n$}
-    \While{true}
-        \State $r \gets 1$
-        \State $v \gets 0$
-        \While {$r < n$}
-            \State $r \gets r * 2$
-            \State $v \gets v * 2 + fetch()$
-        \EndWhile
-        \If {$v<n$}
-            \State \Return $v$
-        \EndIf
-    \EndWhile
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
+Whilst this problem has been studied extensively, there are theoretical limits when generating integers one at a time, because algorithms must always fetch entropy in units. In fact we must fetch up to 2 extra bits of entropy per integer generated \ref{xx}.  For example to roll a fair d6 die requires $\frac{11}{3} \approxeq 3.6$ coin flips on average, but the entropy contained in the d6 is $\log_26 \approxeq 2.58$. When shuffling a deck of 52 cards, fetching integers one at a time requires $\approxeq 278$ bits of entropy to perform the shuffle, against an output entropy of $\log_252! \approxeq 225.58$.
 
-\begin{algorithm}
-\caption{Generating uniform integers with Fast Dice Roller}
-    \label{alg:fast-dice-roller}
-\begin{algorithmic}[1]
-    \Ensure $v$ is uniformly distributed over $[0,n)$
-    \Procedure{fast\_dice\_roller}{$n$}
-    \State $r \gets 1$
-    \State $v \gets 0$
-    \Loop
-        \While {$r < n$}
-            \State $r \gets r * 2$
-            \State $v \gets v * 2 + fetch()$
-        \EndWhile
-        \If {$v<n$}
-            \State \Return $v$
-        \EndIf
-        \State $r \gets r-n$
-        \State $v \gets v-n$
-    \EndLoop
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
+To mitigate these entropy losses, it's possible to generate random integers in batches. The major drawback with existing batching schemes is that they are somewhat complex and expensive to implement, or require you to know beforehand which numbers you need to generate. Whilst they improve entropy efficiency they still compromise on performance and efficiency.
 
+In this paper we will explore a fundamentally different approach. We will allow every entropy conversion algorithm to have access to an \em entropy store \em in the form of a large uniformly distributed integer (of the order of 32 bits), and allow the algorithm to put back any unused entropy into the store. By carefully analysing the steps that could lose entropy, we can reclaim nearly all lost entropy, giving a near-perfect entropy conversion efficiency. 
+
+The entropy efficiency depends only on the ratio of the size of the store $N$ to the size $n$ of the number generated, and a precise bound is calculated in Theorem \ref{xx}. For example to roll a 6-sided die with a 32-bit entropy store ($N\ge2^{31}$) has an entropy efficiency of $>0.99999997$ To shuffle a deck of 52 cards with a 32-bit entropy store has an entropy efficiency $>0.99999992$. By increasing the size of the store, we can achieve entropy efficiency arbitrarily close to 1.
+
+The algorithms are easy to implement, require O(1) time and memory, and use two integer divmod operations per uniform integer generated. To convert between distributions, and additional $O(n)$ of lookup tables is required. The main benefit of these algorithms is their simplicity, flexibility and high efficiency.
+
+\subsection {Contribution}
 
 \section{Related work}
 
 
 \section{Algorithms for entropy conversion}
+
+\subsection{Fundamental operations}
 
 In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
 
@@ -292,6 +259,8 @@ P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
 This means that $x \sim Uniform\{0...n-1\}$.
 \end{proof}
 
+\subsection{Generating uniform integers}
+
 Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
 
 The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $downsample$ (Algorithm \ref{alg:downsample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $downsample$ is very small.
@@ -341,6 +310,8 @@ Algorithm \ref{alg:generate-uniform} terminates with probability 1.
 \begin{proof}
     If $p$ be the probability that the algorithm loops, where $p<1$, then the probability $q$ that Algorithm \ref{alg:generate-uniform} loops forever is given by $q = (1-p)q \implies q=0$.
 \end{proof}
+
+\subsection{Generating weighted integer distributions}
 
 Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 

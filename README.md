@@ -7,6 +7,7 @@ To do on the paper:
 - The convert algorithm needs to read unlimited inputs
 - Argue memoryless
 - Comparison with interval algorithm
+- Be careful about independence
 
 ```
 > fetch returns an integer with the given distribution
