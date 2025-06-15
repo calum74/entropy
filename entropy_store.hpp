@@ -218,17 +218,19 @@ namespace entropy_store
     {
         auto fetch_entropy = [&](uint32_t &U_s, uint32_t &s)
         {
+            // combine(uint32_t(source() - source_dist.min), uint32_t(source_dist.size()), U_s, s, U_s, s);
             combine(U_s, s, uint32_t(source() - source_dist.min), uint32_t(source_dist.size()), U_s, s);
         };
-        return T(generate_uniform(U_s, s, N / source_dist.size(), output_dist.size(), fetch_entropy)) + output_dist.min;
+        return T(generate_uniform(U_s, s, N / source_dist.size(), (uint32_t)output_dist.size(), fetch_entropy)) + output_dist.min;
     }
 
     template <std::integral uint32_t, entropy_generator Source, distribution SourceDist>
-    int generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
+    uint32_t generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
     {
-        int n = generate(U_s, s, N, source, source_dist, uniform_distribution{0u, uint32_t(output_dist.outputs.size() - 1)});
-        int i = output_dist.outputs[n];
-        combine(U_s, s, n - output_dist.offsets[i], output_dist.weights[i], U_s, s);
+        uint32_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint32_t(0), uint32_t(output_dist.outputs.size() - 1)});
+        uint32_t i = output_dist.outputs[n];
+        //combine(n - output_dist.offsets[i], output_dist.weights[i], U_s, s, U_s, s);
+        combine(U_s, s, n - output_dist.offsets[i], uint32_t(output_dist.weights[i]), U_s, s);
         return i;
     }
 
@@ -237,14 +239,17 @@ namespace entropy_store
     {
         N = 1<<(8 * sizeof(uint32_t) - source_dist.bits);
 
-        // If fetch_entropy fails, we'll need to fall back to fetch_binary:
-
         auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
         {
+            // If fetch_entropy fails, we'll need to fall back to fetch_binary.
+            // But we want to avoid getting here by default except during the bootstrap.
+            // std::cout << "b";
+            assert (s < (uint32_t(1) << (8 * sizeof(uint32_t)-1)));
             s <<= 1;
             auto b = source.fetch_bit();
             assert(b==0 || b==1);
             U_s = (U_s << 1) | b;
+            validate(U_s, s);
         };
 
         auto fetch_entropy = [&](uint32_t &U_s, uint32_t &s)
@@ -252,19 +257,20 @@ namespace entropy_store
             validate(U_s, s);
             auto i = source();
             uint32_t n = source_dist.outputs.size();
-            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s,  N>>source_dist.bits, source_dist.weights[i], fetch_binary);
+            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint32_t(N>>source_dist.bits), uint32_t(source_dist.weights[i]), fetch_binary);
             // !! Why does this have a bug if we write
+            // !! This could be a serious bug linked to higher entropy usage
             // combine(U_s, s, U_n, n, U_s, s);
             combine(U_n, n, U_s, s, U_s, s);
         };
 
-        return generate_uniform(U_s, s, N, output_dist.size(), fetch_entropy) + output_dist.min;
+        return generate_uniform(U_s, s, N, uint32_t(output_dist.size()), fetch_entropy) + output_dist.min;
     }
 
-    template <entropy_generator Source>
+    template <entropy_generator Source, std::integral Buffer = std::uint32_t>
     struct entropy_buffer
     {
-        using value_type = std::uint32_t;
+        using value_type = Buffer;
         using source_type = Source;
 
         entropy_buffer(const Source &src) : source(src)
@@ -279,11 +285,11 @@ namespace entropy_store
         int fetch_bit() { return source.fetch_bit(); }
 
     private:
-        value_type N = 1 << 31, U_s = 0, s = 1;
+        value_type N = value_type(1) << (sizeof(value_type)*8 - 1), U_s = 0, s = 1;
         source_type source;
     };
 
-    template <entropy_generator Source, distribution Distribution>
+    template <entropy_generator Source, distribution Distribution, std::integral Buffer = std::uint32_t>
     struct entropy_converter
     {
         using source_type = Source;
@@ -302,8 +308,13 @@ namespace entropy_store
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
-        entropy_buffer<source_type> m_source;
+        entropy_buffer<source_type, Buffer> m_source;
         distribution_type m_distribution;
     };
 
+    template <entropy_generator Source, distribution Distribution>
+    using entropy_converter64 = entropy_converter<Source, Distribution, std::uint64_t>;
+
+    template <entropy_generator Source>
+    using entropy_buffer64 = entropy_buffer<Source, std::uint64_t>;
 }

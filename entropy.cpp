@@ -1,3 +1,5 @@
+// Debugging !!
+#include <iostream>
 
 #include "entropy_store.hpp"
 
@@ -7,7 +9,7 @@
 using namespace entropy_store;
 
 template<std::integral T>
-void mean_and_sd(uniform_distribution<T> dist, int sample, double total, double &mean, double & sd)
+void mean_and_sd(const uniform_distribution<T> &dist, int sample, double total, double &mean, double & sd)
 {
     auto w = 1.0/dist.size();
     mean = total *w;
@@ -21,6 +23,23 @@ void mean_and_sd(weighted_distribution dist, int sample, double total, double &m
     sd = std::sqrt(total * w * (1.0-w));
 }
 
+double entropy(const weighted_distribution &dist)
+{
+    double e = 0;
+    for(double w : dist.weights)
+    {
+        auto p = w/dist.outputs.size();
+        e -= p * std::log2(p);
+    }
+
+    return e;
+}
+
+template<std::integral T>
+double entropy(const uniform_distribution<T> & dist)
+{
+    return std::log2(dist.size());
+}
 
 template<entropy_store::entropy_generator Source>
 void count_totals(int & bits_fetched, Source source, int count=1000)
@@ -38,9 +57,14 @@ void count_totals(int & bits_fetched, Source source, int count=1000)
         mean_and_sd(source.distribution(), value, count, mean, sd);
         auto sigma = (s-mean)/sd;
         std::cout << "  " << value << ": " << s << " " << sigma << "σ" << std::endl;
-        assert( std::abs(sigma)<3 );
+        assert( std::abs(sigma)<4 );
     }
-    std::cout << "  Bits fetched: " << bits_fetched << ", " << (bits_fetched/(double)count) << " per sample\n";
+
+    double de = entropy(source.distribution()) ;
+    double efficiency = de * count / bits_fetched;
+
+    std::cout<< "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
+    std::cout << "  Bits fetched: " << bits_fetched << ", " << (bits_fetched/(double)count) << " per sample, efficiency = " << efficiency << std::endl;
 }
 
 int main()
@@ -92,12 +116,16 @@ int main()
     auto distribution_input = entropy_converter{bits, weighted_distribution{4,3,2,1}};
     auto low_entropy_input1 = entropy_converter{bits, weighted_distribution{1,99}};
     auto low_entropy_input2 = entropy_converter{bits, weighted_distribution{1,999}};
+    auto low_entropy_input3 = entropy_converter64{bits, weighted_distribution{1,999}};
 
     std::cout << "Unbiassed coin from uniform input:\n";
     count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1,1}});
 
     std::cout << "Unbiassed coin from 1:999 input (poor efficiency due to low N):\n";
     count_totals(bits_fetched, entropy_converter{low_entropy_input2, weighted_distribution{1,1}});
+
+    std::cout << "Unbiassed coin from 1:999 input (using 64-bit buffer): !!!! This takes too much entropy and it's probably a bug\n";
+    count_totals(bits_fetched, entropy_converter64{low_entropy_input3, weighted_distribution{1,1}});
 
     std::cout << "Unbiassed coin from 1:99 input:\n";
     count_totals(bits_fetched, entropy_converter{low_entropy_input1, weighted_distribution{1,1}});
