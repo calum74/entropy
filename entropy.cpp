@@ -24,7 +24,21 @@ void count_totals(int & bits_fetched, Source source, int count=1000)
 int main()
 {
     int bits_fetched = 0;
+
+    // This bit generator is based on std::random_device
+    // For debugging purposes, we've wrapped it in a counter
+    // so we can see the number of bits it's generated.
     auto bits = counted_bit_generator{bits_fetched};
+
+    // To generate a fixed distribution
+    auto d6 = entropy_converter{bits,  uniform_distribution{1,6}};    
+    std::cout << "Here is a d6 roll: " << d6() << std::endl;
+
+    // To generate using multiple distributions, use an entropy_buffer
+    auto gen = entropy_buffer {bits};
+    std::cout << "Here is a d6 roll: " << gen(uniform_distribution{1,6}) << std::endl;
+    std::cout << "Here is a coin flip: " << gen(uniform_distribution{0,1}) << std::endl;
+
     std::cout << "Unbiassed bits:\n";
     count_totals(bits_fetched, bits);
 
@@ -49,7 +63,8 @@ int main()
     std::cout << "1:2:3:4 distribution:\n";
         count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1,2,3,4}});
 
-    // Let's create a biassed input distribution
+    // Demonstrating converting *from* weighted distributions
+    // Create some weighted distributions to use as input:
     auto uniform_input = entropy_converter{bits, uniform_distribution{1,6}};
     auto biassed_input = entropy_converter{bits, weighted_distribution{1,4}};
     auto distribution_input = entropy_converter{bits, weighted_distribution{4,3,2,1}};
