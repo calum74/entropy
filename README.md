@@ -1,3 +1,17 @@
+# Entropy Store
+
+These are files to support the evaluation of the submitted paper.
+
+To view calculations, go to [entropy.ipynb](entropy.ipynb).
+
+To get a reusable C++ implementation of entropy store, go to [entropy_store.hpp](entropy_store.hpp).
+
+You can also run some tests for example entropy.py in Python, and entropy.cpp in C++.
+
+
+# Junk
+
+
 To do on the paper:
 - Section on notation
     Summarise different strategies
