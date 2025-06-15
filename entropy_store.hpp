@@ -222,7 +222,7 @@ namespace entropy_store
     template <typename uint32_t, typename Source, typename T>
     T generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N /= source_dist.outputs.size();
+        N >>= source_dist.bits;
         auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
         {
             // !! Try to avoid getting here
@@ -236,7 +236,7 @@ namespace entropy_store
         {
             auto i = source();
             uint32_t n = source_dist.outputs.size();
-            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N / n, (uint32_t)source_dist.weights[i], fetch_binary);
+            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N>>source_dist.bits, (uint32_t)source_dist.weights[i], fetch_binary);
             combine(U_s, s, U_n, n, U_s, s);
         };
 

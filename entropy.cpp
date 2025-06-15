@@ -3,8 +3,7 @@
 
 #include "entropy_store.hpp"
 
-#include <cassert>
-#include <functional>
+#include <map>
 
 using namespace entropy_store;
 
@@ -143,57 +142,61 @@ struct entropy_store_test
     }
 };
 
+template<entropy_store::entropy_generator Source>
+void count_totals(int & bits_fetched, Source source, int count=1000)
+{
+    source();  // Warm up the cache
+    bits_fetched = 0;
+    std::map<int, int> totals;
+    for(int i=0; i<count; i++)
+    {
+        totals[source()]++;
+    }
+    for(auto &[value,count] : totals)
+        std::cout << "  " << value << ": " << count << std::endl;
+    std::cout << "  Bits fetched: " << bits_fetched << std::endl;
+}
 
 int main()
 {
-    weighted_distribution d = {49, 1};
-    entropy_store_test s;
-    for (int i = 0; i < 100; i++)
-        std::cout << s.generate_uniform(6);
-    std::cout << std::endl;
-    s.generate_uniform(1); // Pre-cache entropy
-    s.bits_fetched = 0;
-    for (int i = 0; i < 100; i++)
-        std::cout << s.generate_distribution(d);
-    std::cout << std::endl;
-    std::cout << "Bits fetched = " << s.bits_fetched << std::endl;
-
-    // bs generates bits from the random device
     int bits_fetched = 0;
     auto bits = counted_bit_generator{bits_fetched};
-    std::cout << bits() << std::endl;
+    std::cout << "Unbiassed bits:\n";
+    count_totals(bits_fetched, bits);
 
-    auto c1 = entropy_buffer(bits);
-    auto u = uniform_distribution(3, 9);
-    c1(u);
-    bits_fetched = 0;
-    for (int i = 0; i < 100; i++)
-        std::cout << c1(u);
-    std::cout << "\nFetched " << bits_fetched << " bits\n";
+    std::cout << "Unbiassed coin as a uniform {0,1}:\n";
+    count_totals(bits_fetched, entropy_converter{bits, uniform_distribution{0,1}});
 
-    // Convert
-    auto s1 = entropy_converter{bits, uniform_distribution{'a', 'z'}};
-    s1();
-    bits_fetched = 0;
-    for (int i = 0; i < 100; i++)
-        std::cout << s1();
-    std::cout << "\nFetched " << bits_fetched << " bits\n";
+    std::cout << "Unbiassed coin as a 1:1 distribution:\n";
+    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1,1}});
 
-    auto s2 = entropy_converter{bits, weighted_distribution{1, 20}};
-    s2();
-    bits_fetched = 0;
-    for (int i = 0; i < 100; i++)
-        std::cout << s2();
-    std::cout << "\nFetched " << bits_fetched << " bits\n";
+    std::cout << "Unbiassed D6:\n";
+    count_totals(bits_fetched, entropy_converter{bits, uniform_distribution{1,6}});
 
-    // Convert s2 back into binary
-    // !! Bug: should be able to use any entropy source here (including a
-    auto w1 = entropy_converter{bits, weighted_distribution{1, 20}};
-    auto s4 = entropy_converter{w1, weighted_distribution{2, 1}};
-    s4();
-    s4();
-    bits_fetched = 0;
-    for (int i = 0; i < 100; ++i)
-        std::cout << s4();
-    std::cout << "\nFetched " << bits_fetched << " bits\n";
+    std::cout << "1:2 biassed coin:\n";
+    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1,2}});
+
+    std::cout << "49:2 biassed coin:\n";
+        count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{49,2}});
+
+    std::cout << "1:2:3:4 distribution:\n";
+        count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1,2,3,4}});
+
+    // Let's create a biassed input distribution
+    auto uniform_input = entropy_converter{bits, uniform_distribution{1,6}};
+    auto biassed_input = entropy_converter{bits, weighted_distribution{1,4}};
+    auto distribution_input = entropy_converter{bits, weighted_distribution{4,3,2,1}};
+
+    std::cout << "Unbiassed coin from uniform input:\n";
+    count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1,1}});
+
+    std::cout << "Unbiassed coin from biassed input:\n";
+    count_totals(bits_fetched, entropy_converter{biassed_input, weighted_distribution{1,1}});
+
+    std::cout << "Unbiassed coin from distribution input:\n";
+    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{1,1}});
+
+    std::cout << "4:1:5 distribution from 4:3:2:1 input:\n";
+    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{4,1,5}});
+
 }
