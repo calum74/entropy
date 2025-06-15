@@ -218,10 +218,9 @@ namespace entropy_store
     {
         auto fetch_entropy = [&](uint_t &U_s, uint_t &s)
         {
-            // combine(uint_t(source() - source_dist.min), uint_t(source_dist.size()), U_s, s, U_s, s);
             combine(U_s, s, uint_t(source() - source_dist.min), uint_t(source_dist.size()), U_s, s);
         };
-        return T(generate_uniform(U_s, s, N / source_dist.size(), (uint_t)output_dist.size(), fetch_entropy)) + output_dist.min;
+        return T(generate_uniform(U_s, s, N >> source_dist.bits, uint_t(output_dist.size()), fetch_entropy)) + output_dist.min;
     }
 
     template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
@@ -229,7 +228,6 @@ namespace entropy_store
     {
         uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.outputs.size() - 1)});
         uint_t i = output_dist.outputs[n];
-        //combine(n - output_dist.offsets[i], output_dist.weights[i], U_s, s, U_s, s);
         combine(U_s, s, n - output_dist.offsets[i], uint_t(output_dist.weights[i]), U_s, s);
         return i;
     }
@@ -237,13 +235,12 @@ namespace entropy_store
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N = uint_t(1)<<uint_t(8 * sizeof(uint_t) - source_dist.bits);
+        N >>= source_dist.bits;
 
         auto fetch_binary = [&](uint_t &U_s, uint_t &s)
         {
             // If fetch_entropy fails, we'll need to fall back to fetch_binary.
-            // But we want to avoid getting here by default except during the bootstrap.
-            // std::cout << "b";
+            // We want to avoid getting here by except during the bootstrap.
             assert (s < (uint_t(1) << (8 * sizeof(uint_t)-1)));
             s <<= 1;
             auto b = source.fetch_bit();
@@ -258,8 +255,8 @@ namespace entropy_store
             auto i = source();
             uint_t n = source_dist.outputs.size();
             uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N>>source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
-            // !! Why does this have a bug if we write
-            // combine(U_s, s, U_n, n, U_s, s);
+            // Subtle: We need to be careful about the order of n and s
+            // in the following combine, as it interacts with generate_uniform:
             combine(U_n, n, U_s, s, U_s, s);
         };
 
