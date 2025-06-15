@@ -73,7 +73,7 @@ int main()
     std::cout << "Unbiassed coin from uniform input:\n";
     count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1,1}});
 
-    std::cout << "Unbiassed coin from 1:999 input:\n";
+    std::cout << "Unbiassed coin from 1:999 input: !!!!!!!!!!!!!!!!!!!!!!!!!!\n";
     count_totals(bits_fetched, entropy_converter{low_entropy_input, weighted_distribution{1,1}});
 
     std::cout << "Unbiassed coin from 1:4 input:\n";
@@ -83,8 +83,8 @@ int main()
     count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{1,1}});
 
     std::cout << "4:1:5 distribution from 1:1 input:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{4,1,5}}, 1000000);
+    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{4,1,5}});
 
-    std::cout << "4:1:5 distribution from 4:3:2:1 input:\n";
-    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{4,1,5}}, 1000000);
+    std::cout << "4:1:5 distribution from 4:3:2:1 input: !!!!!!!!!!!!!!!!!!!!!!!\n";
+    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{4,1,5}});
 }
