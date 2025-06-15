@@ -162,12 +162,12 @@ namespace entropy_store
     template <std::integral uint32_t>
     void combine(uint32_t U_n, uint32_t n, uint32_t U_m, uint32_t m, uint32_t &U_nm, uint32_t &nm)
     {
+        validate(U_n, n);
+        validate(U_m, m);
         U_nm = m * U_n + U_m;
         nm = m * n;
         assert(n <= nm);
         assert(m <= nm);
-        validate(U_n, n);
-        validate(U_m, m);
         validate(U_nm, nm);
     }
 
@@ -182,20 +182,27 @@ namespace entropy_store
     template <std::integral uint32_t, std::invocable<uint32_t &, uint32_t &> Fn>
     uint32_t generate_uniform(uint32_t &U_s, uint32_t &s, uint32_t N, uint32_t n, Fn fetch_entropy)
     {
+        assert(N >= n);
+        validate(U_s, s);
         for (;;)
         {
             while (s < N)
                 fetch_entropy(U_s, s);
+            validate(U_s, s);
+            auto debug_U_s = U_s;
+            auto debug_s = s;
             // Resample entropy s to a multiple of m
             uint32_t r = s / n;
             uint32_t c = s % n;
-            if (s >= c) [[likely]]
+            if (U_s >= c) [[likely]]
             {
                 // Resample successful
                 U_s -= c;
                 auto U_n = U_s % n;
                 U_s = U_s / n;
+                assert( r == (s-c)/n );
                 s = r;
+                validate(U_s, s);
                 return U_n;
             }
             else
@@ -219,7 +226,7 @@ namespace entropy_store
     template <std::integral uint32_t, entropy_generator Source, distribution SourceDist>
     int generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
     {
-        int n = generate(U_s, s, N, source, source_dist, uniform_distribution{0ul, output_dist.outputs.size() - 1});
+        int n = generate(U_s, s, N, source, source_dist, uniform_distribution{0u, uint32_t(output_dist.outputs.size() - 1)});
         int i = output_dist.outputs[n];
         combine(U_s, s, n - output_dist.offsets[i], output_dist.weights[i], U_s, s);
         return i;
@@ -228,7 +235,11 @@ namespace entropy_store
     template <std::integral uint32_t, entropy_generator Source, std::integral T>
     T generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N >>= source_dist.bits;
+        N = 1<<(32 - source_dist.bits);
+        // N >>= source_dist.bits;
+
+        // If fetch_entropy fails, we'll need to fall back to fetch_binary:
+
         auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
         {
             s <<= 1;
@@ -239,6 +250,7 @@ namespace entropy_store
 
         auto fetch_entropy = [&](uint32_t &U_s, uint32_t &s)
         {
+            validate(U_s, s);
             auto i = source();
             uint32_t n = source_dist.outputs.size();
             uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N>>source_dist.bits, source_dist.weights[i], fetch_binary);
