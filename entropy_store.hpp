@@ -209,7 +209,6 @@ namespace entropy_store
             {
                 // Resample unsuccessful
                 s = c;
-                std::cout << "$";  // Debug
             }
         }
     }
@@ -260,7 +259,6 @@ namespace entropy_store
             uint_t n = source_dist.outputs.size();
             uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N>>source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
             // !! Why does this have a bug if we write
-            // !! This could be a serious bug linked to higher entropy usage
             // combine(U_s, s, U_n, n, U_s, s);
             combine(U_n, n, U_s, s, U_s, s);
         };
