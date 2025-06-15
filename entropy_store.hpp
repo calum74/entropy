@@ -225,22 +225,21 @@ namespace entropy_store
         N >>= source_dist.bits;
         auto fetch_binary = [&](uint32_t &U_s, uint32_t &s)
         {
-            // !! Try to avoid getting here
-            // We need this if we fail to fetch from primary source
-            std::cout << "b";
             s <<= 1;
-            U_s = (U_s << 1) | source.fetch_bit();
+            auto b = source.fetch_bit();
+            assert(b==0 || b==1);
+            U_s = (U_s << 1) | b;
         };
 
         auto fetch_entropy = [&](uint32_t &U_s, uint32_t &s)
         {
             auto i = source();
             uint32_t n = source_dist.outputs.size();
-            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N>>source_dist.bits, (uint32_t)source_dist.weights[i], fetch_binary);
+            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N>>source_dist.bits, source_dist.weights[i], fetch_binary);
             combine(U_s, s, U_n, n, U_s, s);
         };
 
-        return generate_uniform(U_s, s, N, uint32_t(output_dist.max - output_dist.min + 1), fetch_entropy) + output_dist.min;
+        return generate_uniform(U_s, s, N, output_dist.size(), fetch_entropy) + output_dist.min;
     }
 
     // !! Needs a better name that's all.
