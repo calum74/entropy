@@ -65,6 +65,8 @@ void count_totals(int & bits_fetched, Source source, int count=1000)
 
     std::cout<< "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
     std::cout << "  Bits fetched: " << bits_fetched << ", " << (bits_fetched/(double)count) << " per sample, efficiency = " << efficiency << std::endl;
+
+    // assert(efficiency>0.99); !!
 }
 
 int main()
