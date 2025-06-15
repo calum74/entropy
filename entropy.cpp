@@ -40,7 +40,7 @@ void count_totals(int & bits_fetched, Source source, int count=1000)
         std::cout << "  " << value << ": " << s << " " << sigma << "σ" << std::endl;
         assert( std::abs(sigma)<3 );
     }
-    std::cout << "  Bits fetched: " << bits_fetched << std::endl;
+    std::cout << "  Bits fetched: " << bits_fetched << ", " << (bits_fetched/(double)count) << " per sample\n";
 }
 
 int main()
@@ -96,7 +96,7 @@ int main()
     std::cout << "Unbiassed coin from uniform input:\n";
     count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1,1}});
 
-    std::cout << "Unbiassed coin from 1:999 input:\n";
+    std::cout << "Unbiassed coin from 1:999 input (poor efficiency due to low N):\n";
     count_totals(bits_fetched, entropy_converter{low_entropy_input2, weighted_distribution{1,1}});
 
     std::cout << "Unbiassed coin from 1:99 input:\n";
