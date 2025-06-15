@@ -11,9 +11,8 @@ namespace entropy_store
     struct uniform_distribution
     {
         using value_type = T;
-        // Inclusive values, min<=max
-        int min, max;
-        uint32_t bits; // Number of bits capacity required to represent this
+        int min, max;  // Inclusive values, min<=max
+        std::uint32_t bits; // Number of bits capacity required to represent this
 
         uniform_distribution(T a, T b) : min(a), max(b), bits(std::ceil(std::log2(size()))) {}
 
@@ -44,13 +43,13 @@ namespace entropy_store
         }
 
         std::vector<std::uint32_t> weights, outputs, offsets;
-        uint32_t bits;
+        std::uint32_t bits;
     };
 
     template <typename Distribution>
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
-        { dist.bits } -> std::same_as<std::uint32_t>;
+        dist.bits;
     };
 
     template <typename Source>
@@ -79,7 +78,7 @@ namespace entropy_store
 
         distribution_type distribution() const { return {rd.min(), rd.max()}; }
 
-        int fetch_bit(); //  { return rd()&1; } // Unused
+        int fetch_bit(); // Unused
 
     private:
         std::random_device rd;
@@ -154,12 +153,22 @@ namespace entropy_store
     using counted_bit_generator = counter<random_bit_generator>;
 
     template <std::integral uint32_t>
+    void validate(uint32_t U_n, uint32_t n)
+    {
+        assert(U_n < n);
+    }
+
+
+    template <std::integral uint32_t>
     void combine(uint32_t U_n, uint32_t n, uint32_t U_m, uint32_t m, uint32_t &U_nm, uint32_t &nm)
     {
         U_nm = m * U_n + U_m;
         nm = m * n;
         assert(n <= nm);
         assert(m <= nm);
+        validate(U_n, n);
+        validate(U_m, m);
+        validate(U_nm, nm);
     }
 
     template <std::integral uint32_t>
@@ -197,7 +206,7 @@ namespace entropy_store
         }
     }
 
-    template <typename uint32_t, typename Source, typename U, typename T>
+    template <std::integral uint32_t, entropy_generator Source, std::integral U, std::integral T>
     T generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const uniform_distribution<U> &source_dist, const uniform_distribution<T> &output_dist)
     {
         auto fetch_entropy = [&](uint32_t &U_s, uint32_t &s)
@@ -207,10 +216,7 @@ namespace entropy_store
         return T(generate_uniform(U_s, s, N / source_dist.size(), output_dist.size(), fetch_entropy)) + output_dist.min;
     }
 
-    template <typename uint32_t, typename Source, typename SourceDist>
-    int generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist);
-
-    template <typename uint32_t, typename Source, typename SourceDist>
+    template <std::integral uint32_t, entropy_generator Source, distribution SourceDist>
     int generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
     {
         int n = generate(U_s, s, N, source, source_dist, uniform_distribution{0ul, output_dist.outputs.size() - 1});
@@ -219,7 +225,7 @@ namespace entropy_store
         return i;
     }
 
-    template <typename uint32_t, typename Source, typename T>
+    template <std::integral uint32_t, entropy_generator Source, std::integral T>
     T generate(uint32_t &U_s, uint32_t &s, uint32_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
         N >>= source_dist.bits;
@@ -242,7 +248,6 @@ namespace entropy_store
         return generate_uniform(U_s, s, N, output_dist.size(), fetch_entropy) + output_dist.min;
     }
 
-    // !! Needs a better name that's all.
     template <entropy_generator Source>
     struct entropy_buffer
     {
@@ -253,8 +258,7 @@ namespace entropy_store
         {
         }
 
-        template <typename Distribution>
-        auto operator()(const Distribution &dist)
+        auto operator()(const distribution auto&dist)
         {
             return generate(U_s, s, N, source, source.distribution(), dist);
         }
@@ -266,7 +270,7 @@ namespace entropy_store
         source_type source;
     };
 
-    template <entropy_generator Source, typename Distribution>
+    template <entropy_generator Source, distribution Distribution>
     struct entropy_converter
     {
         using source_type = Source;
