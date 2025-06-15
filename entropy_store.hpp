@@ -209,6 +209,7 @@ namespace entropy_store
             {
                 // Resample unsuccessful
                 s = c;
+                std::cout << "$";  // Debug
             }
         }
     }
@@ -237,7 +238,7 @@ namespace entropy_store
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N = 1<<(8 * sizeof(uint_t) - source_dist.bits);
+        N = uint_t(1)<<uint_t(8 * sizeof(uint_t) - source_dist.bits);
 
         auto fetch_binary = [&](uint_t &U_s, uint_t &s)
         {

@@ -126,7 +126,7 @@ int main()
     std::cout << "Unbiassed coin from 1:999 input (poor efficiency due to low N):\n";
     count_totals(bits_fetched, entropy_converter{low_entropy_input2, weighted_distribution{1,1}});
 
-    std::cout << "Unbiassed coin from 1:999 input (using 64-bit buffer): !!!! This takes too much entropy and it's probably a bug\n";
+    std::cout << "Unbiassed coin from 1:999 input (using 64-bit buffer):\n";
     count_totals(bits_fetched, entropy_converter64{low_entropy_input3, weighted_distribution{1,1}});
 
     std::cout << "Unbiassed coin from 1:99 input:\n";
