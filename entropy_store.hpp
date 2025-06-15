@@ -188,6 +188,7 @@ namespace entropy_store
         {
             while (s < N)
                 fetch_entropy(U_s, s);
+            assert(s>=n);
             validate(U_s, s);
             auto debug_U_s = U_s;
             auto debug_s = s;
@@ -198,12 +199,9 @@ namespace entropy_store
             {
                 // Resample successful
                 U_s -= c;
-                s -= c;
-                s /= n;
                 auto U_n = U_s % n;
                 U_s = U_s / n;
-                //assert( r == (s-c)/n );
-                // s = r;
+                s = r;
                 validate(U_s, s);
                 return U_n;
             }
@@ -254,8 +252,10 @@ namespace entropy_store
             validate(U_s, s);
             auto i = source();
             uint32_t n = source_dist.outputs.size();
-            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, N>>source_dist.bits, source_dist.weights[i], fetch_binary);
-            combine(U_s, s, U_n, n, U_s, s);
+            uint32_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s,  N>>source_dist.bits, source_dist.weights[i], fetch_binary);
+            // !! Why does this have a bug if we write
+            // combine(U_s, s, U_n, n, U_s, s);
+            combine(U_n, n, U_s, s, U_s, s);
         };
 
         return generate_uniform(U_s, s, N, output_dist.size(), fetch_entropy) + output_dist.min;
