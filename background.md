@@ -25,3 +25,16 @@ Although Knuth-Yao and the interval algorithm are optimal for generating single 
 
 To achieve an efficiency closer to 1, various batching schemes have been devised.
 
+# Contribution
+
+We have developed a new algorithms for
+
+- uniform integer generation
+- generating an integer weighted distribution
+- extracting entropy from an integer weighted distribution
+
+We have shown that these algorithms generate perfect distributions and are asymptotically optimal. The main benefit of these algorithms are their relative simplicity and flexibility, avoiding the need for batching or complex data structures.
+
+# Proof of bijection
+
+

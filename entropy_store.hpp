@@ -190,8 +190,6 @@ namespace entropy_store
                 fetch_entropy(U_s, s);
             assert(s>=n);
             validate(U_s, s);
-            auto debug_U_s = U_s;
-            auto debug_s = s;
             // Resample entropy s to a multiple of m
             uint_t r = s / n;
             uint_t c = s % n;
@@ -199,7 +197,7 @@ namespace entropy_store
             {
                 // Resample successful
                 U_s -= c;
-                auto U_n = U_s % n;
+                uint_t U_n = U_s % n;
                 U_s = U_s / n;
                 s = r;
                 validate(U_s, s);
