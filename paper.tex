@@ -29,7 +29,7 @@
 \geometry{margin=1in}
 
 % Title
-\title{Algorithms for efficient entropy conversion}
+\title{Efficient entropy conversion using an entropy store}
 \author{Calum Grant \\
 OxFORD Asset Management \\
 calum.grant@oxam.com}
@@ -66,11 +66,11 @@ calum.grant@oxam.com}
 
 \section{Introduction}
 
-In this paper, we will study the generation of perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but there are practical applications of this such as XX.
+In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but there are practical applications of this such as XX.
 
-The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$ \ref{entropy}. We will be primarily focussed on improving the efficiency of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
+The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$ \ref{entropy}. We will be primarily focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits when generating integers one at a time, because algorithms must always fetch entropy in units. In fact we must fetch up to 2 extra bits of entropy per integer generated \ref{xx}.  For example to roll a fair d6 die requires $\frac{11}{3} \approxeq 3.6$ coin flips on average, but the entropy contained in the d6 is $\log_26 \approxeq 2.58$. When shuffling a deck of 52 cards, fetching integers one at a time requires $\approxeq 278$ bits of entropy to perform the shuffle, against an output entropy of $\log_252! \approxeq 225.58$.
+Whilst this problem has been studied extensively, there are theoretical limits when generating integers one at a time, because algorithms must always fetch entropy in units. XX showed that we must fetch up to 2 extra bits of entropy per integer generated.  For example to roll a fair d6 die requires $\frac{11}{3} \approxeq 3.6$ coin flips on average, but the entropy contained in the d6 is $\log_26 \approxeq 2.58$. When shuffling a deck of 52 cards, fetching integers one at a time requires $\approxeq 278$ bits of entropy to perform the shuffle, against an output entropy of $\log_252! \approxeq 225.58$.
 
 To mitigate these entropy losses, it's possible to generate random integers in batches. The major drawback with existing batching schemes is that they are somewhat complex and expensive to implement, or require you to know beforehand which numbers you need to generate. Whilst they improve entropy efficiency they still compromise on performance and efficiency.
 
@@ -87,11 +87,14 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \section{Algorithms for entropy conversion}
 
-\subsection{Fundamental operations}
-
 In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
 
-We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), and use these to convert entropy between arbitrary distributions (Algorithm \ref{alg:convert-distribution}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+
+Insert notation here...
+
+\subsection{Fundamental operations}
+
 
 Algorithm \ref{alg:combine} combines entropy from two uniform distrete random variables into a single uniform random variable.
 
@@ -103,6 +106,7 @@ Algorithm \ref{alg:combine} combines entropy from two uniform distrete random va
     \Require $n>0$, $m>0$
     \Require $U_n$ is uniformly distributed over $[0,n)$
     \Require $U_m$ is uniformly distributed over $[0,m)$
+    \Require $U_n$ and $U_m$ are independently distributed
     \Ensure $nm$ is $n * m$
     \Ensure $U_{nm}$ is uniformly distributed over $[0,nm)$
 \Procedure{combine}{$U_n, n, U_m, m$} 
@@ -169,11 +173,11 @@ X = \lfloor Z/n \rfloor, Y = Z \mod n
 Since $X$ and $Y$ are the original random variables, they are independent and uniformly distributed.
 \end{proof}
 
-Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:combine} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. The biassed bit also contains entropy, and in fact the total entropy returned by this algorithm is the same as its input entropy.
+Algorithm \ref{alg:resample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:combine} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. The biassed bit also contains entropy, and in fact the total entropy returned by this algorithm is the same as its input entropy.
 
 \begin{algorithm}
-\caption{Downsampling uniformly distributed integers}
-\label{alg:downsample}
+\caption{Resampling uniformly distributed integers}
+\label{alg:resample}
 \begin{algorithmic}[1]
     \Require $U_{n}$, $m$ and $n$ are integers 
     \Require $0 \le m \le n$
@@ -182,14 +186,14 @@ Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a sma
 \Ensure $x = m$ or $x=n-m$
 \Ensure $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
 \Ensure $U_x$ and $B$ are independent
-\Procedure{downsample}{$U_n, n, m$} 
+\Procedure{resample}{$U_n, n, m$} 
   \If{$U_n < n$}
     \State $B \gets True$  
     \State $x \gets m$
     \State $U_x \gets U_n$
   \Else
     \State $B \gets False$  
-    \State $x \gets m-n$
+    \State $x \gets n-m$
     \State $U_x \gets U_n-m$
   \EndIf
   \State \Return $U_x, x, B$
@@ -198,8 +202,8 @@ Algorithm \ref{alg:downsample} converts a uniformly distributed integer to a sma
 \end{algorithm}
 
 \begin{lemma}
-In Algorithm \ref{alg:downsample}, $U_x$ is uniformly distributed over $[0,x)$.
-\label{lem:downsample}
+In Algorithm \ref{alg:resample}, $U_x$ is uniformly distributed over $[0,x)$.
+\label{lem:resample}
 \end{lemma}
 
 \begin{proof}
@@ -211,61 +215,43 @@ If $y < m$, then $y$ is uniformly distributed between $[0,m)$.
 If $y \ge m$, then $y$ is uniformly distributed between $[m, n)$, so $y-m$ is uniformly distributed between $[0, n-m)$.
 \end{proof}
 
-Algorithm \ref{alg:upsample} increases the size of a uniform distribution by incorporating Bernoulli entropy. This could be used to harness entropy from biassed Bernoulli sources.
-
-\begin{algorithm}
-\caption{Upsampling uniformly distributed integers}
-\label{alg:upsample}
-\begin{algorithmic}[1]
-\Require $U_x$ is uniformly distributed over $[0,x)$
-\Require $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
-\Require $x=m$ if $B$ else $x=n-m$
-\Ensure $U_n$ is uniformly distributed over $[0,n)$.
-\Procedure{upsample}{$U_x, x, n, B$} 
-  \If{$B$}
-    \State $U_n \gets U_x$  
-  \Else
-    \State $U_n \gets n-x+U_x$  
-  \EndIf
-  \State \Return $U_n$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
 \begin{lemma}
-In Algorithm \ref{alg:upsample}, $U_{n}$ is uniformly distributed over $[0,n)$.
+\label{lem:conservation}
+Algorithms \ref{alg:combine}-\ref{alg:resample} conserve entropy.
 \end{lemma}
 
 \begin{proof}
-Let $x = U_{n} \sim X$. The possible values of $X$ are $\{0 ... n-1\}$.
+For Algorithm \ref{alg:combine}, we see that the initial entropy $H_{lhs}$ and the final entropy $H_{rhs}$ are equal.
 
-Case 1: $x<n$
+\begin{equation}
+H_{lhs} = \log_2n + \log_2m = \log_2nm = H_{rhs}
+\end{equation}
 
-\begin{align}
-P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
-       & = \frac{m}{n}\frac{1}{m} + 0 \\
-       & = \frac{1}{n}
-\end{align}
-
-Case 2: $x \ge n$
+The same proof applies to Algorithm \ref{alg:divide}. For Algorithm \ref{alg:resample} we need to look at the expected entropy $\mathbb{E}(H)$ before and after the operation:
 
 \begin{align}
-P(x=X) & = P(B)P(x=X|B) + P(\neg B)P(x=X|\neg B) \\
-       & = 0 + (1 - \frac{m}{n})\frac{1}{n-m}  \\
-       & = \frac{n - m}{n}\frac{1}{n-m} \\
-       & = \frac{1}{n}
+H_{lhs}             = &\log_2n \\
+\mathbb{E}(H_{rhs}) = & \mathbb{E}(H(B) + H(U_x)) \\
+                    = & \mathbb{E}(H(B)) + \mathbb{E}(H(U_x)) \\
+                    = & -p\log_2p - (1-p)\log_2(1-p) + p\log_2m + (1-p)\log_2(n-m) \\
+                    = & -\frac{m}{n}\log_2\frac{m}{n} - \frac{n-m}{n}\log_2\frac{n-m}{n} + \frac{m}{n}\log_2m + \frac{n-m}{n}\log_2(n-m) \\
+                    = &(-\frac{m}{n}\log_2m + -\frac{m}{n}\log_2n) \\
+                    & + (- \frac{n-m}{n}\log_2(n-m) + \frac{n-m}{n}\log_2n)\\
+                    &+ \frac{m}{n}\log_2m + \frac{n-m}{n}\log_2(n-m) \\
+                     = & \log_2n
 \end{align}
 
-This means that $x \sim Uniform\{0...n-1\}$.
 \end{proof}
+
+Of course, entropy conversion algorithms which rely on resampling \em do \em lose entropy, and this can be quantified by the $B$ term in Algorithm \ref{alg:resample}. Every time an algorithm takes a decision, entropy is lost.
 
 \subsection{Generating uniform integers}
 
 Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
 
-The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $downsample$ (Algorithm \ref{alg:downsample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $downsample$ is very small.
+The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $resample$ (Algorithm \ref{alg:resample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $resample$ is very small.
 
-The $downsample$ on line 6 resizes $s$ to a multiple of $n$. It is overwhelmingly likely that $b$ is false because $n$ is much smaller than $s$, so we can then proceed to line 8 where we divide $U_s$ into $U_n$ and the new $U_s$. On line 9, return $U_n$ as the result and $U_s$ and $s$ as the input to the next invocation.
+The $resample$ on line 6 resizes $s$ to a multiple of $n$. It is overwhelmingly likely that $b$ is false because $n$ is much smaller than $s$, so we can then proceed to line 8 where we divide $U_s$ into $U_n$ and the new $U_s$. On line 9, return $U_n$ as the result and $U_s$ and $s$ as the input to the next invocation.
 
 An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{adx:source}.
 
@@ -283,7 +269,7 @@ An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix 
     \While {$s < N$}
         \State $U_s, s \gets combine(U_s, s, fetch(), 2)$
     \EndWhile
-    \State $U_s, s, b \gets downsample(U_s, s, s \mod n)$ 
+    \State $U_s, s, b \gets resample(U_s, s, s \mod n)$ 
     \If{$ \neg b$}
         \State $U_n, U_s, s \gets divide(U_s, s, n)$
         \State \Return $U_s, s, U_n$
@@ -300,155 +286,10 @@ $U_s$ is uniformly distributed over $[0,s)$.
 \end{lemma}
 
 \begin{proof}
-The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:downsample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:downsample}, $U_n$ and $U_s$ are uniformly distributed.
+The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:resample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:resample}, $U_n$ and $U_s$ are uniformly distributed.
 \end{proof}
 
-\begin{lemma}
 Algorithm \ref{alg:generate-uniform} terminates with probability 1.
-\end{lemma}
-
-\begin{proof}
-    If $p$ be the probability that the algorithm loops, where $p<1$, then the probability $q$ that Algorithm \ref{alg:generate-uniform} loops forever is given by $q = (1-p)q \implies q=0$.
-\end{proof}
-
-\subsection{Generating weighted integer distributions}
-
-Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
-
-The algorithm works by construct an injective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This is a simple lookup table of size $n$. If $n$ is very large we'll need to implement this differently.
-
-To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the lookup table as the result. 
-
-Notice though that we also can generate a uniform distribution of size $w_i$, due to the index of $n$ within each output range. Figure \ref{fig:bins} illustrates this. When we perform a multi-way downsample, the output is a distribution $X$ and a uniform distribution $Y \sim Uniform [0,w_i)$. $Y$ is uniformly distributed because it is drawn from a uniform distribution.
-
-% Figure bin: 
-
-Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy in $Y$ then no entropy is lost. So the final step in Algorithm \ref{alg:generate-distribution} is to capture the extra entropy from the uniform distribution $Y$ back into the entropy store.
-
-\begin{lemma}
-    \label{lem:distribution-conservation}
-    When we downsample $Uniform\{0..n-1\}$ into weighted distribution $X$ and $Y \sim Uniform\{0,w_i-1\}$, entropy is conserved.
-\end{lemma}
-
-\begin{proof}
-    \begin{align}
-    E(H_{lhs}) & = \log_2 n \\
-    E(H_{rhs}) & = E(H(X)) + E(H(Y)) \\ 
-               & = - \sum_i p_i \log_2p_i + \sum_i p_iH(Y|X=i) \\
-               & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
-               & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
-               & = - \sum_i \frac{w_i}{n}\log_2 w_i + \sum_i \frac{w_i}{n} \log_2 n + \sum_i \frac{w_i}{n}\log_2 w_i \\
-               & = \sum_i \frac{w_i}{n} \log_2 n \\
-               & = \frac{\log_2 n}{n} \sum_i w_i \\
-               & = \frac{\log_2 n}{n} n \\
-               & = \log_2 n
-    \end{align}
-\end{proof}
-
-\begin{algorithm}
-\caption{Constructing lookup tables for a weighted random variable}
-\label{alg:generate-lookup-tables}
-\begin{algorithmic}[1]
-\Require $weights$ is a list of integers $\ge0$
-\Procedure{make\_distribution}{$weights$} 
-  \State $outputs \gets []$
-  \State $offsets \gets []$
-  \For {$w_i \in weights$}
-    \State $offsets \gets offsets + [|outputs|]$
-    \State $outputs \gets outputs + [i] * w_i$
-  \EndFor
-  \State \Return $outputs, offsets$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
-\caption{Generating a weighted random variable}
-\label{alg:generate-distribution}
-\begin{algorithmic}[1]
-\Require $U_s$, $s$, $N$ are integers
-\Require $weights$ is an array of integers $w_i \ge 0$
-\Require $offset$ generated by $make\_distribution$ 
-\Require $outputs$ generated by $make\_distribution$
-\Require $U_s$ is uniformly distributed over $[0,s)$
-\Require $N >> |outputs|$
-\Ensure $U_s$ is uniformly distributed over $[0,s)$
-\Procedure{generate\_distribution}{$U_s, s, N, weights, outputs, offsets$} 
-    \State $n \gets |outputs|$
-    \State $U_s, s, U_n \gets generate\_uniform(U_s, s, N, n)$
-    \State $U_s, s = combine(U_s, s, U_n - offsets[U_n], weights[outputs[U_n]])$
-    \State \Return $U_s, s, outputs[U_n]$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-Algorithm \ref{alg:combine-distribution} performs the inverse of Algorithm \ref{alg:generate-distribution}. It reconstructs a uniform distribution of size $n$ from the weighted distribution variable, and combines it with a uniform distribution of size $w_i$. This allows the entropy store to absorb the entropy from $i$.
-
-Note that when performing the inverse of Algorithm \ref{alg:generate-distribution}, we don't need to supply it the *same* random variable $U_x$ that was originally used, and we can just get one from our entropy store.
-
-We'll ignore potential integer overflows of $U_s$ and $s$.
-
-\begin{algorithm}
-\caption{Extracting entropy from a weighted random variable}
-\label{alg:combine-distribution}
-\begin{algorithmic}[1]
-\Require $U_s$, $s$, $N$ are integers
-\Require $weights$ is an array of integers $w_i \ge 0$
-\Require $offset$ generated by $make\_distribution$ 
-\Require $outputs$ generated by $make\_distribution$
-\Require $U_s$ is uniformly distributed over $[0,s)$
-\Require $N >> |outputs|$
-\Ensure $U_s$ is uniformly distributed over $[0,s)$
-\Procedure{combine\_distribution}{$U_s, s, N, weights, outputs, offsets, i$} 
-    \State $U_s, s, U_x \gets generate\_uniform(U_s, s, N, weights[i])$
-    \State $U_s, s \gets combine(U_s, s, U_x + offsets[i], |outputs|)$
-    \State \Return $U_s, s$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-Finally we can compose Algorithm \ref{alg:generate-distribution} and Algorithm \ref{alg:combine-distribution} into a single step in Algorithm \ref{alg:convert-distribution}. This allows entropy to be converted from one form to another via the entropy store.
-
-
-\begin{algorithm}
-\caption{Converting entropy between weighted random variables}
-\label{alg:convert-distribution}
-\begin{algorithmic}[1]
-\Require $U_s$, $s$, $N$ are integers
-\Require $W_{in}$ is an array of integers $w_i \ge 0$
-\Require $O_{in}$ generated by $make\_distribution$ 
-\Require $T_{in}$ generated by $make\_distribution$
-\Require $U_s$ is uniformly distributed over $[0,s)$
-\Require $N >> |outputs|$ TODO
-\Require $i$ is distributed fairly according to $W_{in}$, $O_{in}$ and $T_{in}$
-\Ensure $j$ is distributed fairly according to $W_{in}$, $O_{in}$ and $T_{in}$
-\Ensure $U_s$ is uniformly distributed over $[0,s)$
-\Procedure{convert\_distribution}{$U_s, s, N, W_{in}, O_{in}, T_{in}, W_{out}, O_{out}, T_{out}, i$} 
-    \State $U_s, s \gets combine\_distribution(U_s, s, N, W_{in}, I_{in}, T_{in}, i)$
-    \State $U_s, s, j \gets generate\_distribution(U_s, s, N, W_{out}, O_{out}, T_{out})$
-    \State \Return $U_s, s, j$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-
-\section {Efficiency of entropy conversion algorithms}
-
-In this section we'll calculate bounds on the entropy efficiency of Algortithms \ref{alg:combine}-\ref{alg:convert-distribution}, and prove that these algorithms have entropy efficiency 1 or arbitrarily close to 1.
-
-Insert notation here.
-
-\begin{lemma}
-\label{lem:conservation}
-Algorithms \ref{alg:combine}-\ref{alg:upsample} conserve entropy.
-\end{lemma}
-
-\begin{proof}
-We can calculate the before and after entropy for each of these algorithms to see that they are the same. But we can also observe that since each algorithm has an inverse (Algorithm \ref{alg:combine} inverts Algorithm \ref{alg:divide}; Algorithm \ref{alg:upsample} inverts Algorithm \ref{alg:downsample}), entropy must be conserved.
-\end{proof}
-
-The \em rejection sampling \em algorithm (Algorithm \ref{alg:rejection-sampling}), and Fast Dice Roller (Algorithm \ref{alg:fast-dice-roller}) use a form of Algorithm \ref{alg:downsample}, but do lose entropy because they throw away the $B$ term. The entropy of the internal decision is exactly the entropy that is lost by these algorithms.
 
 \begin{lemma}
     \label{lem:shannon-inequality}
@@ -513,7 +354,7 @@ The total entropy lost by the algorithm is given by the number of iterations of 
 = & -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 
-We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em downsample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
+We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em resample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
 \end{proof}
 
 The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values are found in $U_s$ and $s$, so we can only give an upper bound.
@@ -547,25 +388,127 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitra
 \end{corollary}
 
 \begin{proof}
-$H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
+$H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
 \end{proof}
 
 
-\begin{corollary}
-The entropy loss of Algorithm \ref{alg:convert_u_u} is $H_{loss}(\frac{n-1}{N})$.
-\end{corollary}
+
+
+
+
+\subsection{Generating weighted integer distributions}
+
+Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
+
+The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the lookup table as the result. 
+
+The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into uniformly distributed chunks of size $w_i$, as illutrated in Figure \ref{fig:chunks}, we see that each chunk contains $\log_2w_i$ entropy. Since the entropy in each chunk is in a uniform distribution, we can use $combine$ to return this entropy back to the entropy store.
+
+Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
+
+\begin{definition}
+    Let $f_{GD}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{0,n-1\}$ to independent random variables $Y$ and $Z \sim Uniform\{0, w_i-1\}$.
+
+\end{definition}
+
+\begin{lemma}
+    \label{lem:distribution-conservation}
+    $f_{GD}$ does not lose entropy
+\end{lemma}
 
 \begin{proof}
-    Algorithm \ref{alg:convert_u_u} only loses entropy through $generate\_uniform$ which loses $H_{loss}(\frac{n-1}{N})$. The $combine$ operation does not lose entropy by Lemma \ref{lem:conservation}.
+    \begin{align}
+    \mathbb{E}(H(X)) & = \log_2 n \\
+    \mathbb{E}(H(Y)) + \mathbb{E}(H(Z))
+               & = - \sum_i p_i \log_2p_i + \sum_i p_iH(Y|X=i) \\
+               & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = - \sum_i \frac{w_i}{n}\log_2 w_i + \sum_i \frac{w_i}{n} \log_2 n + \sum_i \frac{w_i}{n}\log_2 w_i \\
+               & = \sum_i \frac{w_i}{n} \log_2 n \\
+               & = \frac{\log_2 n}{n} \sum_i w_i \\
+               & = \frac{\log_2 n}{n} n \\
+               & = \log_2 n
+    \end{align}
 \end{proof}
 
-\begin{corollary}
-The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $H_{loss}(\frac{n-1}{N})$.
-\end{corollary}
+\begin{algorithm}
+\caption{Constructing lookup tables for a weighted random variable}
+\label{alg:generate-lookup-tables}
+\begin{algorithmic}[1]
+\Require $weights$ is a list of integers $\ge0$
+\Procedure{make\_distribution}{$weights$} 
+  \State $outputs \gets []$
+  \State $offsets \gets []$
+  \For {$w_i \in weights$}
+    \State $offsets \gets offsets + [|outputs|]$
+    \State $outputs \gets outputs + [i] * w_i$
+  \EndFor
+  \State \Return $outputs, offsets$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+\caption{Generating a weighted random variable}
+\label{alg:generate-distribution}
+\begin{algorithmic}[1]
+\Require $U_s$, $s$, $N$ are integers
+\Require $weights$ is an array of integers $w_i \ge 0$
+\Require $offset$ generated by $make\_distribution$ 
+\Require $outputs$ generated by $make\_distribution$
+\Require $U_s$ is uniformly distributed over $[0,s)$
+\Require $N >> |outputs|$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Procedure{generate\_distribution}{$U_s, s, N, weights, outputs, offsets$} 
+    \State $n \gets |outputs|$
+    \State $U_s, s, U_n \gets generate\_uniform(U_s, s, N, n)$
+    \State $U_s, s = combine(U_s, s, U_n - offsets[U_n], weights[outputs[U_n]])$
+    \State \Return $U_s, s, outputs[U_n]$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\begin{lemma}
+    The function $f_{GD}$ is a bijection.
+\end{lemma}
 
 \begin{proof}
-    Algorithm \ref{alg:generate-bernoulli} only loses entropy through $generate\_uniform$ which loses $H_{loss}(n)$. The $downsample$ $combine$ operations do not lose entropy by Lemma \ref{lem:conservation}.
+Consider two mappings $x_1 \mapsto (y_1,z_1)$ and $x_2 \mapsto (y_2,z_2)$.
+
+If $y_1=y_2$ and $z_1=z_2$ then this uniquely specifies 
+
 \end{proof}
+
+\subsection {Extracting entropy from weighted integer distributions}
+
+Algorithm \ref{alg:combine-distribution} performs the inverse of Algorithm \ref{alg:generate-distribution}. It reconstructs a uniform distribution $X$ of size $n$ from the weighted random variable $Y$, and combines it with a uniform distribution $Z$ of size $w_i$. This allows the entropy store to absorb the entropy from $i$.
+
+Note that when performing the inverse of Algorithm \ref{alg:generate-distribution}, we don't need to supply it the *same* random variable $U_x$ that was originally used, and we can just get one from our entropy store.
+
+We'll ignore potential integer overflows of $U_s$ and $s$.
+
+\begin{algorithm}
+\caption{Extracting entropy from a weighted random variable}
+\label{alg:combine-distribution}
+\begin{algorithmic}[1]
+\Require $U_s$, $s$, $N$ are integers
+\Require $weights$ is an array of integers $w_i \ge 0$
+\Require $offset$ generated by $make\_distribution$ 
+\Require $outputs$ generated by $make\_distribution$
+\Require $U_s$ is uniformly distributed over $[0,s)$
+\Require $N >> |outputs|$
+\Ensure $U_s$ is uniformly distributed over $[0,s)$
+\Procedure{combine\_distribution}{$U_s, s, N, weights, outputs, offsets, i$} 
+    \State $U_s, s, U_x \gets generate\_uniform(U_s, s, N, weights[i])$
+    \State $U_s, s \gets combine(U_s, s, U_x + offsets[i], |outputs|)$
+    \State \Return $U_s, s$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
 
 \begin{lemma}
     \label{lem:hloss_monotonic}
@@ -580,20 +523,14 @@ The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $H_{loss}
 \end{proof}
 
 \begin{lemma}
-The entropy loss of Algorithm \ref{alg:consume_b} is no more than than $H_{loss}(\frac{n-1}{N})$
+The entropy loss of Algorithm \ref{alg:combine-distribution} is no more than than $H_{loss}(\frac{n-1}{N})$
 \end{lemma}
 
 \begin{proof}
-    The entropy-losing step in Algorithm \ref{alg:consume_b} is $generate\_uniform$ which loses $H_{loss}(\frac{x-1}{N})$ bits. $x \le n$, so from Lemma \ref{lem:hloss_monotonic}, this means that $H_{loss}(\frac{x-1}{N}) \le H_{loss}(\frac{n-1}{N})$.
+    The entropy-losing step in Algorithm \ref{alg:combine-distribution} is $generate\_uniform$ which loses $H_{loss}(\frac{x-1}{N})$ bits. $x \le n$, so from Lemma \ref{lem:hloss_monotonic}, this means that $H_{loss}(\frac{x-1}{N}) \le H_{loss}(\frac{n-1}{N})$.
 \end{proof}
 
-\begin{corollary}
-The amortised entropy lost by Algorithm \ref{alg:convert_b_b} is no more than $H_{loss}(\frac{n_1-1}{N}) + H_{loss}(\frac{n_2-1}{N})$
-\end{corollary}
-
-\begin{proof}
-    $consume\_bit$ loses $H_{loss}(\frac{n_1-1}{N})$ bits of entropy, and $generate\_bit$ loses $H_{loss}(\frac{n_2-1}{N})$ bits of entropy.
-\end{proof}
+To create a generic entropy converter between weighted distributions, we can use Algorithm \ref{alg:generate-distribution} to generate the output distribution, but replace the $fetch$ step in Algorithm \ref{alg:generate-uniform} with a call to $combine\_distribution$.
 
 
 
@@ -601,10 +538,7 @@ The amortised entropy lost by Algorithm \ref{alg:convert_b_b} is no more than $H
 
 
 
-
-
-\section {Evaluation}
-
+\section {Discussion}
 
 In terms of time, all EEC algorithms are O(1). On modern CPUs, the most expensive operation is integer division, which is usually as expensive as divide and modulus (divmod) \cite{cpudivmod}. This makes the $divide$ algorithm (Algorithm \ref{alg:divide}) the most expensive algorithm using two integer divisions, but it is still O(1).
 

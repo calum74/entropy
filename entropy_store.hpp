@@ -164,7 +164,7 @@ namespace entropy_store
     {
         validate(U_n, n);
         validate(U_m, m);
-        U_nm = m * U_n + U_m;
+        U_nm = n * U_m + U_n;
         nm = m * n;
         assert(n <= nm);
         assert(m <= nm);
@@ -255,7 +255,7 @@ namespace entropy_store
             uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N>>source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
             // Subtle: We need to be careful about the order of n and s
             // in the following combine, as it interacts with generate_uniform:
-            combine(U_n, n, U_s, s, U_s, s);
+            combine(U_s, s, U_n, n, U_s, s);
         };
 
         return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
