@@ -11,7 +11,7 @@ namespace entropy_store
     struct uniform_distribution
     {
         using value_type = T;
-        int min, max;  // Inclusive values, min<=max
+        int min, max;       // Inclusive values, min<=max
         std::uint32_t bits; // Number of bits capacity required to represent this
 
         uniform_distribution(T a, T b) : min(a), max(b), bits(std::ceil(std::log2(size()))) {}
@@ -56,10 +56,10 @@ namespace entropy_store
     concept entropy_generator = requires(Source source) {
         typename Source::value_type;
         typename Source::distribution_type;
-        source.distribution();  // !! Check types
-        source();       // !! Check types
-        source.fetch_bit();  
-        
+        source.distribution(); // !! Check types
+        source();              // !! Check types
+        source.fetch_bit();
+
         // !! also check iterator and * properties
     };
 
@@ -112,6 +112,8 @@ namespace entropy_store
             }
             return (m_value >> m_shift) & 1;
         }
+
+        double internal_entropy() const { return 32-m_shift; }
     };
 
     using random_bit_generator = bit_generator<random_device_generator>;
@@ -147,6 +149,8 @@ namespace entropy_store
             return m_source.fetch_bit();
         }
 
+        double internal_entropy() const { return 0; }
+
         int &m_count;
     };
 
@@ -157,7 +161,6 @@ namespace entropy_store
     {
         assert(U_n < n);
     }
-
 
     template <std::integral uint_t>
     void combine(uint_t U_n, uint_t n, uint_t U_m, uint_t m, uint_t &U_nm, uint_t &nm)
@@ -188,7 +191,7 @@ namespace entropy_store
         {
             while (s < N)
                 fetch_entropy(U_s, s);
-            assert(s>=n);
+            assert(s >= n);
             validate(U_s, s);
             // Resample entropy s to a multiple of m
             uint_t r = s / n;
@@ -239,10 +242,10 @@ namespace entropy_store
         {
             // If fetch_entropy fails, we'll need to fall back to fetch_binary.
             // We want to avoid getting here by except during the bootstrap.
-            assert (s < (uint_t(1) << (8 * sizeof(uint_t)-1)));
+            assert(s < (uint_t(1) << (8 * sizeof(uint_t) - 1)));
             s <<= 1;
             auto b = source.fetch_bit();
-            assert(b==0 || b==1);
+            assert(b == 0 || b == 1);
             U_s = (U_s << 1) | b;
             validate(U_s, s);
         };
@@ -252,7 +255,7 @@ namespace entropy_store
             validate(U_s, s);
             auto i = source();
             uint_t n = source_dist.outputs.size();
-            uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N>>source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
+            uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
             // Subtle: We need to be careful about the order of n and s
             // in the following combine, as it interacts with generate_uniform:
             combine(U_s, s, U_n, n, U_s, s);
@@ -271,15 +274,20 @@ namespace entropy_store
         {
         }
 
-        auto operator()(const distribution auto&dist)
+        auto operator()(const distribution auto &dist)
         {
             return generate(U_s, s, N, source, source.distribution(), dist);
         }
 
         int fetch_bit() { return source.fetch_bit(); }
 
+        double internal_entropy() const
+        {
+            return std::log2(s) + source.internal_entropy();
+        }
+
     private:
-        value_type N = value_type(1) << (sizeof(value_type)*8 - 1), U_s = 0, s = 1;
+        value_type N = value_type(1) << (sizeof(value_type) * 8 - 1), U_s = 0, s = 1;
         source_type source;
     };
 
@@ -301,6 +309,8 @@ namespace entropy_store
         auto distribution() const { return m_distribution; }
 
         int fetch_bit() { return m_source.fetch_bit(); }
+
+        double internal_entropy() const { return m_source.internal_entropy(); }
 
         entropy_buffer<source_type, Buffer> m_source;
         distribution_type m_distribution;

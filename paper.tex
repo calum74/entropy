@@ -87,11 +87,12 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:upsample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
+In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:resample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
 
-We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-Insert notation here...
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a..b-1$.
+
 
 \subsection{Fundamental operations}
 
@@ -126,10 +127,10 @@ In Algorithm \ref{alg:combine}, $U_{nm}$ is uniformly distributed over $[0,nm)$.
 Let $X \sim Uniform \{0 ... n-1\}$ and $Y \sim Uniform\{0 ... m-1\}$ be independent uniformly distributed random variables. The joint distribution $(X,Y)$ is uniformly distributed with $nm$ elements of probability $\frac{1}{nm}$. Let $Z$ be the distribution defined as
 
 \begin{equation}
-Z = f(X,Y) = mX+Y
+Z = f_{combine}(X,Y) = mX+Y
 \end{equation}
 
-The mapping $f$ is a bijection between the pair $X \times Y$ and $Z$, so $Z$ is also uniformly distributed and 
+The mapping $f_{combine}$ is a bijection between the pair $X \times Y$ and $Z$, so $Z$ is also uniformly distributed and 
 
 \begin{equation}
 Z \sim Uniform \{0 ... nm-1\}
@@ -165,7 +166,7 @@ In Algorithm \ref{alg:divide}, $U_n$ is uniformly distributed over $[0,n)$ and $
 \label{lem:divide}
 \end{lemma}
 
-\begin{proof} $f$ is a bijection so has an inverse function 
+\begin{proof} $f_{combine}$ is a bijection so has an inverse function 
 \begin{equation}    
 X = \lfloor Z/n \rfloor, Y = Z \mod n
 \end{equation}
@@ -400,26 +401,33 @@ $H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 
 Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 
-The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the lookup table as the result. 
+The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement the mapping as a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the $output$ lookup table as the result. 
 
-The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into uniformly distributed chunks of size $w_i$, as illutrated in Figure \ref{fig:chunks}, we see that each chunk contains $\log_2w_i$ entropy. Since the entropy in each chunk is in a uniform distribution, we can use $combine$ to return this entropy back to the entropy store.
+The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$ as illutrated in Figure \ref{fig:chunks}. The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store.
 
 Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
 
 \begin{definition}
-    Let $f_{GD}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{0,n-1\}$ to independent random variables $Y$ and $Z \sim Uniform\{0, w_i-1\}$.
+    Let $f_{gendist}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{0,n-1\}$ to independent random variables $Y$ and $Z \sim Uniform\{0, w_i-1\}$.
+
+    \begin{align}
+    Y &= min(j : \sum_{i<j}w_i<X) \\
+    Z &= X - \sum_{i<Y}w_i
+    \end{align}
 
 \end{definition}
 
+
+
 \begin{lemma}
     \label{lem:distribution-conservation}
-    $f_{GD}$ does not lose entropy
+    $f_{gendist}$ does not lose entropy
 \end{lemma}
 
 \begin{proof}
     \begin{align}
     \mathbb{E}(H(X)) & = \log_2 n \\
-    \mathbb{E}(H(Y)) + \mathbb{E}(H(Z))
+    \mathbb{E}(H(Y) + H(Z)) &=  \mathbb{E}(H(Y)) + \mathbb{E}(H(Z)) \\
                & = - \sum_i p_i \log_2p_i + \sum_i p_iH(Y|X=i) \\
                & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
                & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
@@ -471,13 +479,15 @@ Lemma \ref{lem:distribution-conservation} shows us that when we account for this
 
 
 \begin{lemma}
-    The function $f_{GD}$ is a bijection.
+The inverse of $f$ is given by
+
+    \begin{equation}
+    f^{-1}_{gendist}(Y,Z) = \sum_{i<Y}w_i + Z
+    \end{equation}
 \end{lemma}
 
 \begin{proof}
-Consider two mappings $x_1 \mapsto (y_1,z_1)$ and $x_2 \mapsto (y_2,z_2)$.
-
-If $y_1=y_2$ and $z_1=z_2$ then this uniquely specifies 
+    Show that $f^{-1}f= I$
 
 \end{proof}
 
@@ -592,7 +602,7 @@ This can have practical applications where the numbers generated must genuinely 
 Here is the source code for $generate\_uniform$, written in C.
 
 \begin{verbatim}
-    static const uint32_t N = 1<<31;
+    const uint32_t N = 1<<31;
     uint32_t s_value = 0, s_range = 1;
 
     uint32_t generate_uniform(uint32_t n)
