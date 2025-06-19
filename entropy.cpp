@@ -69,8 +69,9 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     double net_output = de * count;
     double efficiency = net_output / net_input;
 
+    std::cout << std::setprecision(10);
     std::cout << "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
-    std::cout << "  Net output entropy = " << std::setprecision(10) << net_output << std::endl;
+    std::cout << "  Net output entropy = " << net_output << std::endl;
     std::cout << "  Bits fetched = " << bits_fetched << std::endl;
     std::cout << "  Internal entropy delta = " << (internal_after - internal_before) << std::endl;
     std::cout << "  Net input entropy = " << net_input << std::endl;
