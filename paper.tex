@@ -82,7 +82,51 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \subsection {Contribution}
 
-\section{Related work}
+\subsection{Related work}
+
+Uniform generation:
+    KnuthYao: \cite{Knuth1976TheCO}
+    Lemire (low efficiency) \cite{lemire2019fast}
+    Fast Loaded Dice roller: \cite{saad2020fldr}
+    Arxiv: Lumbroso \cite{lumbroso2013optimal}
+    Arxiv: Huber \cite{huber2024optimalrollingfairdice}
+    Bacher: \cite{bacher2017}
+    \cite{baidya24}
+    \cite {von1963various}
+
+
+Arbitrary distribution generation:
+    \ref{walker1977efficient} (alias method)
+    \ref{vose91}
+    \ref{abrahams96}
+    Interval generation:
+        \cite{han97}
+        \cite{watanabe2019}
+        \cite{oohama2020performance}
+    Variate generation (not just weighted):
+        \cite{saad2025}
+    \cite{roche91}
+
+Unclassified:
+    \cite{norman72}
+    \cite{stout1984tree}
+    \cite{Hoeffding1994}
+
+Entropy extraction:
+    Randomness recycler: @inproceedings{fill2000randomness}
+    \cite{saad24}
+    \cite{saad20}
+    \cite{norman72}
+    \cite{pae15}
+    \cite{pae20} ??
+    \cite{peres1992iterating}
+    \cite{pae06}
+    \cite{vembu95}
+
+Evaluating random number generators:
+
+Random number generators are evaluated on
+
 
 
 \section{Algorithms for entropy conversion}
@@ -399,25 +443,25 @@ $H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 
 \subsection{Generating weighted integer distributions}
 
-Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight ${w_1 ... w_k}$, normalised to a discrete distribution with probabilities $\{\frac{w_1}{n}, \frac{w_2}{n} ... \frac{w_k}{n}\}$ where $n=\sum_i w_i$ is the total weight.
+Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, normalised to a discrete distribution with probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 
 The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement the mapping as a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the $output$ lookup table as the result. 
 
-The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$ as illutrated in Figure \ref{fig:chunks}. The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store.
+We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$ as illutrated in Figure \ref{fig:chunks}. The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store.
 
 Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
 
 \begin{definition}
-    Let $f_{gendist}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{0,n-1\}$ to independent random variables $Y$ and $Z \sim Uniform\{0, w_i-1\}$.
+    Let $f_{gendist}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{n\}$ to independent random variables $Y$ and $Z \sim Uniform\{w_i\}$.
 
     \begin{align}
-    Y &= min(j : \sum_{i<j}w_i<X) \\
+    Y &= max(j : \sum_{i<j}w_i<X) \\
     Z &= X - \sum_{i<Y}w_i
     \end{align}
 
 \end{definition}
 
-
+Note that $f_{gendist}$ is a generalisation of XX $f_{combine}$ and $f_{sample}$ XX we didn't define $f_{sample}$.
 
 \begin{lemma}
     \label{lem:distribution-conservation}
