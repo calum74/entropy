@@ -40,6 +40,17 @@ keywords = {variance, uniform distribution, random number generator, multithread
   keywords={Cryptography;Hardware;Field programmable gate arrays;Lenses;Hamming weight;Registers;Polynomials;Discrete gaussian sampling;knuth yao sampler;lattice based cryptography;post-quantum cryptography},
   doi={10.1109/LCA.2024.3454490}}
 
+@article{elias1972efficient,
+  title={The efficient construction of an unbiased random sequence},
+  author={Elias, Peter},
+  journal={The Annals of Mathematical Statistics},
+  volume={43},
+  number={3},
+  pages={865--870},
+  year={1972},
+  publisher={Institute of Mathematical Statistics}
+}
+
 @inproceedings{fill2000randomness,
   title={The randomness recycler: A new technique for perfect sampling},
   author={Fill, James Allen and Huber, Mark},
@@ -47,49 +58,6 @@ keywords = {variance, uniform distribution, random number generator, multithread
   pages={503--511},
   year={2000},
   organization={IEEE}
-}
-
-
-@article{lemire2019fast,
-author = {Lemire, Daniel},
-title = {Fast Random Integer Generation in an Interval},
-year = {2019},
-issue_date = {January 2019},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {29},
-number = {1},
-issn = {1049-3301},
-url = {https://doi.org/10.1145/3230636},
-doi = {10.1145/3230636},
-journal={ACM Transactions on Modeling and Computer Simulation (TOMACS)},
-month = jan,
-articleno = {3},
-numpages = {12},
-keywords = {Random number generation, randomized algorithms, rejection method}
-}
-
-
-
-@article{neumann,
-  author = {TODO},
-  title = {A Mathematical Theory of Communication},
-  journal = {Bell System Technical Journal},
-  year = {1948},
-  volume = {27},
-  number = {3},
-  pages = {379--423},
-}
-
-@article{norman1972computer,
-  title={A computer program for the generation of random variables from any discrete distribution},
-  author={Norman, JE and Cannon, LE},
-  journal={Journal of Statistical Computation and Simulation},
-  volume={1},
-  number={4},
-  pages={331--348},
-  year={1972},
-  publisher={Taylor \& Francis}
 }
 
 @article{han97,
@@ -130,12 +98,74 @@ url="https://doi.org/10.1007/978-1-4612-0865-5_31"
       url={https://arxiv.org/abs/2412.20700}, 
 }
 
+@inproceedings{Knuth1976TheCO,
+  title={The complexity of nonuniform random number generation},
+  author={Donald Ervin Knuth and Andrew Chi-Chih Yao},
+  year={1976},
+  url={https://api.semanticscholar.org/CorpusID:115400979}
+}
+
+
+
+@article{lemire2019fast,
+author = {Lemire, Daniel},
+title = {Fast Random Integer Generation in an Interval},
+year = {2019},
+issue_date = {January 2019},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {29},
+number = {1},
+issn = {1049-3301},
+url = {https://doi.org/10.1145/3230636},
+doi = {10.1145/3230636},
+journal={ACM Transactions on Modeling and Computer Simulation (TOMACS)},
+month = jan,
+articleno = {3},
+numpages = {12},
+keywords = {Random number generation, randomized algorithms, rejection method}
+}
+
 @article{lumbroso2013optimal,
   title={Optimal discrete uniform generation from coin flips, and applications},
   author={Lumbroso, J{\'e}r{\'e}mie},
   journal={arXiv preprint arXiv:1304.1916},
   year={2013}
 }
+
+@article{norman1972computer,
+  title={A computer program for the generation of random variables from any discrete distribution},
+  author={Norman, JE and Cannon, LE},
+  journal={Journal of Statistical Computation and Simulation},
+  volume={1},
+  number={4},
+  pages={331--348},
+  year={1972},
+  publisher={Taylor \& Francis}
+}
+
+@ARTICLE{oohama11,
+  author={Oohama, Yasutada},
+  journal={IEEE Transactions on Information Theory}, 
+  title={Performance Analysis of the Interval Algorithm for Random Number Generation Based on Number Systems}, 
+  year={2011},
+  volume={57},
+  number={3},
+  pages={1177-1185},
+  keywords={Random number generation;Algorithm design and analysis;Random variables;Random sequences;Encoding;Performance analysis;Generating tree;interval algorithm;number systems;performance analysis;random number generation},
+  doi={10.1109/TIT.2010.2103730}}
+
+@article{oohama2020performance,
+  title={Performance analysis of the interval algorithm for random number generation in the case of Markov coin tossing},
+  author={Oohama, Yasutada},
+  journal={IEICE Transactions on Fundamentals of Electronics, Communications and Computer Sciences},
+  volume={103},
+  number={12},
+  pages={1325--1336},
+  year={2020},
+  publisher={The Institute of Electronics, Information and Communication Engineers}
+}
+
 
 @ARTICLE{pae06,
   author={Pae, S.-I. and Loui, M.C.},
@@ -213,34 +243,8 @@ url="https://doi.org/10.1007/978-1-4612-0865-5_31"
   doi={10.1109/TIT.2019.2946235}
 }
 
-@article{oohama2020performance,
-  title={Performance analysis of the interval algorithm for random number generation in the case of Markov coin tossing},
-  author={Oohama, Yasutada},
-  journal={IEICE Transactions on Fundamentals of Electronics, Communications and Computer Sciences},
-  volume={103},
-  number={12},
-  pages={1325--1336},
-  year={2020},
-  publisher={The Institute of Electronics, Information and Communication Engineers}
-}
-
-@inproceedings{Knuth1976TheCO,
-  title={The complexity of nonuniform random number generation},
-  author={Donald Ervin Knuth and Andrew Chi-Chih Yao},
-  year={1976},
-  url={https://api.semanticscholar.org/CorpusID:115400979}
-}
 
 
-@article{article,
-author = {Han, Te Sun and Hoshi, Mamoru},
-year = {1997},
-month = {03},
-pages = {599-611},
-title = {Interval algorithm for random number generation},
-volume = {43},
-journal = {IEEE Transactions on Information Theory}
-}
 
 @inproceedings{saad2020fldr,
 title           = {The Fast Loaded Dice Roller: A Near-optimal Exact Sampler for Discrete Probability Distributions},
@@ -291,6 +295,28 @@ numpages = {25},
 keywords = {algorithm design and analysis, entropy, probabilistic programming}
 }
 
+@article{shannon1948mathematical,
+  title={A mathematical theory of communication},
+  author={Shannon, Claude E},
+  journal={The Bell system technical journal},
+  volume={27},
+  number={3},
+  pages={379--423},
+  year={1948},
+  publisher={Nokia Bell Labs}
+}
+
+@ARTICLE{vembu95,
+  author={Vembu, S. and Verdu, S.},
+  journal={IEEE Transactions on Information Theory}, 
+  title={Generating random bits from an arbitrary source: fundamental limits}, 
+  year={1995},
+  volume={41},
+  number={5},
+  pages={1322-1332},
+  keywords={Random number generation;Probability distribution;Entropy;Source coding},
+  doi={10.1109/18.412679}}
+
 @article{von1963various,
   title={Various techniques used in connection with random digits},
   author={Von Neumann, John and others},
@@ -299,6 +325,14 @@ keywords = {algorithm design and analysis, entropy, probabilistic programming}
   pages={768--770},
   year={1963},
   publisher={MacMillan New York, USA}
+}
+@article{neumann51,
+  author = {John von Neumann},
+  title = {Various techniques used in connection with random digits},
+  year={1951},
+  pages={36--38},
+  journal={Notes by G.E. Forsythe, National Bureau of Standards, Applied Math Series},
+  volume={12}
 }
 
 @ARTICLE{vose91,
@@ -323,13 +357,13 @@ keywords = {algorithm design and analysis, entropy, probabilistic programming}
   publisher={ACM New York, NY, USA}
 }
 
-@ARTICLE{vembu95,
-  author={Vembu, S. and Verdu, S.},
+@ARTICLE{wanatabe20,
+  author={Watanabe, Shun and Han, Te Sun},
   journal={IEEE Transactions on Information Theory}, 
-  title={Generating random bits from an arbitrary source: fundamental limits}, 
-  year={1995},
-  volume={41},
-  number={5},
-  pages={1322-1332},
-  keywords={Random number generation;Probability distribution;Entropy;Source coding},
-  doi={10.1109/18.412679}}
+  title={Interval Algorithm for Random Number Generation: Information Spectrum Approach}, 
+  year={2020},
+  volume={66},
+  number={3},
+  pages={1691-1701},
+  keywords={Random number generation;Random variables;Random processes;Markov processes;Performance analysis;Entropy;Convergence;Information spectrum approach;interval algorithm;random number generation},
+  doi={10.1109/TIT.2019.2946235}}

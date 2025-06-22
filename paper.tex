@@ -61,7 +61,7 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache entropy. The method can generate random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $>0.99999992$ using a 32-bit entropy cache, compared with standard methods that only have a $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per random integer generated, making it significantly slower than other algorithms.
+    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $>0.99999992$ using a 32-bit entropy cache, compared with standard methods that only have a $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per random integer generated, making it slower than other methods.
 \end{abstract}
 
 \section{Introduction}
@@ -82,7 +82,103 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \subsection {Contribution}
 
+We present a new algorithm for converting entropy with the following characteristics:
+
+- Input source: 
+    Symbols: Dice (including coins)
+    Distribution: Arbitrary known (includes uniform)
+    Error: exact
+    Sequence: Markov (includes iid)
+- Outputs:
+    Symbols: dice
+    Distribution: arbitrary (integer weighted) (includes uniform and dyadic)
+    Error: exact
+    Sequence: Markov
+- Entropy: $H(P) + \epsilon$
+- Time:
+    Setup:
+        Uniform: $O(m) \approxeq O(1)$
+        Distribution: $O(nm) \approxeq O(n)$
+        O(m)
+    Step:
+        $O(m\log_2m) \approxeq O(1)$
+- Space 
+    O(1)
+    O(mn) 
+
+The main advantage of this algorithm is its flexibility and entropy efficiency. With just a small extra step of pre-fetching entropy, and caching unused entropy between outputs, we have shown that a near-perfect amortised entropy efficiency can be achieved.
+
+No other algorithm has achieved this level of entropy efficiency in practice.
+
 \subsection{Related work}
+
+Entropy conversion is a well studied subject going back to at least 1951 when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform integers (a "dice roll") from an unbiassed coin (a "coin flip") - just three years after Claude Shannon's seminal work from 1948 \cite{shannon1948mathematical}. Von Neumann's algorithm is called "rejection sampling", and works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
+
+Knuth and Yao \cite{Knuth1976TheCO} came up with the first entropy efficient algorithm, and is based on creating a binary decision tree based on the arithmetic coding of each output, and proved that this solution is optimal in that no other binary decision tree could on average give fewer decisions.
+
+The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is of course no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform integer generated, depending on which integer is generated. Only exact powers of 2 can be generated without entropy loss.
+
+Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are less efficient from an entropy perspective, by using fewer CPU division operations.
+
+Various methods have been explored for generating arbitrary intervals.
+The Knuth-Yao algorithm can be used to generate arbitrary distributions from binary entropy, but the tree may need to be truncated unless the distribution is dyadic.
+
+The alias method devised by Walker \cite{walker1977efficient} and improved by Vose \cite{vose91} maps a uniform integer to an arbitrary distribution, and is therefore less entropy efficient because the output distribution generally contains less entropy than the uniform input distribution.
+
+Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
+Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm.
+
+/em Entropy extraction /em studies how to convert the entropy /em from /em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions with perfect amortised efficiency.
+
+For completely unknown distributions, Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. XX Implementation ?? XX
+
+In order to improve entropy efficiency further, various batching ideas have been put forward. Batching divides the overhead of generating an output over the size of the output. Blanc and Devroye s
+
+The Knuth-Yau algorithm can be batched \cite{xx}.
+
+
+Lumbroso \cite{lumbroso2013optimal} also suggests batching as a way to improve efficiency, but does not provide an implementation.
+
+
+Input and output distributions could also be part of a Markov chain, where the input or output distribution changes with time or on previous values.
+
+
+Batching......
+
+
+
+
+
+
+
+often independent and identically distributed, but the inputs could also 
+The output can also form a Markov
+
+Other use cases, e.g. 
+
+
+Knuth and Yao can be extended in multiple ways:
+
+Arbitrary distributions
+
+
+
+Ideas of recycling unused entropy are not new. Fill and Huber \cite{fill2000randomness} developed a Markov model which
+
+Uniform numbers:
+
+Biassed inputs:
+
+Entropy extraction:
+Fill
+
+
+Intervals:
+
+Batching:
+
+
+
 
 Uniform generation:
     KnuthYao: \cite{Knuth1976TheCO}
@@ -96,27 +192,30 @@ Uniform generation:
 
 
 Arbitrary distribution generation:
-    \ref{walker1977efficient} (alias method)
-    \ref{vose91}
-    \ref{abrahams96}
+    \cite{walker1977efficient} (alias method)
+    \cite{vose91}
+    \cite{abrahams96}
     Interval generation:
         \cite{han97}
         \cite{watanabe2019}
+        \cite{oohama11}
         \cite{oohama2020performance}
     Variate generation (not just weighted):
         \cite{saad2025}
     \cite{roche91}
 
 Unclassified:
-    \cite{norman72}
+    \cite{norman1972computer}
     \cite{stout1984tree}
     \cite{Hoeffding1994}
 
 Entropy extraction:
+    \cite{elias1972efficient},
     Randomness recycler: @inproceedings{fill2000randomness}
     \cite{saad24}
-    \cite{saad20}
-    \cite{norman72}
+    \cite{saad2020optimalsampling}
+    \cite{saad2025}
+    \cite{norman1972computer}
     \cite{pae15}
     \cite{pae20} ??
     \cite{peres1992iterating}
@@ -356,7 +455,7 @@ Since the derivative of $g>0$ it means that $g$ is monotonic.
 \end{proof}
 
 \begin{definition}
-    Let $H_{loss}(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, for $p=\frac{n-1}{N}$.
+    Let $\epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, for $p=\frac{n-1}{N}$.
 \end{definition}
 
 \begin{theorem}
@@ -364,7 +463,7 @@ Since the derivative of $g>0$ it means that $g$ is monotonic.
 If $p = \frac{n-1}{N} < 0.5$,
 
 \begin{equation}
-0 \le H_{loss}(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
+0 \le \epsilon(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{equation}
 
 \end{theorem}
@@ -399,7 +498,7 @@ The total entropy lost by the algorithm is given by the number of iterations of 
 = & -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 
-We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em resample \em step always succeeds with no entropy loss, so $H_{loss}=0$.
+We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em resample \em step always succeeds with no entropy loss, so $\epsilon=0$.
 \end{proof}
 
 The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values are found in $U_s$ and $s$, so we can only give an upper bound.
@@ -408,7 +507,7 @@ The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded by
 
 \begin{equation}
-\frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})} \le \eta \le 1
+\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})} \le \eta \le 1
 \label{eq:generate-uniform-efficiency}
 \end{equation}
 \end{corollary}
@@ -416,12 +515,12 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded
 \begin{proof}
 \begin{align}
     \eta & = \frac{H_{out}}{H_{in}} \\
-         & = \frac{H_{out}}{H_{out}+H_{loss}} \\
-         & = \frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})}
+         & = \frac{H_{out}}{H_{out}+\epsilon} \\
+         & = \frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})}
 \end{align}
 Therefore 
 \begin{equation}
-\frac{\log_2n}{\log_2n + H_{loss}(\frac{n-1}{N})} \le \eta \le 1
+\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})} \le \eta \le 1
 \end{equation}
 from Theorem \ref{thm:loss}.
 \end{proof}
@@ -433,7 +532,7 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitra
 \end{corollary}
 
 \begin{proof}
-$H_{loss}(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
+$\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
 \end{proof}
 
 
@@ -566,10 +665,10 @@ We'll ignore potential integer overflows of $U_s$ and $s$.
 
 \begin{lemma}
     \label{lem:hloss_monotonic}
-    $H_{loss}(p)$ is monotonically increasing in the range $0 < p < 1$.
+    $\epsilon(p)$ is monotonically increasing in the range $0 < p < 1$.
 \end{lemma}
 
-\begin{proof}The derivative of $H_{loss}$ is
+\begin{proof}The derivative of $\epsilon(p)$ is
     \begin{equation}
         \frac{-\log_2p}{(1-p)^2}
     \end{equation}
@@ -577,11 +676,11 @@ We'll ignore potential integer overflows of $U_s$ and $s$.
 \end{proof}
 
 \begin{lemma}
-The entropy loss of Algorithm \ref{alg:combine-distribution} is no more than than $H_{loss}(\frac{n-1}{N})$
+The entropy loss of Algorithm \ref{alg:combine-distribution} is no more than than $\epsilon(\frac{n-1}{N})$
 \end{lemma}
 
 \begin{proof}
-    The entropy-losing step in Algorithm \ref{alg:combine-distribution} is $generate\_uniform$ which loses $H_{loss}(\frac{x-1}{N})$ bits. $x \le n$, so from Lemma \ref{lem:hloss_monotonic}, this means that $H_{loss}(\frac{x-1}{N}) \le H_{loss}(\frac{n-1}{N})$.
+    The entropy-losing step in Algorithm \ref{alg:combine-distribution} is $generate\_uniform$ which loses $\epsilon(\frac{x-1}{N})$ bits. $x \le n$, so from Lemma \ref{lem:hloss_monotonic}, this means that $\epsilon(\frac{x-1}{N}) \le \epsilon(\frac{n-1}{N})$.
 \end{proof}
 
 To create a generic entropy converter between weighted distributions, we can use Algorithm \ref{alg:generate-distribution} to generate the output distribution, but replace the $fetch$ step in Algorithm \ref{alg:generate-uniform} with a call to $combine\_distribution$.
@@ -599,7 +698,7 @@ In terms of time, all EEC algorithms are O(1). On modern CPUs, the most expensiv
 
 
 
-We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yau, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}). To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
+We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yao, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}). To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
 
 Figure \ref{fig:uniform} shows the entropy efficiency when generating a single integer in the range $[0,n)$.  Algorithms that do not store entropy are much less efficient, and as observed by Backer et al \cite{todo}, the efficiency depends on the number being generated. For Algorithm \ref{alg:generate-uniform}, efficiency does decrease with the number generated according to Equation \ref{eq:generate-uniform-efficiency}, but it is not visible on this graph.
 
@@ -633,10 +732,13 @@ Calculate average bounds on efficiency.
 
 Measure obtainable entropy efficiency of batching methods and other conversion methods.
 
+Two integer divmod operations per output is significant, and maybe it is possible to use entropy store ideas without relying on divmod.
+
+Super-nice to explore the performance of batching.
 
 \section{Conclusion}
 
-We showed that entropy can be converted between different forms much more efficiently if we are able to pre-fetch and store entropy between invocations. Then we can exploit the large value in the entropy store to make an extremely asymmetrical descision that loses a minimum of entropy.
+We showed that entropy can be converted between different forms much more efficiently if we are able to pre-fetch and store entropy between invocations. Then we can exploit the large value in the entropy store to make an extremely asymmetrical decision that loses a minimum of entropy.
 
 We have shown that the amortised entropy conversion efficiency can be arbitrarily close to 1, and the efficiency depends on the the size of the entropy store relative to the integer being generated. For applications like dice-rolling or card-shuffling, we can store the entropy in a 32-bit integer and can achieve an amortised entropy efficiency of $> 0.999999924$.
 
