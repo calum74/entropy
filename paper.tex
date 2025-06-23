@@ -128,55 +128,25 @@ The alias method devised by Walker \cite{walker1977efficient} and improved by Vo
 Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
 Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm.
 
-/em Entropy extraction /em studies how to convert the entropy /em from /em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions with perfect amortised efficiency.
+/em Entropy extraction /em studies how to convert the entropy /em from /em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
 For completely unknown distributions, Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. XX Implementation ?? XX
 
-In order to improve entropy efficiency further, various batching ideas have been put forward. Batching divides the overhead of generating an output over the size of the output. Blanc and Devroye s
+Batching is often cited as a way to achieve theoretical efficiency, by dividing the overhead of generating an output over the size of the output. Devroye \cite{devroye86} describes how to batch uniform distributions using multiplication, and the efficiency of tree-based batching in general.
 
 The Knuth-Yau algorithm can be batched \cite{xx}.
 
+FLDR batching: \cite{xx}
+
+HanHoshi batching ...
 
 Lumbroso \cite{lumbroso2013optimal} also suggests batching as a way to improve efficiency, but does not provide an implementation.
 
+Bacher talk about using batching in random permutations. xx
 
-Input and output distributions could also be part of a Markov chain, where the input or output distribution changes with time or on previous values.
-
-
-Batching......
-
-
-
-
-
-
-
-often independent and identically distributed, but the inputs could also 
-The output can also form a Markov
-
-Other use cases, e.g. 
-
-
-Knuth and Yao can be extended in multiple ways:
-
-Arbitrary distributions
-
-
+Batching is an example of recycling unused entropy.
 
 Ideas of recycling unused entropy are not new. Fill and Huber \cite{fill2000randomness} developed a Markov model which
-
-Uniform numbers:
-
-Biassed inputs:
-
-Entropy extraction:
-Fill
-
-
-Intervals:
-
-Batching:
-
 
 
 
@@ -221,10 +191,6 @@ Entropy extraction:
     \cite{peres1992iterating}
     \cite{pae06}
     \cite{vembu95}
-
-Evaluating random number generators:
-
-Random number generators are evaluated on
 
 
 
@@ -551,7 +517,7 @@ We would expect this process to lose entropy because in general the output distr
 Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
 
 \begin{definition}
-    Let $f_{gendist}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{n\}$ to independent random variables $Y$ and $Z \sim Uniform\{w_i\}$.
+    Let $f_{distribute}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{n\}$ to independent random variables $Y$ and $Z \sim Uniform\{w_i\}$.
 
     \begin{align}
     Y &= max(j : \sum_{i<j}w_i<X) \\
@@ -560,11 +526,11 @@ Lemma \ref{lem:distribution-conservation} shows us that when we account for this
 
 \end{definition}
 
-Note that $f_{gendist}$ is a generalisation of XX $f_{combine}$ and $f_{sample}$ XX we didn't define $f_{sample}$.
+Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sample}$ XX we didn't define $f_{sample}$.
 
 \begin{lemma}
     \label{lem:distribution-conservation}
-    $f_{gendist}$ does not lose entropy
+    $f_{distribute}$ does not lose entropy
 \end{lemma}
 
 \begin{proof}
@@ -625,7 +591,7 @@ Note that $f_{gendist}$ is a generalisation of XX $f_{combine}$ and $f_{sample}$
 The inverse of $f$ is given by
 
     \begin{equation}
-    f^{-1}_{gendist}(Y,Z) = \sum_{i<Y}w_i + Z
+    f^{-1}_{distribute}(Y,Z) = \sum_{i<Y}w_i + Z
     \end{equation}
 \end{lemma}
 
