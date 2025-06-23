@@ -56,7 +56,25 @@ Simulate bits needed for HY.
 
 Figure \ref{fig:uniform} shows the calculated entropy loss (toll) for generating uniform integers, comparing entropy store (ES) methods with unbatched von Neumann (vN) and Knuth-Yao (KY) samplers. Note that these graphs show exact calculation, not simulation. We can observe that for vN and KY, the entropy loss is heavily dependent on the number being generated. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its store size of $N$. We see that the observed entropy loss is less than the calculated upper bound $\epsilon$, but does wobble depending on the previous size of the store. We can also confirm that increasing the store size to 64-bit reduces the entropy loss.
 
-Figure \ref{fig:shuffle} shows the calculated entropy loss for shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisheryates}. The overall output is smoother because more numbers are fetched. Again, we observe that ES is orders of magitude more entropy efficient than vN or KY.
+Figure \ref{fig:shuffle} shows the calculated entropy loss for shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisheryates}. The overall output is smoother because each datapoint fetches multiple values. Again, we observe that ES is orders of magitude more entropy efficient than vN or KY.
 
-Figure \ref{fig:bernoulli} shows the calculated entropy loss for Bernoulli ($p=\frac{1}{n}$) outputs when using aliasing, interval algorithm and ES. ES is able to generate exact outputs without truncation or approximation, at a much greater efficiency.
+Figure \ref{fig:bernoulli} shows the calculated entropy loss for $Bernoulli\{\frac{1}{n}$\}$ outputs when using aliasing, interval algorithm and ES. It also shows "typical" entropy loss which wobbles because it depends on the size in the store. The interval method's efficiency tends towards 0, losing up to 2 bits of entropy per output. ES is able to generate exact outputs without truncation or approximation, at a much greater efficiency.
 
+# Conclusion
+
+Giving entropy conversion algorithms access to an entropy store can greatly increase their efficiency, even beyond "optimal" algorithms like Knuth-Yao or the Interval algorithm.
+
+
+
+
+A major drawback with the algorithmsOne drawback
+
+There are other advantages to the entropy store algorithms as well, for example by being able to generate exact Bernoulli distributions without truncation
+
+
+how entropy store algorithms can overcome the theoretical limits of entropy efficiency when generating discrete distributions
+
+
+Entropy Store algorithms 
+
+Further work
