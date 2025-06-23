@@ -15,16 +15,6 @@ To illustrate the efficiency of the method, using a 32-bit entropy store the alg
 # Introduction
 
 
-# Related work
-
-
-
-Distribution generation
-
-Although Knuth-Yao and the interval algorithm are optimal for generating single integers, they are not optimal in the amortised case, because they always have an entropy loss, or toll, of up to 2 bits per integer generated. For example to roll a d6, the entropy required is $\log_26 \approxeq ...$, but the Knuth-Yau algorithm requires $...$ bits on average.
-
-To achieve an efficiency closer to 1, various batching schemes have been devised.
-
 # Contribution
 
 We have developed a new algorithms for
@@ -36,5 +26,10 @@ We have developed a new algorithms for
 We have shown that these algorithms generate perfect distributions and are asymptotically optimal. The main benefit of these algorithms are their relative simplicity and flexibility, avoiding the need for batching or complex data structures.
 
 # Proof of bijection
+
+The problem with the recombine is that the number we combine must be independent of the RV in the store. However this is only true if you multiply the variable back in a certain way.
+
+Let $f_{GD}: X \rightarrow Y,Z$ where $X \sim Uniform\{0,n-1\}$, $Y \sim Weighted$ and $Z \sim Uniform{0,W_{Y}-1}$, as implemented in Algorithm \ref{alg:generate-distribution}.
+
 
 
