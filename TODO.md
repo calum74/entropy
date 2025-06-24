@@ -59,11 +59,3 @@ Simulate bits needed for HY.
 
 # Eval2
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly with output entropy. IA must fetch at least 2 bits per output, irrespective of the output entropy. By contrast, ES algorithms to not necessily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output.
-
-<Figure>
-
-Figure \ref{fig:bernoulli-output} compares the rate of output per input bit of ES and IA. IA cannot generate more than 0.5 outputs per input bit XX. By illustration, to generate a $Bernoulli\{#frac{1}{12}\}$ variable, EA is XX times more productive than IA.
-
-<Figure>
-
