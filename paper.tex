@@ -82,6 +82,8 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \subsection {Contribution}
 
+Name the algorithms: Entropy store methods and algorithms
+
 We present a new algorithm for converting entropy with the following characteristics:
 
 - Input source: 
@@ -655,42 +657,44 @@ To create a generic entropy converter between weighted distributions, we can use
 
 
 
+\section {Evaluation}
 
+The main evaluation for the entropy store algorithms will be by entropy efficiency and entropy loss per output. In this case, we have already proved that the ES algorithms outperform classical algorithms such as Knuth-Yao and the Interval Algorithm, and calculated a bound, but it is still instructive to visualise this comparison.
 
-\section {Discussion}
-
-In terms of time, all EEC algorithms are O(1). On modern CPUs, the most expensive operation is integer division, which is usually as expensive as divide and modulus (divmod) \cite{cpudivmod}. This makes the $divide$ algorithm (Algorithm \ref{alg:divide}) the most expensive algorithm using two integer divisions, but it is still O(1).
-
-
-
-
-We can compare the entropy efficiency of different algorithms. Backer et al [] compared the efficiency of random integer generation of rejection sampling (Algorithm \ref{alg:rejection-sampling}) and Knuth-Yao, implemented as Lombraso's Fast Dice Roller algorithm (Algorithm \ref{alg:fast-dice-roller}). To this comparison we can now add Algorithm \ref{alg:generate-uniform}.
-
-Figure \ref{fig:uniform} shows the entropy efficiency when generating a single integer in the range $[0,n)$.  Algorithms that do not store entropy are much less efficient, and as observed by Backer et al \cite{todo}, the efficiency depends on the number being generated. For Algorithm \ref{alg:generate-uniform}, efficiency does decrease with the number generated according to Equation \ref{eq:generate-uniform-efficiency}, but it is not visible on this graph.
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing entropy store (ES) methods with unbatched von Neumann (vN) and Knuth-Yao (KY) samplers. Note that these graphs show exact calculation, not simulation. We can observe that for vN and KY, the entropy loss is heavily dependent on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show "typical" efficiency by simulating the store, and show that it is within the worst case bound $\epsilon$, but wobbles because it depends on the current size of the store.
+As expected, using a larger entropy buffer yields greater efficiency, but at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{uniform_efficiency.png}
-\caption{Entropy efficiency for uniform integer generation.}
-\label{fig:uniform}
+\includegraphics[width=0.8\textwidth]{uniform_losses.png}
+\caption{Entropy losses for uniform integer generation.}
+\label{fig:uniform-losses}
 \end{figure}
 
-Figure \ref{fig:shuffle} shows the entropy efficiency when shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisher-yates}.
+Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisheryates}. With an ES uniform generator, from Figure \ref{fig:uniform-losses} are negligible. As an example, we can calculate that shuffling a deck of 52 cards can be done with an entropy loss of XX, or an entropy efficiency of XX.
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.5\textwidth]{shuffling_efficiency.png}
-\caption{Entropy efficiency for card shuffling.}
-\label{fig:shuffle}
+\includegraphics[width=0.8\textwidth]{shuffling_efficiency.png}
+\caption{Entropy efficiency shuffling cards.}
+\label{fig:bernoulli-efficiency}
 \end{figure}
 
 
+Figure \ref{fig:bernoulli-efficiency} shows the entropy efficiency of the Inverval Algorithm (IA) when generating low-entropy Bernoulli distributions. As the entropy of the output tends to zero, the efficiency of the IA also tends to zero because the IA fetches up to 2 bits. The entropy losses from ES follow Figure \ref{fig:uniform-losses} so are negligible on this graph.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.8\textwidth]{bernoulli_efficiency.png}
+\caption{Entropy efficiency generating Bernoulli distributions.}
+\label{fig:bernoulli-efficiency}
+\end{figure}
 
+This translates into output rate. (TODO: Output rate per bit).
 
+We can also evaluate ES algorithms in terms of their memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like the FLDR \ref{}. To be more precise, since integer multiplication and division is $O(n \log n)$ \ref{integer multiplication}, for an $m$ bit buffer the complexity of the algorithm is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
 
-\section{Discussion}
-
+ES has another advantage, which is that it is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA.
 
 \subsection{Further work}
 
@@ -704,13 +708,12 @@ Super-nice to explore the performance of batching.
 
 \section{Conclusion}
 
-We showed that entropy can be converted between different forms much more efficiently if we are able to pre-fetch and store entropy between invocations. Then we can exploit the large value in the entropy store to make an extremely asymmetrical decision that loses a minimum of entropy.
+We have introduced a new class of algorithm to convert entropy to and from a uniform entropy store efficiently, and by caching unused entropy between outputs we can achieve arbitrarily low entropy losses.
 
-We have shown that the amortised entropy conversion efficiency can be arbitrarily close to 1, and the efficiency depends on the the size of the entropy store relative to the integer being generated. For applications like dice-rolling or card-shuffling, we can store the entropy in a 32-bit integer and can achieve an amortised entropy efficiency of $> 0.999999924$.
+We have shown that the tradition entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be bypassed using an entropy store. 
 
-As well a generating uniform integers, we can read and generate entropy values $<1$ in the form of Bernoulli entropy, with near 1 efficiency.
+The algorithms are simple practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
 
-This can have practical applications where the numbers generated must genuinely random and not from a pseudo-random number generator.
 
 \printbibliography
 
