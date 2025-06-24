@@ -57,19 +57,13 @@ Simulate bits needed for HY.
 
 # Conclusion
 
-Giving entropy conversion algorithms access to an entropy store can greatly increase their efficiency, even beyond "optimal" algorithms like Knuth-Yao or the Interval algorithm.
+# Eval2
 
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly. IA must fetch at least 2 bits per output, which is optimal without batching. By contrast, ES algorithms to not necessily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output.
 
+<Figure>
 
+Figure \ref{fig:bernoulli-output} compares the rate of output per input bit of ES and IA. IA cannot generate more than 0.5 outputs per input bit XX. By illustration, to generate a $Bernoulli\{#frac{1}{12}\}$ variable, EA is XX times more productive than IA.
 
-A major drawback with the algorithmsOne drawback
+<Figure>
 
-There are other advantages to the entropy store algorithms as well, for example by being able to generate exact Bernoulli distributions without truncation
-
-
-how entropy store algorithms can overcome the theoretical limits of entropy efficiency when generating discrete distributions
-
-
-Entropy Store algorithms 
-
-Further work
