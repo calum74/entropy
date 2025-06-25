@@ -319,6 +319,8 @@ In Algorithm \ref{alg:resample}, $U_x$ is uniformly distributed over $[0,x)$.
 \end{lemma}
 
 \begin{proof}
+    XX define $f_resample(X) \rightarrow Y, Z$ where $Y~ 
+
     Let $y = U_n$.
     $P(y<m) = \frac{m}{n}$ so $B \sim Bernoulli\{\frac{m}{n}\}$.
 
@@ -661,8 +663,7 @@ To create a generic entropy converter between weighted distributions, we can use
 
 We have already shown that the ES algorithms outperform optimal classical algorithms such as Knuth-Yao and the Interval Algorithm, but it is still instructive to visualise this comparison.
 
-Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing entropy store (ES) methods with unbatched von Neumann (vN) and Knuth-Yao (KY) samplers. Note that these graphs show exact calculation, not simulation. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real values by simulating the store, and show that it is within the worst case bound $\epsilon$, depends on the current size of the store.
-As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing entropy store (ES) methods with unbatched von Neumann (vN) and Knuth-Yao (KY) samplers. These graphs show exact calculation unless states otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
 
 \begin{figure}[ht]
 \centering
@@ -680,7 +681,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows the rate of output per input bit for ES and IA.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot increase its output rate as the entropy of the output distribution drops.
 
 \begin{figure}[ht]
 \centering
@@ -696,7 +697,7 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-We can also evaluate ES algorithms in terms of their memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like the FLDR \ref{}. To be more precise, since integer multiplication and division is $O(n \log n)$ \ref{integer multiplication}, for an $m$ bit buffer the complexity of the algorithm is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
+We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like FLDR \ref{}. Integer division and multiplication is $O(m \log m)$ \ref{integer multiplication}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
 
 ES is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA.
 
@@ -706,7 +707,7 @@ We have introduced a new class of algorithm to convert entropy to and from a uni
 
 We have shown that the tradition entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be bypassed using an entropy store. 
 
-The algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
+The ES algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
 
 
 \printbibliography
