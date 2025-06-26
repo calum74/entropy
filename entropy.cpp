@@ -72,14 +72,18 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     std::array<std::array<int,10>, 10> pairs = {};
 
     int prev = 0;
+    int first = 0;
 
     for (int i = 0; i < count; i++)
     {
         auto x = source();
+        assert(x>=0 && x<totals.size());
         totals[x]++;
         if(i>0) pairs[prev][x]++;
+        if(i==0) first = x;
         prev = x;
     }
+    pairs[prev][first]++; // Just to be pedantic
 
     for(int value=0; value<totals.size(); ++value)
     {
@@ -89,7 +93,7 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
             double mean, sd;
             mean_and_sd(source.distribution(), value, count, mean, sd);
             auto sigma = (s - mean) / sd;
-            std::cout << "  " << value << ": n=" << s << " σ=" << sigma << std::endl;
+            std::cout << "  " << value << ": n=" << s << " σ=" << std::setprecision(2) << sigma << std::endl;
             assert(std::abs(sigma) < 4);
         }
     }
@@ -104,7 +108,7 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
                 double mean, sd;
                 mean_and_sd(source.distribution(), x, y, count, mean, sd);
                 auto sigma = (s - mean) / sd;
-                std::cout << "  " << x << y << ": n=" << s << " σ=" << sigma << std::endl;
+                std::cout << "  " << x << y << ": n=" << s << " σ=" << std::setprecision(2) << sigma << std::endl;
                 assert(std::abs(sigma) < 4);
             }
         }
