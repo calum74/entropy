@@ -319,7 +319,7 @@ In Algorithm \ref{alg:resample}, $U_x$ is uniformly distributed over $[0,x)$.
 \end{lemma}
 
 \begin{proof}
-    XX define $f_resample(X) \rightarrow Y, Z$ where $Y~ 
+    XX define $f_resample(X) \rightarrow Y, Z$ where
 
     Let $y = U_n$.
     $P(y<m) = \frac{m}{n}$ so $B \sim Bernoulli\{\frac{m}{n}\}$.
@@ -592,7 +592,7 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 
 
 \begin{lemma}
-The inverse of $f$ is given by
+The inverse of $f_{distribute}$ is given by
 
     \begin{equation}
     f^{-1}_{distribute}(Y,Z) = \sum_{i<Y}w_i + Z
@@ -661,9 +661,9 @@ To create a generic entropy converter between weighted distributions, we can use
 
 \section {Evaluation}
 
-We have already shown that the ES algorithms outperform optimal classical algorithms such as Knuth-Yao and the Interval Algorithm, but it is still instructive to visualise this comparison.
+We have already shown that the ES algorithms are more efficient than optimal classical algorithms such as Knuth-Yao and the Interval Algorithm, but it is still instructive to visualise this comparison.
 
-Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing entropy store (ES) methods with unbatched von Neumann (vN) and Knuth-Yao (KY) samplers. These graphs show exact calculation unless states otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with unbatched von Neumann (vN) and Knuth-Yao samplers. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
 
 \begin{figure}[ht]
 \centering
@@ -703,12 +703,13 @@ ES is able to generate perfect distributions and does not have (albeit minimal) 
 
 \section{Conclusion}
 
-We have introduced a new class of algorithm to convert entropy to and from a uniform entropy store efficiently, and by caching unused entropy between outputs we can achieve arbitrarily low entropy losses.
+We have introduced a new class of algorithm to convert entropy via a uniform entropy store efficiently, and by caching unused entropy between outputs we can achieve arbitrarily low entropy losses.
 
-We have shown that the tradition entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be bypassed using an entropy store. 
+We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be avoided by using an entropy store. 
 
 The ES algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
 
+?? Replacing division with something else ??
 
 \printbibliography
 
