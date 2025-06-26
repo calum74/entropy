@@ -24,6 +24,25 @@ void mean_and_sd(weighted_distribution dist, int sample, double total, double &m
     sd = std::sqrt(total * w * (1.0 - w));
 }
 
+template <std::integral T>
+void mean_and_sd(const uniform_distribution<T> &dist, int x, int y, double total, double &mean, double &sd)
+{
+    auto w = 1.0 / dist.size();
+    w = w*w;
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
+
+void mean_and_sd(weighted_distribution dist, int x, int y, double total, double &mean, double &sd)
+{
+    auto w1 = double(dist.weights[x]) / dist.outputs.size();
+    auto w2 = double(dist.weights[y]) / dist.outputs.size();
+    auto w = w1*w2;
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
+
+
 double entropy(const weighted_distribution &dist)
 {
     double e = 0;
@@ -49,19 +68,48 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     bits_fetched = 0;
     double internal_before = source.internal_entropy();
 
-    std::map<int, int> totals;
+    std::array<int, 10> totals = {};
+    std::array<std::array<int,10>, 10> pairs = {};
+
+    int prev = 0;
+
     for (int i = 0; i < count; i++)
     {
-        totals[source()]++;
+        auto x = source();
+        totals[x]++;
+        if(i>0) pairs[prev][x]++;
+        prev = x;
     }
-    for (auto &[value, s] : totals)
+
+    for(int value=0; value<totals.size(); ++value)
     {
-        double mean, sd;
-        mean_and_sd(source.distribution(), value, count, mean, sd);
-        auto sigma = (s - mean) / sd;
-        std::cout << "  " << value << ": n=" << s << " σ=" << sigma << std::endl;
-        assert(std::abs(sigma) < 4);
+        auto s = totals[value];
+        if(s>0)
+        {
+            double mean, sd;
+            mean_and_sd(source.distribution(), value, count, mean, sd);
+            auto sigma = (s - mean) / sd;
+            std::cout << "  " << value << ": n=" << s << " σ=" << sigma << std::endl;
+            assert(std::abs(sigma) < 4);
+        }
     }
+
+    for(int x=0; x<totals.size(); ++x)
+    {
+        for(int y=0; y<totals.size(); ++y)
+        {
+            auto s = pairs[x][y];
+            if(s>0)
+            {
+                double mean, sd;
+                mean_and_sd(source.distribution(), x, y, count, mean, sd);
+                auto sigma = (s - mean) / sd;
+                std::cout << "  " << x << y << ": n=" << s << " σ=" << sigma << std::endl;
+                assert(std::abs(sigma) < 4);
+            }
+        }
+    }
+
 
     double de = entropy(source.distribution());
     double internal_after = source.internal_entropy();
