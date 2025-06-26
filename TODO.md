@@ -48,18 +48,26 @@ $$
 
 The inverse of $f_{distribute}$ is given by $f^{-1}_{distribute}(Y,Z) = \sum_{i<Y}w_i + Z$
 
-Function $f$    $X$        $Y$     $Z = f(X,Y)$
+## Three bijections
 
-combine         $X=Z \text{ div } m$,     $Y=Z \mod m$,    $Z=mX+Y$
+The functions $f_{combine}$, $f_{sample}$, $f_{distribute}$ provide different ways of splitting up a uniform distribution of size $n$ into two smaller distributions containing the same entropy as the original distribution.
 
-sample          $Z<m$         $Z-Xm        $mX+Y$
-distribute      $max(j:\sum_{i<j}w_i<Z)$.   $Z - \sum_{i<X}w_i$     $\sum_{i<Y}w_i + Z$
+$f_{divide,m}$:         $X=Z \text{ div } m \sim Uniform\{\frac{n}{m}\}$,     $Y=Z \mod m \sim Uniform\{m\}$,    $Z=mX+Y \sim Uniform\{n\}$.
 
+$f_{sample,m}$:          $X = Z \ge m \sim Bernoulli\{\frac{m}{n}\}$,        $Y=Z-Xm \sim Uniform$,        $Z=mX+Y \sim Uniform\{n\}$.
 
+$f_{distribute,w}$:      $X=max(j:\sum_{i<j}w_i<Z) \sim W$,   $Y=Z - \sum_{i<X}w_i \sim Uniform\{w_i\}$,     $Z=\sum_{i<Y}w_i + Z \sim Uniform\{n\}$.
 
-# Missing proofs:
+$f_{divide}$ splits a uniform distribution of size $n$ into a uniform distribution of size $m$ and uniform distribution of size $\frac{n}{m}$. $m$ must divide into $n$ exactly.
 
-Proof of Lemma 8:
+$f_{sample}$ splits a uniform distribution of size $n$ into a Bernoulli distribution. $f_{sample}$ is used as the basis of Lumbrusco's fast dice roller and von Neumann's rejection sampling algorithms.
+
+$f_{distribute}$ splits a uniform distributions into a weighted distribution and a smaller uniform distribution. Because these functions are bijections, we have the inverse functions $f^{-1}_{divide}$ which combines two uniform distributions, $f^{-1}_{sample}$ and $^{-1}_{distribute}$ which combines smaller uniform distributions with entropy to create a larger uniform distribution.
+
+# Missing proofs
+
+(Appendix??)
+
 
 # Contributions
 
