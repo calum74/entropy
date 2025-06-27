@@ -78,11 +78,11 @@ In this paper we will explore a fundamentally different approach. We will allow 
 
 The entropy efficiency depends only on the ratio of the size of the store $N$ to the size $n$ of the number generated, and a precise bound is calculated in Theorem \ref{xx}. For example to roll a 6-sided die with a 32-bit entropy store ($N\ge2^{31}$) has an entropy efficiency of $>0.99999997$ To shuffle a deck of 52 cards with a 32-bit entropy store has an entropy efficiency $>0.99999992$. By increasing the size of the store, we can achieve entropy efficiency arbitrarily close to 1.
 
-The algorithms are easy to implement, require O(1) time and memory, and use two integer divmod operations per uniform integer generated. To convert between distributions, and additional $O(n)$ of lookup tables is required. The main benefit of these algorithms is their simplicity, flexibility and high efficiency.
+The algorithms are easy to implement, require O(1) XX time and memory, and use two integer divmod operations per uniform integer generated. To convert between distributions, and additional $O(n)$ of lookup tables is required. The main benefit of these algorithms is their simplicity, flexibility and high efficiency.
 
 \subsection {Contribution}
 
-We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the input/output distribution. $\epsilon$ is defined in Theorem \ref{thm:loss}. These characteristics are essentially optimal since $m$ and $n$ are generally constant.  Of course, this also covers other distributions such as uniform and Bernoulli distributions.
+We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the input/output distribution. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are generally constant.  Of course, a weighted distribution also covers other distributions such as uniform and Bernoulli distributions.
 
 \begin{table}[h!]
 \centering
@@ -103,7 +103,7 @@ No other algorithm has achieved this level of entropy efficiency in practice.
 
 \subsection{Related work}
 
-Entropy conversion is a well studied subject going back to at least 1951 when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform integers (a "dice roll") from an unbiassed coin (a "coin flip") - just three years after Claude Shannon's seminal work from 1948 \cite{shannon1948mathematical}. Von Neumann's algorithm is called "rejection sampling", and works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
+Entropy conversion is a well studied subject going back to at least 1951 when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform integers (a "dice roll") from an unbiassed coin (a "coin flip") - just three years after Claude Shannon's seminal work from 1948 \cite{shannon1948mathematical}. Von Neumann's "rejection sampling" algorithm works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
 
 Knuth and Yao \cite{Knuth1976TheCO} came up with the first entropy efficient algorithm, and is based on creating a binary decision tree based on the arithmetic coding of each output, and proved that this solution is optimal in that no other binary decision tree could on average give fewer decisions.
 
