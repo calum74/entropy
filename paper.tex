@@ -82,33 +82,22 @@ The algorithms are easy to implement, require O(1) time and memory, and use two 
 
 \subsection {Contribution}
 
-Name the algorithms: Entropy store methods and algorithms
+We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the input/output distribution. $\epsilon$ is defined in Theorem \ref{thm:loss}. These characteristics are essentially optimal since $m$ and $n$ are generally constant.  Of course, this also covers other distributions such as uniform and Bernoulli distributions.
 
-We present a new algorithm for converting entropy with the following characteristics:
-
-- Input source: 
-    Symbols: Dice (including coins)
-    Distribution: Arbitrary known (includes uniform)
-    Error: exact
-    Sequence: Markov (includes iid)
-- Outputs:
-    Symbols: dice
-    Distribution: arbitrary (integer weighted) (includes uniform and dyadic)
-    Error: exact
-    Sequence: Markov
-- Entropy: $H(P) + \epsilon$
-- Time:
-    Setup:
-        Uniform: $O(m) \approxeq O(1)$
-        Distribution: $O(nm) \approxeq O(n)$
-        O(m)
-    Step:
-        $O(m\log_2m) \approxeq O(1)$
-- Space 
-    O(1)
-    O(mn) 
-
-The main advantage of this algorithm is its flexibility and entropy efficiency. With just a small extra step of pre-fetching entropy, and caching unused entropy between outputs, we have shown that a near-perfect amortised entropy efficiency can be achieved.
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Input & Output & Entropy & Time & Space \\
+\hline
+Weighted & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & $O(mn)$ \\
+Exact & Exact & (amortised) & Per output: $O(m \log m)$  &   \\
+Markov & Markov &  &   &   \\
+\hline
+\end{tabular}
+\caption{Entropy store algorithm overview}
+    \label{tab:entropy-store}
+\end{table}
 
 No other algorithm has achieved this level of entropy efficiency in practice.
 
@@ -118,7 +107,7 @@ Entropy conversion is a well studied subject going back to at least 1951 when Vo
 
 Knuth and Yao \cite{Knuth1976TheCO} came up with the first entropy efficient algorithm, and is based on creating a binary decision tree based on the arithmetic coding of each output, and proved that this solution is optimal in that no other binary decision tree could on average give fewer decisions.
 
-The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is of course no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform integer generated, depending on which integer is generated. Only exact powers of 2 can be generated without entropy loss.
+The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is of course no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform integer generated, depending on the integer is generated. Only exact powers of 2 can be generated without entropy loss.
 
 Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are less efficient from an entropy perspective, by using fewer CPU division operations.
 
