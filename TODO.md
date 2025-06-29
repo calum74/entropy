@@ -1,3 +1,18 @@
+Unused references:
+Arxiv:
+    Huber \cite{huber2024optimalrollingfairdice}
+    \cite{baidya24}
+    \cite{saad2025}
+    \cite{roche91}
+
+Unclassified:
+    \cite{norman1972computer}
+    \cite{stout1984tree}
+    \cite{Hoeffding1994}
+    Randomness recycler: \cite{fill2000randomness}
+    \cite{norman1972computer}
+    
+
 Paper:
 - Background work: More about batching, particularly multiplication, FLDR, 
     More about Bernoulli distributions
