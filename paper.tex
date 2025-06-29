@@ -70,9 +70,9 @@ In this paper, we will study generating perfectly distributed integers from an e
 
 The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$ \cite{shannon1948mathematical}.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. When generating uniform integers for example, \cite{Knuth1976TheCO} showed that an optimal algorithm must fetch up to 2 extra bits of entropy per output.
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. \cite{Knuth1976TheCO} showed that an optimal algorithm must fetch up to 2 extra bits of entropy per output.
 
-To mitigate these entropy losses, it's possible to generate random integers in batches. The major drawback with existing batching schemes is that they are somewhat complex and expensive to implement, or require you to know beforehand which numbers you need to generate. Whilst they improve entropy efficiency they still have limits on capacity and efficiency.
+To mitigate these entropy losses, it's possible to generate random integers in batches. The major drawback with existing batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
 In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
 
@@ -91,9 +91,9 @@ We present new algorithms, called \em entropy store algorithms \em, that have lo
 \hline
 Input & Output & Entropy & Time & Space \\
 \hline
-Weighted & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & $O(mn)$ \\
-Exact & Exact & (amortised) & Per output: $O(m \log m)$  &   \\
-Markov & Markov &  &   &   \\
+Weighted & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & Weighted: $O(mn)$ \\
+Exact & Exact & (amortised) & Per output: $O(m \log m)$  &  Uniform/Bernoulli: \\
+Markov & Markov &  &   & $O(m)$  \\
 \hline
 \end{tabular}
 \caption{Entropy store algorithm overview.}
@@ -600,7 +600,7 @@ To create a generic entropy converter between weighted distributions, we can use
 
 We have already shown that the entropy-store (ES) algorithms are more efficient than optimal classical algorithms such as Knuth-Yao and the Interval Algorithm, but it is still instructive to visualise this comparison.
 
-Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with von Neumann (vN) and Knuth-Yao (KY) generators. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{inteldivmodslowness}
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with von Neumann (vN) and Knuth-Yao (KY) generators. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. The \cite{Abel19a} website compares the instruction latency on Intel CPUs, showing for example that on an Alder Lake-P CPU a 64-bit IDIV instruction takes 14-18 cycles vs 10-15 cycles for 32-bit instructions.
 
 \begin{figure}[ht]
 \centering
@@ -609,7 +609,9 @@ Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating
 \label{fig:uniform-losses}
 \end{figure}
 
-Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisheryates}. As an example, we can calculate that shuffling a deck of 52 cards can be done with an entropy loss of XX, or an entropy efficiency of XX.
+Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisher1953statistical, durstenfeld1964algorithm, knuth2014art}. As an example, we can calculate that shuffling a deck of 52 cards can be done with an entropy loss of XX, or an entropy efficiency of XX.
+
+% Tighten up these references!!
 
 \begin{figure}[ht]
 \centering
@@ -634,7 +636,7 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like FLDR \ref{}. Integer division and multiplication is $O(m \log m)$ \ref{integer multiplication}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
+We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(m \log m)$ \ref{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
 
 ES is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA.
 

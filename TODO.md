@@ -11,7 +11,17 @@ Unclassified:
     \cite{Hoeffding1994}
     Randomness recycler: \cite{fill2000randomness}
     \cite{norman1972computer}
-    
+
+idiv:
+Cite as {Abel19a}
+
+Data on CPU instructions shows 
+
+            Alder Lake-P     
+32-bit      10-15
+64-bit      14-18
+
+
 
 Paper:
 - Background work: More about batching, particularly multiplication, FLDR, 
