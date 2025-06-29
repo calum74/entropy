@@ -21,6 +21,9 @@ Data on CPU instructions shows
 32-bit      10-15
 64-bit      14-18
 
+TODO: Ef(X)  = f(EX) if f is a convex function. This is called Jensen's inequality.
+
+
 
 
 Paper:

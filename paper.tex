@@ -61,18 +61,18 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache unused entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $\approxeq 0.99999992$ using a 32-bit entropy cache, compared with classical "optimal" algorithms that only have $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per output, making it slower than other methods.
+    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache unused entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $\approxeq 0.99999992$ using a 32-bit entropy cache, compared with classical "optimal" algorithms that only have $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per output, making it a bit slower than other methods.
 \end{abstract}
 
 \section{Introduction}
 
 In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulations.
 
-The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$ \cite{shannon1948mathematical}.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
+The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$ \cite{shannon1948mathematical}.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. \cite{cover1999elements} We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. \cite{Knuth1976TheCO} showed that an optimal algorithm must fetch up to 2 extra bits of entropy per output.
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. \cite{Knuth1976TheCO} showed that an optimal algorithm must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements}
 
-To mitigate these entropy losses, it's possible to generate random integers in batches. The major drawback with existing batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
+To mitigate these entropy losses, it is possible to generate random integers in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
 In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
 
@@ -110,7 +110,7 @@ Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, based on creat
 
 The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform integer generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
 
-Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are less efficient from an entropy perspective, by using fewer CPU division operations.
+Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are very inefficient from an entropy perspective, by using fewer CPU division operations. Lemire's argument is that often the entropy comes from a pseudorandom source that can be quickly generated.
 
 Various methods have been explored for generating arbitrary intervals.
 The Knuth-Yao algorithm can be used to generate arbitrary distributions from binary entropy, but the tree may need to be truncated unless the distribution is dyadic.
@@ -122,11 +122,11 @@ Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum
 
 Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithms to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy.
 
-/em Entropy extraction /em studies how to convert the entropy /em from /em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
+\em Entropy extraction \em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
-A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal}. Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you want to plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale because they requires arbitrary output precision and data structure sizes.
+A common suggestion to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you want to plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale because they require arbitrary output precision or data structure sizes.
 
 
 
@@ -143,6 +143,30 @@ We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and 
 
 
 \subsection{Fundamental operations}
+
+
+\[
+\overbrace{
+\underbrace{a_0 a_1 ... a_{m-1}}_m\underbrace{a_m ... a_{2m-1}}_m...\underbrace{a_{\frac{n}{m}}...a_{n-1}}_{m}}^n
+\]
+
+
+\[
+\overbrace{
+\underbrace{a_0 ... a_{m-1}}_m\underbrace{a_m ... a_{n-1}}_{n-m}}^n
+\]
+
+\[
+\overbrace{
+    \underbrace{a_0 ... a_{w_0-1}}_{w_0}
+    \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{w_1}
+    ...
+    \underbrace{
+        a_{n-w_{k-1}} ... 
+        a_{n-1}
+    }_{w_{k-1}}
+}^n
+\]
 
 
 Algorithm \ref{alg:combine} combines entropy from two uniform distrete random variables into a single uniform random variable.
@@ -367,7 +391,7 @@ Since the derivative of $g>0$ it means that $g$ is monotonic.
 
 \begin{theorem}
     \label{thm:loss}
-If $p = \frac{n-1}{N} < 0.5$,
+If $p = \frac{n-1}{N} < 0.5$, then
 
 \begin{equation}
 0 \le \epsilon(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
@@ -376,7 +400,7 @@ If $p = \frac{n-1}{N} < 0.5$,
 \end{theorem}
 
 \begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \ref{todo}:
+For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
 
 \begin{equation}
 H(b_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
@@ -598,9 +622,9 @@ To create a generic entropy converter between weighted distributions, we can use
 
 \section {Evaluation}
 
-We have already shown that the entropy-store (ES) algorithms are more efficient than optimal classical algorithms such as Knuth-Yao and the Interval Algorithm, but it is still instructive to visualise this comparison.
+We have already shown that the entropy-store (ES) algorithms are more efficient than optimal classical algorithms such as Knuth-Yao (KY) and the Interval Algorithm (IA), but it is still instructive to visualise this comparison.
 
-Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with von Neumann (vN) and Knuth-Yao (KY) generators. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real entropy loss by simulating the store, which depends on the previous size of the store, and is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. The \cite{Abel19a} website compares the instruction latency on Intel CPUs, showing for example that on an Alder Lake-P CPU a 64-bit IDIV instruction takes 14-18 cycles vs 10-15 cycles for 32-bit instructions.
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with von Neumann (vN) and Knuth-Yao generators. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real world entropy loss, which depends on the previous size of the store, and it is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{Abel19a} compares the instruction latency on Intel CPUs, showing for example that on an Alder Lake-P CPU a 64-bit IDIV instruction takes 14-18 cycles compared with 10-15 cycles for 32-bit instructions.
 
 \begin{figure}[ht]
 \centering
@@ -609,9 +633,7 @@ Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating
 \label{fig:uniform-losses}
 \end{figure}
 
-Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisher1953statistical, durstenfeld1964algorithm, knuth2014art}. As an example, we can calculate that shuffling a deck of 52 cards can be done with an entropy loss of XX, or an entropy efficiency of XX.
-
-% Tighten up these references!!
+Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{fisher1953statistical, durstenfeld1964algorithm, knuth2014art}. This is a good demonstration of the entropy efficiency under a real-world workload. Calculations show that we can calculate that shuffling a deck of 52 cards can be done with an entropy loss of $\approxeq 1.7e-5$ bits, or an entropy efficiency of $\approxeq 0.99999992$.
 
 \begin{figure}[ht]
 \centering
@@ -620,7 +642,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot increase its output rate as the entropy of the output distribution drops.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot increase its output rate as the entropy of the output distribution decreases below 1.
 
 \begin{figure}[ht]
 \centering
@@ -636,7 +658,7 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \ref{lemire}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(m \log m)$ \ref{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
+We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \cite{lemire2019fast}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(m \log m)$ \ref{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
 
 ES is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA.
 
