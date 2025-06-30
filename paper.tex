@@ -61,20 +61,23 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache unused entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $\approxeq 0.99999992$ using a 32-bit entropy cache, compared with classical "optimal" algorithms that only have $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per output, making it a bit slower than other methods.
+    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache unused entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical "optimal" algorithms that only have $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per output, making it a bit slower than other methods.
 \end{abstract}
 
 \section{Introduction}
 
 In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulations.
 
-The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$ \cite{shannon1948mathematical}.  A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. \cite{cover1999elements} We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
+The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$
+\cite{shannon1948mathematical}.  
+A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. \cite{cover1999elements} 
+We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. \cite{Knuth1976TheCO} showed that an optimal algorithm must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. An optimal algorithm must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
 
 To mitigate these entropy losses, it is possible to generate random integers in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
 
 The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is calculated in Theorem \ref{thm:loss}. 
 
@@ -126,7 +129,7 @@ Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorith
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
-A common suggestion to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you want to plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale because they require arbitrary output precision or data structure sizes.
+A common suggestion to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale because they require arbitrary output precision or data structure sizes.
 
 
 
@@ -139,37 +142,65 @@ In this section we'll start with some basic operations (Algorithm \ref{alg:combi
 
 We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a..b-1$.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. $\mathbb{P}$ means probability, $\mathbb{E}$ means expected value.
 
 
 \subsection{Fundamental operations}
 
+At the basis of the ES is the ability to extract entropy from a uniform distribution, and to combine entropy with a uniform distribution in an entropy-preserving way. These 
+
+Algorithm \ref{alg:combine} combines entropy from two uniform discrete random variables into a single uniform random variable. It  divides the range $[0,nm)$ into $n$ subranges of $[0,m)$ as follows:
 
 \[
 \overbrace{
-\underbrace{a_0 a_1 ... a_{m-1}}_m\underbrace{a_m ... a_{2m-1}}_m...\underbrace{a_{\frac{n}{m}}...a_{n-1}}_{m}}^n
-\]
-
-
-\[
-\overbrace{
-\underbrace{a_0 ... a_{m-1}}_m\underbrace{a_m ... a_{n-1}}_{n-m}}^n
-\]
-
-\[
-\overbrace{
-    \underbrace{a_0 ... a_{w_0-1}}_{w_0}
-    \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{w_1}
-    ...
     \underbrace{
-        a_{n-w_{k-1}} ... 
-        a_{n-1}
-    }_{w_{k-1}}
-}^n
+        \underbrace{a_0 ... a_{m-1}}_{X \sim Uniform\{m\}}
+        \underbrace{a_m ... a_{2m-1}}_{X \sim Uniform\{m\}}
+        ...
+        \underbrace{a_{n(m-1)}...a_{nm-1}}_{X \sim Uniform\{m\}}} 
+        }_{Y \sim Uniform\{n\}}
+        ^{Z \sim Uniform\{nm\}}
 \]
 
+The function $f_{combine}$ defines this operation. Similar constructs can be found for example in \cite{gentle2003xx}. Algorithm \ref{alg:combine} is an implementation of $f_{combine}$.
 
-Algorithm \ref{alg:combine} combines entropy from two uniform distrete random variables into a single uniform random variable.
+\begin{definition}
+    $f_{combine}: [0,n)\times [0,m) \rightarrow [0,nm)$ is defined as $f_{combine}(X,Y) = mX+Y$.
+\end{definition}
+
+\begin{lemma}
+    The inverse of $f_{combine}$, $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Y \mod m)$.
+\end{lemma}
+
+\begin{proof}
+    $f_{combine}(f^{-1}_{combine}(Z)) = f_{combine}(\lfloor \frac{Z}{m}\rfloor, Z \text{ mod } m) = m(\lfloor \frac{Z}{m}m \rfloor) + (Z \mod m) = Z$. $f^{-1}_{combine}(f_{combine}(X,Y)) = f^{-1}_{combine}(mX+Y) = (\lfloor\frac{mX+Y}{m}\rfloor, (mX+Y)\mod m) = (X,Y)$.
+\end{proof}
+
+\begin{corollary}
+    $f_{combine}$ is a bijection.
+\end{corollary}
+
+\begin{lemma}
+    If $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$ are independent, then 
+    $f_{combine}(X,Y) \sim Uniform \{nm\}$.
+\end{lemma}
+
+\begin{proof}
+    Let $Z = mX+Y$, so $Z \in [0,nm)$. $\mathbb{P}(X=x,Y=y) = \mathbb{P}(X=x)\mathbb{P}(Y=y) = \frac{1}{n}\frac{1}{m} = \frac{1}{nm}$. Since $f_{combine}$ is a bijection then it means that all $z$ values occur with $\mathbb{P}(Z=z) = \frac{1}{nm}$, so $Z \sim Uniform\{nm\}$.
+    
+\end{proof}
+
+\begin{lemma}
+    If $Z \sim Uniform \{nm\}$, and $f^{-1}_{combine}(Z) = (X,Y)$, then $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$. $X$ and $Y$ are independent.
+\end{lemma}
+
+\begin{proof}
+    Since $f_{combine}$ is a bijection, for all all values $\mathbb{P}(X=x,Y=y) = \frac{1}{nm}$.
+
+    $\mathbb{P}(X=x) = \sum_{y}\mathbb{P}(X=x,Y=y) = m\frac{1}{nm} = \frac{1}{n}$. $\mathbb{P}(Y=y) = \sum_{x}\mathbb{P}(X=x,Y=y) = n\frac{1}{nm} = \frac{1}{m}$. This proves that $X\sim Uniform\{n\}$ and $Y\sim Uniform\{m\}$.
+
+    $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X$ and $Y$ are independent.
+\end{proof}
 
 \begin{algorithm}
 \caption{Combining uniformly distributed integers}
@@ -190,26 +221,8 @@ Algorithm \ref{alg:combine} combines entropy from two uniform distrete random va
 \end{algorithmic}
 \end{algorithm}
 
-\begin{lemma}
-In Algorithm \ref{alg:combine}, $U_{nm}$ is uniformly distributed over $[0,nm)$.
-\label{lem:combine}
-\end{lemma}
 
-\begin{proof}
-Let $X \sim Uniform \{0 ... n-1\}$ and $Y \sim Uniform\{0 ... m-1\}$ be independent uniformly distributed random variables. The joint distribution $(X,Y)$ is uniformly distributed with $nm$ elements of probability $\frac{1}{nm}$. Let $Z$ be the distribution defined as
-
-\begin{equation}
-Z = f_{combine}(X,Y) = mX+Y
-\end{equation}
-
-The mapping $f_{combine}$ is a bijection between the pair $X \times Y$ and $Z$, so $Z$ is also uniformly distributed and 
-
-\begin{equation}
-Z \sim Uniform \{0 ... nm-1\}
-\end{equation}
-\end{proof}
-
-Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution.
+Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution. Algorithm \ref{alg:divide} implements $f^{-1}_{combine}$.
 
 \begin{algorithm}
 \caption{Division of uniformly distributed integers}
@@ -227,26 +240,26 @@ Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowi
   \State $U_m \gets U_{nm} \operatorname{div} n$
   \State $U_{n} \gets U_{nm} \mod n$
   \State $m \gets nm / n$
-  \State \Return $U_n, U_m, m$
+  \State \Return $U_m, m, U_n$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-\begin{lemma}
-In Algorithm \ref{alg:divide}, $U_n$ is uniformly distributed over $[0,n)$ and $U_m$ is uniformly distributed over $[0,m)$. $U_m$ and $U_n$ are independent.
 
-\label{lem:divide}
-\end{lemma}
 
-\begin{proof} $f_{combine}$ is a bijection so has an inverse function 
-\begin{equation}    
-X = \lfloor Z/n \rfloor, Y = Z \mod n
-\end{equation}
 
-Since $X$ and $Y$ are the original random variables, they are independent and uniformly distributed.
-\end{proof}
+Algorithm \ref{alg:resample} converts a uniformly distributed integer $Uniform\{n\}$ to a biassed bit $Bernoulli\{\frac{m}{n}\}$ and a uniform integer $Uniform\{m\}$ or $Uniform\{n-m\}$. It implements the following mapping, defined more formally in Definition \ref{def:sample} as $f_{sample}$:
 
-Algorithm \ref{alg:resample} converts a uniformly distributed integer to a smaller range, and also returns a biassed bit. Unlike Algorithm \ref{alg:combine} and Algorithm \ref{alg:divide}, the size of the output distribution depends on the value. The biassed bit also contains entropy, and in fact the total entropy returned by this algorithm is the same as its input entropy.
+more words here
+
+
+\[
+\overbrace{
+    \underbrace{
+        \underbrace{a_0 \text{   } ... \text{   } a_{m-1}}_{Y \sim Uniform\{m\}}
+        \underbrace{a_m \text{   } ... \text{   } a_{n-1}}_{Y \sim Uniform\{n-m\}}}
+    }_{X \sim Bernoulli\{\frac{m}{n}\}}^{Z \sim Uniform\{n\}}
+\]
 
 \begin{algorithm}
 \caption{Resampling uniformly distributed integers}
@@ -274,13 +287,18 @@ Algorithm \ref{alg:resample} converts a uniformly distributed integer to a small
 \end{algorithmic}
 \end{algorithm}
 
+\begin{definition}
+$f_{sample}: [0,n) \rightarrow {0,1} \times \mathbb{N}_0$ is defined as $f_{sample}(Z) = (...).$
+\label{def:sample}
+\end{definition}
+
 \begin{lemma}
 In Algorithm \ref{alg:resample}, $U_x$ is uniformly distributed over $[0,x)$.
 \label{lem:resample}
 \end{lemma}
 
 \begin{proof}
-    XX define $f_resample(X) \rightarrow Y, Z$ where
+    XX define $f_{resample}(X) \rightarrow Y, Z$ where
 
     Let $y = U_n$.
     $P(y<m) = \frac{m}{n}$ so $B \sim Bernoulli\{\frac{m}{n}\}$.
@@ -318,11 +336,11 @@ H_{lhs}             = &\log_2n \\
 
 \end{proof}
 
-Of course, entropy conversion algorithms which rely on resampling \em do \em lose entropy, and this can be quantified by the $B$ term in Algorithm \ref{alg:resample}. Every time an algorithm takes a decision, entropy is lost.
+Algorithm \ref{alg:resample} is the basis for von Neumann's rejection sampling algorithm, and Lumbrusco's fast dice roller algorithm. However these algorithms throw away some of the outputs, resulting in entropy inefficiency.
 
 \subsection{Generating uniform integers}
 
-Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. In a practial implementation, $U_s$ and $s$ can be captured variables or class members. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
+Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
 
 The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $resample$ (Algorithm \ref{alg:resample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $resample$ is very small.
 
@@ -477,9 +495,25 @@ Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary
 
 The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement the mapping as a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the $output$ lookup table as the result. 
 
-We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$ as illutrated in Figure \ref{fig:chunks}. The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store.
+We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$:
 
-Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
+\[
+\overbrace{
+    \underbrace{
+        \underbrace{a_0 ... a_{w_0-1}}_{Y \sim Uniform\{w_0\}}
+          \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{Y \sim Uniform\{w_1\}}
+          ...
+          \underbrace{
+             a_{n-w_{k-1}} ... 
+             a_{n-1}
+         }_{Y \sim Uniform\{w_{k-1}\}}
+    }_{X \sim Weighted\{w_0, ..., w_{k-1}\}}
+}^{Z \sim Uniform\{n\}}
+\]
+
+The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
+
+
 
 \begin{definition}
     Let $f_{distribute}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{n\}$ to independent random variables $Y$ and $Z \sim Uniform\{w_i\}$.
@@ -622,7 +656,7 @@ To create a generic entropy converter between weighted distributions, we can use
 
 \section {Evaluation}
 
-We have already shown that the entropy-store (ES) algorithms are more efficient than optimal classical algorithms such as Knuth-Yao (KY) and the Interval Algorithm (IA), but it is still instructive to visualise this comparison.
+We have already shown that the entropy store (ES) algorithms are more efficient than optimal classical algorithms such as Knuth-Yao (KY) and the Interval Algorithm (IA), but it is still instructive to visualise this comparison.
 
 Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform integers, comparing ES methods with von Neumann (vN) and Knuth-Yao generators. These graphs show exact calculation unless stated otherwise. We can observe that for vN and KY, the entropy loss depends on the number being generated. KY loses up to 2 bits per output. ES is not dependent on the generated integer, but loses efficiency at high $n$ as it approaches its minimum store size $N$. We also show real world entropy loss, which depends on the previous size of the store, and it is within the worst case bound $\epsilon$. As expected, using a larger entropy buffer yields greater efficiency, but would be at the cost of a larger pre-fetch of entropy and slower divmod operations. \cite{Abel19a} compares the instruction latency on Intel CPUs, showing for example that on an Alder Lake-P CPU a 64-bit IDIV instruction takes 14-18 cycles compared with 10-15 cycles for 32-bit instructions.
 
@@ -658,7 +692,7 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \cite{lemire2019fast}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(m \log m)$ \ref{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
+We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{appendix}), which are likely to prove a bottleneck compared to say Lemire's algorithm \cite{lemire2019fast}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(n \log n)$, but for practical purposes it is $O(1)$ in time and space.
 
 ES is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA.
 
@@ -672,7 +706,12 @@ We have shown that the entropy efficiency limits of classical algorithms like Kn
 
 The ES algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
 
-?? Replacing division with something else ??
+A drawback with the method is the need for 2 divmod operations per output. It would be very interesting to see if ES methods could found that avoid integer division entirely.
+
+
+
+
+
 
 \printbibliography
 
