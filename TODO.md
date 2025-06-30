@@ -1,3 +1,28 @@
+Set up the README
+
+- sample.cpp - how to use the library
+
+Paper:
+- Continue proof of $f_{sample}$ and delete other proofs.
+- Put brace underneath showing the other distribution
+
+Definition: $f_{distribute}: [0,n) \rightarrow [0,k) \times [0,w_i)$ is defined as $f_{distribute}(Z) = (\max i : s_{i+1} < Z, Z - s_i)$.
+
+Lemma: If $X \sim Weighted\{w_0, ..., w_{k-1}\}$ and $Y \sim Uniform\{w_X\}$, then $f^{-1}_{distribute}(X,Y) = s_X + Y$.
+
+Proof:
+$f^{-1}_{distribute}(f_{distribute}(Z)) = f^{-1}_{distribute}(\max i : s_{i+1} < Z, Z - s_i) = s_i + Z - s_i = Z$. $f_{distribute}(f^{-1}_{distribute}(X,Y)) = f_{distribute}(s_X+Y) = (\max i : s_{i+1} < s_X+Y, s_X + Y - s_i) = (X,Y)$.
+
+Lemma: If $Z \sim Uniform\{n\}$ then $X \sim Weighted\{w_0, ..., w_{k-1}\}$ and $Y \sim Uniform \{w_X\}$. They are independent.
+
+
+
+
+
+
+Lemma: $f_{distribute}$ is a bijection.
+
+
 Unused references:
 Arxiv:
     Huber \cite{huber2024optimalrollingfairdice}
