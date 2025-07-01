@@ -167,10 +167,10 @@ The function $f_{combine}$, in Definition \ref{def:combine}, divides the range $
     \label{def:combine}
 \end{definition}
 
-When $X$ and $Y$ are uniformly distributed, then $f_{combine}(X,Y)$ is also uniformly distributed. $f_{combine}$ is reversible, meaning it has an inverse and is a bijection, and it conserves entropy. Similar constructs can be found for example in \cite{gentle2003xx} XX. 
+$f_{combine}$ sets up a 1-1 correspondence, a bijection, between a uniform distribution $Uniform\{nm\}$ and a pair of independent uniform distributions $Uniform\{n\}$ and $Uniform\{m\}$. This will allow us to split and combine entropy in an entropy-preserving way. Similar constructs can be found for example in \cite{gentle2003xx} XX. 
 
 \begin{lemma}
-    The inverse of $f_{combine}$, $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Y \mod m)$.
+    The inverse of $f_{combine}$, $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
 \end{lemma}
 
 \begin{proof}
@@ -300,13 +300,12 @@ Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:up
 \begin{algorithmic}[1]
     \Require $U_{x}$ is uniformly distributed over $[0,x)$
     \Require $x = m$ or $x=n-m$
-    \Require $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}
+    \Require $B$ is a Boolean value Bernoulli distributed with $p=\frac{m}{n}$
     \Require $U_{n}$, $m$ and $n$ are integers 
-    \W $0 \le m \le n$
     \Ensure $U_x$ and $B$ are independent
     \Ensure $U_{n}$ is uniformly distributed over $[0,n)$
-{n}$
 \Procedure{downsample}{$xx$} 
+    \State $123$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -462,6 +461,8 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 
 
 
+\subsection{Generating Bernoulli distributions}
+
 
 
 
@@ -471,20 +472,20 @@ Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary
 
 The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement the mapping as a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the $output$ lookup table as the result. 
 
-We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $X$ into chunks of size $w_i$, we see that each chunk contains a uniform distribution of size $w_i$:
+We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $[0,n)$ into chunks of size $w_i$, each value in $[0,n)$ is contained in a uniform distribution $Uniform\{w_i\}$.
 
 \[
 \overbrace{
     \underbrace{
-        \underbrace{a_0 ... a_{w_0-1}}_{Y \sim Uniform\{w_0\}}
-          \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{Y \sim Uniform\{w_1\}}
+        \underbrace{a_0 ... a_{w_0-1}}_{w_0}
+          \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{w_1}
           ...
           \underbrace{
              a_{n-w_{k-1}} ... 
              a_{n-1}
-         }_{Y \sim Uniform\{w_{k-1}\}}
-    }_{X \sim Weighted\{w_0, ..., w_{k-1}\}}
-}^{Z \sim Uniform\{n\}}
+         }_{w_{k-1}}
+    }_{Weighted\{w_0, ..., w_{k-1}\}}
+}^{n}
 \]
 
 The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
