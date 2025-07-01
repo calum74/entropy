@@ -12,7 +12,7 @@ int main()
     entropy_store::uniform_distribution d6{1,6};
     entropy_store::bernoulli_distribution fair_coin{1,2};
     entropy_store::bernoulli_distribution biassed_coin{4,10};
-    entropy_store::weighted_distribution biassed_d6{1,1,1,1,1,10};
+    entropy_store::weighted_distribution biassed_d6{0,1,1,1,1,1,10};
 
     // Generate some random numbers
     std::cout << "Here is a d6 roll: " << es(d6) << std::endl;
@@ -23,11 +23,12 @@ int main()
     // Create a stream of d6
     auto d6s = entropy_store::converter{es, d6};
 
+    // Test the stream
     std::cout << "Here are 20 dice rolls: ";
     for(int i=0; i<20; ++i) std::cout << d6s();
     std::cout << std::endl;
 
-    // Extract entropy from a d6 stream
+    // Extract entropy from the d6 stream
     auto es2 = entropy_store::entropy_buffer{d6s};
     
     // Flip a coin from the d6 stream
