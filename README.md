@@ -19,97 +19,278 @@ The file `sample.cpp` contains sample usage.
 The program [entropy.cpp](entropy.cpp) reads from the random device and generates output similar to this:
 
 ```
-Here is a d6 roll: 4
 Here is a d6 roll: 2
-Here is a coin flip: 0
+Here is a d6 roll: 6
+Here is a coin flip: 1
 Fair coin:
-  0: n=5002783 σ=1.76012
-  1: n=4997217 σ=-1.76012
+  0: n=480 σ=-1.3
+  1: n=520 σ=1.3
+  00: n=227 σ=-1.7
+  01: n=253 σ=0.22
+  10: n=253 σ=0.22
+  11: n=267 σ=1.2
   Distribution entropy = 1
-  Bits fetched: 10000000, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 1000
+  Internal entropy delta = 0
+  Net input entropy = 1000
+  Net efficiency = 1
 Fair coin as a uniform {0,1}:
-  0: n=4997769 σ=-1.41101
-  1: n=5002231 σ=1.41101
+  0: n=486 σ=-0.89
+  1: n=514 σ=0.89
+  00: n=225 σ=-1.8
+  01: n=261 σ=0.8
+  10: n=261 σ=0.8
+  11: n=253 σ=0.22
   Distribution entropy = 1
-  Bits fetched: 10000000, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 1000
+  Internal entropy delta = 0
+  Net input entropy = 1000
+  Net efficiency = 1
 Fair coin as a 1:1 distribution:
-  0: n=5001931 σ=1.22127
-  1: n=4998069 σ=-1.22127
+  0: n=506 σ=0.38
+  1: n=494 σ=-0.38
+  00: n=253 σ=0.22
+  01: n=253 σ=0.22
+  10: n=253 σ=0.22
+  11: n=241 σ=-0.66
   Distribution entropy = 1
-  Bits fetched: 10000000, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 1000
+  Internal entropy delta = 0
+  Net input entropy = 1000
+  Net efficiency = 1
 Fair d6:
-  1: n=1668442 σ=1.50642
-  2: n=1664916 σ=-1.48549
-  3: n=1665381 σ=-1.09092
-  4: n=1666968 σ=0.25569
-  5: n=1666189 σ=-0.405314
-  6: n=1668104 σ=1.21962
-  Distribution entropy = 2.58496
-  Bits fetched: 25849626, 2.58496 per sample, efficiency = 1
+  1: n=143 σ=-2
+  2: n=175 σ=0.71
+  3: n=177 σ=0.88
+  4: n=177 σ=0.88
+  5: n=155 σ=-0.99
+  6: n=173 σ=0.54
+  11: n=17 σ=-2.1
+  12: n=29 σ=0.24
+  13: n=27 σ=-0.15
+  14: n=21 σ=-1.3
+  15: n=23 σ=-0.92
+  16: n=26 σ=-0.34
+  21: n=22 σ=-1.1
+  22: n=28 σ=0.043
+  23: n=32 σ=0.81
+  24: n=37 σ=1.8
+  25: n=28 σ=0.043
+  26: n=28 σ=0.043
+  31: n=30 σ=0.43
+  32: n=25 σ=-0.53
+  33: n=32 σ=0.81
+  34: n=36 σ=1.6
+  35: n=18 σ=-1.9
+  36: n=36 σ=1.6
+  41: n=27 σ=-0.15
+  42: n=27 σ=-0.15
+  43: n=25 σ=-0.53
+  44: n=34 σ=1.2
+  45: n=30 σ=0.43
+  46: n=34 σ=1.2
+  51: n=20 σ=-1.5
+  52: n=42 σ=2.7
+  53: n=31 σ=0.62
+  54: n=18 σ=-1.9
+  55: n=26 σ=-0.34
+  56: n=18 σ=-1.9
+  61: n=27 σ=-0.15
+  62: n=24 σ=-0.73
+  63: n=30 σ=0.43
+  64: n=31 σ=0.62
+  65: n=30 σ=0.43
+  66: n=31 σ=0.62
+  Distribution entropy = 2.584962501
+  Net output entropy = 2584.962501
+  Bits fetched = 2585
+  Internal entropy delta = 0.0374973437
+  Net input entropy = 2584.962503
+  Net efficiency = 0.9999999993
 1:2 biassed coin:
-  0: n=3335488 σ=1.44539
-  1: n=6664512 σ=-1.44539
-  Distribution entropy = 0.918296
-  Bits fetched: 9185114, 0.918511 per sample, efficiency = 0.999765
+  0: n=321 σ=-0.83
+  1: n=679 σ=0.83
+  00: n=106 σ=-0.51
+  01: n=215 σ=-0.55
+  10: n=215 σ=-0.55
+  11: n=464 σ=1.2
+  Distribution entropy = 0.9182958341
+  Net output entropy = 918.2958341
+  Bits fetched = 906
+  Internal entropy delta = 0.03749834902
+  Net input entropy = 905.9625017
+  Net efficiency = 1.013613513
 49:2 biassed coin:
-  0: n=9607860 σ=0.0274717
-  1: n=392140 σ=-0.0274717
-  Distribution entropy = 0.238685
-  Bits fetched: 2386768, 0.238677 per sample, efficiency = 1.00003
+  0: n=961 σ=0.035
+  1: n=39 σ=-0.035
+  00: n=923 σ=-0.013
+  01: n=38 σ=0.054
+  10: n=38 σ=0.054
+  11: n=1 σ=-0.43
+  Distribution entropy = 0.2386845114
+  Net output entropy = 238.6845114
+  Bits fetched = 238
+  Internal entropy delta = 0.3107941533
+  Net input entropy = 237.6892058
+  Net efficiency = 1.004187424
 1:999 biassed coin:
-  0: n=10102 σ=1.02051
-  1: n=9989898 σ=-1.02051
-  Distribution entropy = 0.0114078
-  Bits fetched: 115185, 0.0115185 per sample, efficiency = 0.990386
+  0: n=2 σ=1
+  1: n=998 σ=-1
+  01: n=2 σ=1
+  10: n=2 σ=1
+  11: n=996 σ=-1.4
+  Distribution entropy = 0.01140775774
+  Net output entropy = 11.40775774
+  Bits fetched = 22
+  Internal entropy delta = 0.6274417292
+  Net input entropy = 21.37255827
+  Net efficiency = 0.5337572411
 1:2:3:4 distribution:
-  0: n=1000379 σ=0.399501
-  1: n=1999521 σ=-0.378683
-  2: n=3000995 σ=0.686615
-  3: n=3999105 σ=-0.57772
-  Distribution entropy = 1.84644
-  Bits fetched: 18465086, 1.84651 per sample, efficiency = 0.999962
+  0: n=93 σ=-0.74
+  1: n=192 σ=-0.63
+  2: n=289 σ=-0.76
+  3: n=426 σ=1.7
+  00: n=6 σ=-1.3
+  01: n=17 σ=-0.68
+  02: n=27 σ=-0.56
+  03: n=43 σ=0.48
+  10: n=20 σ=-8e-16
+  11: n=46 σ=0.97
+  12: n=53 σ=-0.93
+  13: n=73 σ=-0.82
+  20: n=29 σ=-0.19
+  21: n=61 σ=0.13
+  22: n=94 σ=0.44
+  23: n=105 σ=-1.5
+  30: n=38 σ=-0.32
+  31: n=68 σ=-1.4
+  32: n=115 σ=-0.49
+  33: n=205 σ=3.9
+  Distribution entropy = 1.846439345
+  Net output entropy = 1846.439345
+  Bits fetched = 1820
+  Internal entropy delta = 0.1260640339
+  Net input entropy = 1819.873936
+  Net efficiency = 1.01459739
 Fair coin from uniform input:
-  0: n=4998405 σ=-1.00877
-  1: n=5001595 σ=1.00877
+  0: n=512 σ=0.76
+  1: n=488 σ=-0.76
+  00: n=263 σ=0.95
+  01: n=249 σ=-0.073
+  10: n=249 σ=-0.073
+  11: n=239 σ=-0.8
   Distribution entropy = 1
-  Bits fetched: 10000003, 1 per sample, efficiency = 1
-Fair coin from 1:999 input (poor efficiency due to low N):
-  0: n=5000288 σ=0.182147
-  1: n=4999712 σ=-0.182147
-  Distribution entropy = 1
-  Bits fetched: 12548844, 1.25488 per sample, efficiency = 0.796886
+  Net output entropy = 1000
+  Bits fetched = 1001
+  Internal entropy delta = 0.9999982329
+  Net input entropy = 1000.000002
+  Net efficiency = 0.9999999982
 Fair coin from 1:999 input (using 64-bit buffer):
-  0: n=4999469 σ=-0.335834
-  1: n=5000531 σ=0.335834
+  0: n=509 σ=0.57
+  1: n=491 σ=-0.57
+  00: n=261 σ=0.8
+  01: n=248 σ=-0.15
+  10: n=248 σ=-0.15
+  11: n=243 σ=-0.51
   Distribution entropy = 1
-  Bits fetched: 10000005, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 1001
+  Internal entropy delta = 0.9999999884
+  Net input entropy = 1000
+  Net efficiency = 1
+Fair coin from 1:999 input (poor efficiency due to low buffer size):
+  0: n=504 σ=0.25
+  1: n=496 σ=-0.25
+  00: n=252 σ=0.15
+  01: n=252 σ=0.15
+  10: n=252 σ=0.15
+  11: n=244 σ=-0.44
+  Distribution entropy = 1
+  Net output entropy = 1000
+  Bits fetched = 1453
+  Internal entropy delta = 1.86403003
+  Net input entropy = 1451.13597
+  Net efficiency = 0.6891153005
 Fair coin from 1:99 input:
-  0: n=4999471 σ=-0.334569
-  1: n=5000529 σ=0.334569
+  0: n=500 σ=0
+  1: n=500 σ=0
+  00: n=253 σ=0.22
+  01: n=247 σ=-0.22
+  10: n=247 σ=-0.22
+  11: n=253 σ=0.22
   Distribution entropy = 1
-  Bits fetched: 10005224, 1.00052 per sample, efficiency = 0.999478
+  Net output entropy = 1000
+  Bits fetched = 1004
+  Internal entropy delta = 3.91359388
+  Net input entropy = 1000.086406
+  Net efficiency = 0.9999136013
 Fair coin from 1:4 input:
-  0: n=4996084 σ=-2.4767
-  1: n=5003916 σ=2.4767
+  0: n=515 σ=0.95
+  1: n=485 σ=-0.95
+  00: n=269 σ=1.4
+  01: n=246 σ=-0.29
+  10: n=246 σ=-0.29
+  11: n=239 σ=-0.8
   Distribution entropy = 1
-  Bits fetched: 10000001, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 999
+  Internal entropy delta = -1.000017451
+  Net input entropy = 1000.000017
+  Net efficiency = 0.9999999825
 Fair coin from 4:3:2:1 input:
-  0: n=4998576 σ=-0.900617
-  1: n=5001424 σ=0.900617
+  0: n=474 σ=-1.6
+  1: n=526 σ=1.6
+  00: n=225 σ=-1.8
+  01: n=249 σ=-0.073
+  10: n=249 σ=-0.073
+  11: n=277 σ=2
   Distribution entropy = 1
-  Bits fetched: 9999999, 1 per sample, efficiency = 1
+  Net output entropy = 1000
+  Bits fetched = 999
+  Internal entropy delta = -1.000011818
+  Net input entropy = 1000.000012
+  Net efficiency = 0.9999999882
 4:1:5 distribution from 1:1 input:
-  0: n=4000216 σ=0.139427
-  1: n=1001655 σ=1.74452
-  2: n=4998129 σ=-1.18332
-  Distribution entropy = 1.36096
-  Bits fetched: 13613554, 1.36136 per sample, efficiency = 0.999713
+  0: n=409 σ=0.58
+  1: n=83 σ=-1.8
+  2: n=508 σ=0.51
+  00: n=181 σ=1.8
+  01: n=32 σ=-1.3
+  02: n=196 σ=-0.32
+  10: n=32 σ=-1.3
+  11: n=6 σ=-1.3
+  12: n=45 σ=-0.73
+  20: n=196 σ=-0.32
+  21: n=45 σ=-0.73
+  22: n=267 σ=1.2
+  Distribution entropy = 1.360964047
+  Net output entropy = 1360.964047
+  Bits fetched = 1325
+  Internal entropy delta = 0.6113754111
+  Net input entropy = 1324.388625
+  Net efficiency = 1.027616836
 4:1:5 distribution from 4:3:2:1 input:
-  0: n=4001257 σ=0.81139
-  1: n=998944 σ=-1.11312
-  2: n=4999799 σ=-0.127124
-  Distribution entropy = 1.36096
-  Bits fetched: 13607593, 1.36076 per sample, efficiency = 1.00015
+  0: n=385 σ=-0.97
+  1: n=85 σ=-1.6
+  2: n=530 σ=1.9
+  00: n=152 σ=-0.69
+  01: n=33 σ=-1.1
+  02: n=200 σ=0
+  10: n=31 σ=-1.5
+  11: n=6 σ=-1.3
+  12: n=48 σ=-0.29
+  20: n=202 σ=0.16
+  21: n=46 σ=-0.58
+  22: n=282 σ=2.3
+  Distribution entropy = 1.360964047
+  Net output entropy = 1360.964047
+  Bits fetched = 1322
+  Internal entropy delta = 0.6937758294
+  Net input entropy = 1321.306224
+  Net efficiency = 1.030014105
 
 All tests passed!
 ```
