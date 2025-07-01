@@ -46,6 +46,11 @@ namespace entropy_store
         std::uint32_t bits;
     };
 
+    class Bernoulli_distribution
+    {
+        // TODO.
+    };
+
     template <typename Distribution>
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
