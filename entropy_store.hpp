@@ -46,9 +46,18 @@ namespace entropy_store
         std::uint32_t bits;
     };
 
-    class Bernoulli_distribution
+    class bernoulli_distribution
     {
-        // TODO.
+    public:
+        using uint_t = std::uint32_t;
+
+        bernoulli_distribution(uint_t numerator, uint_t denominator) :
+            numerator(numerator), denominator(denominator)
+        {}
+
+        uint_t numerator, denominator;
+        using value_type = uint_t;
+        const std::uint32_t bits = 1;
     };
 
     template <typename Distribution>
@@ -118,7 +127,7 @@ namespace entropy_store
             return (m_value >> m_shift) & 1;
         }
 
-        double internal_entropy() const { return 32-m_shift; }
+        double internal_entropy() const { return 32 - m_shift; }
     };
 
     using random_bit_generator = bit_generator<random_device_generator>;
@@ -237,6 +246,19 @@ namespace entropy_store
         combine(U_s, s, n - output_dist.offsets[i], uint_t(output_dist.weights[i]), U_s, s);
         return i;
     }
+
+    template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
+    uint_t generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const SourceDist &source_dist, const bernoulli_distribution &output_dist)
+    {
+        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.denominator - 1)});
+        uint_t b = n < output_dist.numerator;
+        if(b)
+            combine(U_s, s, n, uint_t(output_dist.numerator), U_s, s);
+        else
+            combine(U_s, s, n - uint_t(output_dist.numerator), uint_t(output_dist.denominator - output_dist.numerator), U_s, s);
+        return b;
+    }
+
 
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)

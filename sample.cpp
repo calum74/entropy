@@ -1,4 +1,5 @@
 #include "entropy_store.hpp"
+#include <iostream>
 
 int main()
 {
@@ -21,7 +22,7 @@ int main()
     std::cout << "Here is a biassed d6 roll: " << es(biassed_d6) << std::endl;
 
     // Create a stream of d6
-    auto d6s = entropy_store::converter{es, d6};
+    auto d6s = entropy_store::entropy_converter{fetch, d6};
 
     // Test the stream
     std::cout << "Here are 20 dice rolls: ";
@@ -32,5 +33,5 @@ int main()
     auto es2 = entropy_store::entropy_buffer{d6s};
     
     // Flip a coin from the d6 stream
-    std::cout << "Coin flip:" << es2(fair_coin) << std::endl;
+    std::cout << "Coin flip: " << es2(fair_coin) << std::endl;
 }
