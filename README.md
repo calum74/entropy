@@ -113,3 +113,5 @@ Fair coin from 4:3:2:1 input:
 
 All tests passed!
 ```
+
+This tests a variety of distributions, and counts the number of outputs and the number of adjacent pairs against the expected number for that distribution. It then calculates how many standard deviations that number is compared to its expected value. Whilst large deviations are always possible, they are improbable and would indicate a bug. 
