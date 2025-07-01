@@ -24,6 +24,15 @@ void mean_and_sd(weighted_distribution dist, int sample, double total, double &m
     sd = std::sqrt(total * w * (1.0 - w));
 }
 
+void mean_and_sd(bernoulli_distribution dist, int sample, double total, double &mean, double &sd)
+{
+    double p = double(dist.numerator)/double(dist.denominator);
+    auto w = sample ? p : (1-p);    
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
+
+
 template <std::integral T>
 void mean_and_sd(const uniform_distribution<T> &dist, int x, int y, double total, double &mean, double &sd)
 {
@@ -42,6 +51,22 @@ void mean_and_sd(weighted_distribution dist, int x, int y, double total, double 
     sd = std::sqrt(total * w * (1.0 - w));
 }
 
+void mean_and_sd(bernoulli_distribution dist, int x, int y, double total, double &mean, double &sd)
+{
+    double p = double(dist.numerator)/double(dist.denominator);
+    auto w1 = x ? p : 1-p;
+    auto w2 = y ? p : 1-p;
+    auto w = w1*w2;
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
+
+
+double entropy(const bernoulli_distribution &dist)
+{
+    double p = double(dist.numerator)/double(dist.denominator);
+    return -p * std::log2(p) - (1-p) * std::log2(1-p);
+}
 
 double entropy(const weighted_distribution &dist)
 {
@@ -165,11 +190,17 @@ int main(int argc, char **argv)
     std::cout << "Fair coin as a 1:1 distribution:\n";
     count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 1}}, N);
 
+    std::cout << "Fair coin as a Bernoulli 1/2:\n";
+    count_totals(bits_fetched, entropy_converter{bits, bernoulli_distribution{1, 2}}, N);
+
     std::cout << "Fair d6:\n";
     count_totals(bits_fetched, entropy_converter{bits, uniform_distribution{1, 6}}, N);
 
     std::cout << "1:2 biassed coin:\n";
     count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 2}}, N, 0.96, 1.04);
+
+    std::cout << "Bernoulli 1/3 biassed coin:\n";
+    count_totals(bits_fetched, entropy_converter{bits, bernoulli_distribution{1, 3}}, N, 0.96, 1.04);
 
     std::cout << "49:2 biassed coin:\n";
     count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{49, 2}}, N, 0.7, 1.5);

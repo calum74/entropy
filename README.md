@@ -10,9 +10,9 @@ You can also run some tests for example entropy.py in Python, and entropy.cpp in
 
 ## C++ Reference
 
-The implementation is in `entropy_store.hpp` which can be copied to your C++ project.
+The implementation is in [entropy_store.hpp](entropy_store.hpp) which can be copied to your C++ project.
 
-The file `sample.cpp` contains sample usage.
+The file [sample.cpp](sample.cpp) contains instructions for usage.
 
 ## Testing
 
