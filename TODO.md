@@ -40,14 +40,80 @@ Unclassified:
 idiv:
 Cite as {Abel19a}
 
+Treat Bernoulli distribitions separately.
+Maybe mention Bernoulli distributions can be generated in O(1) space.
+
 Data on CPU instructions shows 
 
             Alder Lake-P     
 32-bit      10-15
 64-bit      14-18
 
+Random Number Generation and Monte Carlo Methods" by James E. Gentle (2nd ed., 2003)
+Chapter 1 introduces methods for generating uniform deviates over a finite set.
+
+Section 1.7: Combining Generators delves into techniques—such as forming linear combinations like 
+𝑋
++
+𝑚
+𝑌
+X+mY or 
+𝑚
+𝑋
++
+𝑌
+mX+Y—to produce new uniform variates from independent uniform sources 
+arxiv.org
++15
+mason.gmu.edu
++15
+link.springer.com
++15
+link.springer.com
++4
+link.springer.com
++4
+link.springer.com
++4
+.
+
+Gentle discusses both the theory behind these constructions and practical implementation details.
+
+
+
 TODO: Ef(X)  = f(EX) if f is a convex function. This is called Jensen's inequality.
 
+
+
+
+
+We can split up a $Z \sim Uniform\{n\}$ into two independent distributions $Y$ and $Z$.
+
+\begin{equation}
+    123
+\end{equation}
+
+
+\[
+\overbrace{
+\underbrace{a_0 ... a_{m-1}}_m\underbrace{a_m ... a_{n-1}}_{n-m}}^n
+\]
+
+Splitting up $s$:
+
+XX Use r as the remainder
+
+\[
+\overbrace{
+    \underbrace{
+        \underbrace{a_0 ... a_{m-1}}_m
+        \underbrace{a_n ... a_{2m-1}}_m
+        ...        
+        \underbrace{a_{n(m-1)} ... a_{nm-1}}_m
+        }_{nm}
+    \underbrace{a_{nm} ... a_{nm+r-1}}_r
+    }^{nm+r}
+\]
 
 
 

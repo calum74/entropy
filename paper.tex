@@ -123,13 +123,13 @@ The alias method devised by Walker \cite{walker1977efficient} and improved by Vo
 Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
 Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm.
 
-Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithms to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy.
+Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithms to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
 
-\em Entropy extraction \em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
+\em Entropy extraction\em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
-A common suggestion to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale because they require arbitrary output precision or data structure sizes.
+A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary output precision or data structure sizes.
 
 
 
@@ -142,31 +142,32 @@ In this section we'll start with some basic operations (Algorithm \ref{alg:combi
 
 We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. $\mathbb{P}$ means probability, $\mathbb{E}$ means expected value.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and $f$ as a function on random variables.
 
 
 \subsection{Fundamental operations}
 
-At the basis of the ES is the ability to extract entropy from a uniform distribution, and to combine entropy with a uniform distribution in an entropy-preserving way. These 
+At the basis of the ES is the ability to extract entropy from a uniform distribution, and to combine entropy with a uniform distribution in an entropy-preserving way. 
 
-Algorithm \ref{alg:combine} combines entropy from two uniform discrete random variables into a single uniform random variable. It  divides the range $[0,nm)$ into $n$ subranges of $[0,m)$ as follows:
+The function $f_{combine}$, in Definition \ref{def:combine}, divides the range $[0,nm)$ into $n$ subranges of $[0,m)$ as follows:
 
 \[
 \overbrace{
     \underbrace{
-        \underbrace{a_0 ... a_{m-1}}_{X \sim Uniform\{m\}}
-        \underbrace{a_m ... a_{2m-1}}_{X \sim Uniform\{m\}}
+        \underbrace{a_0 ... a_{m-1}}_{m}
+        \underbrace{a_m ... a_{2m-1}}_{m}
         ...
-        \underbrace{a_{n(m-1)}...a_{nm-1}}_{X \sim Uniform\{m\}}} 
-        }_{Y \sim Uniform\{n\}}
-        ^{Z \sim Uniform\{nm\}}
+        \underbrace{a_{n(m-1)}...a_{nm-1}}_{m} 
+        }_{n}}
+        ^{nm}
 \]
-
-The function $f_{combine}$ defines this operation. Similar constructs can be found for example in \cite{gentle2003xx}. Algorithm \ref{alg:combine} is an implementation of $f_{combine}$.
 
 \begin{definition}
     $f_{combine}: [0,n)\times [0,m) \rightarrow [0,nm)$ is defined as $f_{combine}(X,Y) = mX+Y$.
+    \label{def:combine}
 \end{definition}
+
+When applied to uniform distributions $X \sim Uniform\{n\}$ and $Y \sim Uniform \{m\}$, we can show that the result $f(X,Y)$ is also a uniform distribution, and that $f_{combine}$ has an inverse and is therefore a bijection. Because $f_{combine}$ is a bijection, it means it conserves entropy. Similar constructs can be found for example in \cite{gentle2003xx} XX. 
 
 \begin{lemma}
     The inverse of $f_{combine}$, $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Y \mod m)$.
@@ -202,6 +203,8 @@ The function $f_{combine}$ defines this operation. Similar constructs can be fou
     $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X$ and $Y$ are independent.
 \end{proof}
 
+Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$.
+
 \begin{algorithm}
 \caption{Combining uniformly distributed integers}
 \label{alg:combine}
@@ -220,9 +223,6 @@ The function $f_{combine}$ defines this operation. Similar constructs can be fou
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
-
-
-Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowing us to factorise a uniformly distributed integer into two. For this, the sizes of the output distributions must divide the size of the input distribution. Algorithm \ref{alg:divide} implements $f^{-1}_{combine}$.
 
 \begin{algorithm}
 \caption{Division of uniformly distributed integers}
@@ -247,10 +247,14 @@ Algorithm \ref{alg:divide} is the inverse of Algorithm \ref{alg:combine}, allowi
 
 
 
-
-Algorithm \ref{alg:resample} converts a uniformly distributed integer $Uniform\{n\}$ to a biassed bit $Bernoulli\{\frac{m}{n}\}$ and a uniform integer $Uniform\{m\}$ or $Uniform\{n-m\}$. It implements the following mapping, defined more formally in Definition \ref{def:sample} as $f_{sample}$:
+The function $f_{sample}$, in Definition \ref{def:sample} .. 
 
 more words here
+
+\begin{definition}
+$f_{sample}: [0,n) \rightarrow {0,1} \times \mathbb{N}_0$ is defined as $f_{sample}(Z) = (...).$
+\label{def:sample}
+\end{definition}
 
 
 \[
@@ -260,6 +264,13 @@ more words here
         \underbrace{a_m \text{   } ... \text{   } a_{n-1}}_{Y \sim Uniform\{n-m\}}}
     }_{X \sim Bernoulli\{\frac{m}{n}\}}^{Z \sim Uniform\{n\}}
 \]
+
+
+
+
+
+Algorithm \ref{alg:resample} converts a uniformly distributed integer $Uniform\{n\}$ to a biassed bit $Bernoulli\{\frac{m}{n}\}$ and a uniform integer $Uniform\{m\}$ or $Uniform\{n-m\}$. It implements the following mapping, defined more formally in Definition \ref{def:sample} as $f_{sample}$:
+
 
 \begin{algorithm}
 \caption{Resampling uniformly distributed integers}
@@ -287,10 +298,6 @@ more words here
 \end{algorithmic}
 \end{algorithm}
 
-\begin{definition}
-$f_{sample}: [0,n) \rightarrow {0,1} \times \mathbb{N}_0$ is defined as $f_{sample}(Z) = (...).$
-\label{def:sample}
-\end{definition}
 
 \begin{lemma}
 In Algorithm \ref{alg:resample}, $U_x$ is uniformly distributed over $[0,x)$.
