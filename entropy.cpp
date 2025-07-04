@@ -5,7 +5,7 @@
 
 #include <iostream>
 #include <iomanip>
-#include <map>
+#include <array>
 
 using namespace entropy_store;
 
