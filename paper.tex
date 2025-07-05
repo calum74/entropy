@@ -512,8 +512,6 @@ We would expect this process to lose entropy because in general the output distr
 
 The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
 
-
-
 \begin{definition}
     Let $f_{distribute}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim Uniform\{n\}$ to independent random variables $Y$ and $Z \sim Uniform\{w_i\}$.
 
@@ -702,7 +700,7 @@ ES is able to generate perfect distributions and does not have (albeit minimal) 
 
 The entropy store can be used as part of a Markov sequence for either input or output.
 
-\section{Conclusion}
+\section{Conclusion and further work}
 
 We have introduced a new class of algorithm to convert entropy via a uniform entropy store efficiently, and by caching unused entropy between outputs we can achieve arbitrarily low entropy losses.
 
@@ -710,10 +708,11 @@ We have shown that the entropy efficiency limits of classical algorithms like Kn
 
 The ES algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
 
-A drawback with the method is the need for 2 divmod operations per output. It would be very interesting to see if ES methods could found that avoid integer division entirely.
+A drawback with the method is the need for 2 32-bit divmod operations per output. It would be very interesting to see if ES methods could found that avoid integer division entirely.
 
+The ES algorithms rely on extracting entropy from uniform variables, but we have not established a theoretical limit or whether the presented algorithms are optimal.
 
-
+Whilst \cite{saad2020fldr} compare the performance of multiple algorithms, such an comparison has yet to be done on the batched versions of these algorithms.
 
 
 
