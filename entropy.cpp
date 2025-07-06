@@ -86,7 +86,7 @@ double entropy(const uniform_distribution<T> &dist)
     return std::log2(dist.size());
 }
 
-template <entropy_store::entropy_generator Source>
+template <entropy_generator Source>
 void count_totals(int &bits_fetched, Source source, int count, double min = 0.99, double max = 1.01)
 {
     source(); // Warm up the cache
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
     std::cout << "Here is a d6 roll: " << d6() << std::endl;
 
     // To generate using multiple distributions, use an entropy_buffer
-    auto gen = entropy_buffer{bits};
+    auto gen = entropy_store32{bits};
     std::cout << "Here is a d6 roll: " << gen(uniform_distribution{1, 6}) << std::endl;
     std::cout << "Here is a coin flip: " << gen(uniform_distribution{0, 1}) << std::endl;
 

@@ -7,7 +7,7 @@ int main()
     entropy_store::random_bit_generator fetch;
 
     // Create our entropy store
-    auto es = entropy_store::entropy_buffer{fetch};
+    auto es = entropy_store::entropy_store{fetch};
 
     // Define some distributions we can generate or consume
     entropy_store::uniform_distribution d6{1,6};
@@ -30,7 +30,7 @@ int main()
     std::cout << std::endl;
 
     // Extract entropy from the d6 stream
-    auto es2 = entropy_store::entropy_buffer{d6s};
+    auto es2 = entropy_store::entropy_store{d6s};
     
     // Flip a coin from the d6 stream
     std::cout << "Coin flip: " << es2(fair_coin) << std::endl;

@@ -292,12 +292,12 @@ namespace entropy_store
     }
 
     template <entropy_generator Source, std::integral Buffer = std::uint32_t>
-    struct entropy_buffer
+    struct entropy_store
     {
         using value_type = Buffer;
         using source_type = Source;
 
-        entropy_buffer(const Source &src) : source(src)
+        entropy_store(const Source &src) : source(src)
         {
         }
 
@@ -339,7 +339,7 @@ namespace entropy_store
 
         double internal_entropy() const { return m_source.internal_entropy(); }
 
-        entropy_buffer<source_type, Buffer> m_source;
+        entropy_store<source_type, Buffer> m_source;
         distribution_type m_distribution;
     };
 
@@ -347,5 +347,8 @@ namespace entropy_store
     using entropy_converter64 = entropy_converter<Source, Distribution, std::uint64_t>;
 
     template <entropy_generator Source>
-    using entropy_buffer64 = entropy_buffer<Source, std::uint64_t>;
+    using entropy_store32 = entropy_store<Source, std::uint32_t>;
+
+    template <entropy_generator Source>
+    using entropy_store64 = entropy_store<Source, std::uint64_t>;
 }
