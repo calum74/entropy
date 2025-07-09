@@ -1,4 +1,36 @@
+Problem with correctness of entropy extraction Algorithms 9 and 10.
+
+Why does the following fail?
+1. x = m(n-m)
+2. Get U_x
+3. Create U_N from B (should be uniform, right??)
+4. Combine with U_N
+
+Let's look at the expected entropy.
+
+p = m/n
+
+LHS entropy: log(m(n-m)) -p log p - (1-p)log(1-p)
+
+RHS entropy: plog(size1) + (1-p)log(size2)
+
+size1 =n(n-m)
+size2 = nm
+
+LHS entropy = 
+
+Fundamentally, the size of the distribution leaks information and causes correlations.
+
+
+Is step 3 still independent?
+
+Or how do I argue that the original algorithm is actually correct?
+
+E.g. 
+
 Set up the README
+
+
 
 - sample.cpp - how to use the library
 
