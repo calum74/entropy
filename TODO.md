@@ -1,3 +1,41 @@
+Need to rewrite the algorithms as follows:
+- `generate_multiple`
+- Rewrite `generate_uniform` in terms of `generate_multuple`
+- Rewrite `generate_bernoulli` in terms of `generate_multiple`
+- Rewrite `generate_weighted` in terms of `generate_multiple`
+- `combine_uniform_bernoulli`
+- `combine_weighted_bernoulli`
+
+```py
+def generate_bernouli(U_s, s, generate_multiple, m, n):
+    U_s, s, k = generate_multiple(U_s, s, n)
+    U_s, s, B = resample(U_s, s, k*m)
+    return U_s, s, B
+
+def combine_bernoulli(U_s, s, generate_multiple, m, n, B):
+    if B==0:
+        U_s, s, k = generate_multiple(U_s, s, m)
+        U_s, s = unsample(U_s, s, m*k)
+    else:
+        U_s, s, k = generate_multiple(U_s, s, m-n)
+        U_s, s = unsample(U_s, s, (n-m)*k)
+    return U_s, s
+
+def generate_weighted(U_s, s, generate_multiple, weights, outputs, offsets):
+    n = len(offsets)
+    U_s, s, k = generate_multiple(U_s, s, n)
+    W = outputs[U_s/k]
+    U_s = U_s - offsets[W]*k
+    s = weights[W]*k
+    return U_s, s
+    
+def combine_weighted(U_s, s, generate_multiple, weights, outputs, offsets, W):
+    U_s, s, k = generate_multiple(U_s, s, weights[W])
+    U_s = U_s + k*offsets[W]
+    s = k * len(offsets)
+    return U_s, s
+```
+
 Problem with correctness of entropy extraction Algorithms 9 and 10.
 
 Why does the following fail?
