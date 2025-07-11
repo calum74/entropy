@@ -40,6 +40,8 @@ calum.grant@oxam.com}
 \newtheorem{definition}{Definition}
 \newtheorem{theorem}{Theorem}
 
+\newcommand{\indep}{\perp\!\!\!\perp}
+
 \lstset{
   language=C,        % choose the language
   basicstyle=\ttfamily\small, % font style and size
@@ -138,11 +140,11 @@ A common proposal to reach asymptotic efficiency for random number generation is
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:combine}-\ref{alg:sample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
+In this section we'll start with some basic operations (Algorithm \ref{alg:combine-uniform}-\ref{alg:sample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
 
-We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-distribution}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-distribution}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-weighted}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-weighted}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and $f$ as a function on random variables. $f^{-1}$ means the inverse function.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent.
 
 We'll say "uniform integer" to mean a uniformly distributed variable or variate.
 
@@ -186,7 +188,7 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
 \end{corollary}
 
 \begin{lemma}
-    If $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$ are independent, then 
+    If $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$ and $X \indep Y$, then 
     $f_{combine}(X,Y) \sim Uniform \{nm\}$.
 \end{lemma}
 
@@ -196,7 +198,8 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
 \end{proof}
 
 \begin{lemma}
-    If $Z \sim Uniform \{nm\}$, and $f^{-1}_{combine}(Z) = (X,Y)$, then $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$. $X$ and $Y$ are independent.
+    If $Z \sim Uniform \{nm\}$, and $f^{-1}_{combine}(Z) = (X,Y)$, then $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$. $X \indep Y$.
+    \label{lem:combine-independent}
 \end{lemma}
 
 \begin{proof}
@@ -204,22 +207,22 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
 
     $\mathbb{P}(X=x) = \sum_{y}\mathbb{P}(X=x,Y=y) = m\frac{1}{nm} = \frac{1}{n}$. $\mathbb{P}(Y=y) = \sum_{x}\mathbb{P}(X=x,Y=y) = n\frac{1}{nm} = \frac{1}{m}$. This proves that $X\sim Uniform\{n\}$ and $Y\sim Uniform\{m\}$.
 
-    $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X$ and $Y$ are independent.
+    $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X \indep Y$.
 \end{proof}
 
-Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine} will be used when \em returning \em entropy to the entropy store, and Algorithm \ref{alg:divide} can be used to extract entropy from the entropy store.
+Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine-uniform} will be used when \em returning \em entropy to the entropy store, and Algorithm \ref{alg:divide} can be used to extract entropy from the entropy store.
 
 \begin{algorithm}
 \caption{Converting two uniform integers into one uniform integer}
-\label{alg:combine}
+\label{alg:combine-uniform}
 \begin{algorithmic}[1]
     \Require $n$, $m$, $U_n$, $U_m$ are integers
     \Require $U_n \sim Uniform\{n\}$
     \Require $U_m \sim Uniform\{m\}$
-    \Require $U_n$ and $U_m$ are independently
+    \Require $U_n \indep U_m$
     \Ensure $nm$ is $n * m$
     \Ensure $U_{nm} \sim Uniform\{nm\}$
-\Procedure{combine}{$U_n, n, U_m, m$} 
+\Procedure{combine\_uniform}{$U_n, n, U_m, m$} 
   \State $U_{nm} \gets U_n * m + U_m$
   \State $nm \gets n * m$
   \State \Return $U_{nm}, nm$
@@ -229,7 +232,7 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
 
 \begin{algorithm}
 \caption{Converting a uniform integer into two uniform integers by division}
-\label{alg:divide}
+\label{alg:divide-uniform}
 \begin{algorithmic}[1]
     \Require $nm, n$ and $U_{nm}$ are integers
     \Require $nm$ is divisible by $n$
@@ -237,8 +240,8 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
     \Ensure $n * m = nm$
     \Ensure $U_{n} \sim Uniform\{n\}$
     \Ensure $U_{m} \sim Uniform\{m\}$
-    \Ensure $U_n$ and $U_m$ are independent
-\Procedure{divide}{$U_{nm}, nm, m$} 
+    \Ensure $U_n \indep U_m$
+\Procedure{divide\_uniform}{$U_{nm}, nm, m$} 
   \State $U_n \gets U_{nm} \operatorname{div} m$
   \State $U_m \gets U_{nm} \mod m$
   \State $n \gets nm / n$
@@ -280,7 +283,7 @@ Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:up
     \Ensure $B \sim Bernoulli\{\frac{m}{n}\}$
     \Ensure $U_x \sim Uniform\{x\}$
     \Ensure $x = Bm + (1-B)(n-m)$
-    \Ensure $U_x$ and $B$ are independent
+    \Ensure $U_x \indep B$
 \Procedure{sample}{$U_n, n, m$} 
   \If{$U_n < m$}
     \State $B \gets 1$  
@@ -306,7 +309,7 @@ Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:up
     \Require $B \sim Bernoulli\{\frac{m}{n}\}$
     \Require $U_{x} \sim Uniform\{x\}$
     \Require $x = Bm + (1-B)(n-m)$
-    \Require $U_x$ and $B$ are independent
+    \Require $U_x \indep B$
     \Ensure $U_{n} \sim Uniform\{n\}$
 \Procedure{expand}{$U_x, B, m$}
     \State $U_n \gets (1-B)*m + U_x$
@@ -338,7 +341,7 @@ An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix 
 \Require $U_s \sim Uniform\{s\}$
 \Ensure $U_n \sim Uniform\{n\}$
 \Ensure $U_s \sim Uniform\{s\}$
-\Ensure $U_s$ and $U_n$ are independent
+\Ensure $U_s \indep U_n$
 \Procedure{generate\_uniform}{$U_s, s, n$} 
   \While {True}
     \While {$s < N$}
@@ -412,7 +415,6 @@ Therefore,
 0 \le H(b_i) \le -p\log_2p - (1-p)\log_2(1-p) 
 \end{equation}
 
-
 by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $N$ is given by
 
 \begin{align}
@@ -480,11 +482,11 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 \Require $0 \le m \le n\le N$
 \Ensure $B \sim Bernoulli\{\frac{m}{n}\}$
 \Ensure $U_s \sim Uniform\{s\}$
-\Ensure $U_s$ and $B$ are independent
+\Ensure $U_s \indep B$
 \Procedure{generate\_bernoulli}{$U_s, s, m, n$} 
   \State $U_s, s, U_n \gets generate\_uniform(U_s, s, n)$
   \State $U_x, x, B \gets sample(U_n, n, m)$
-  \State $U_s, s \gets combine(U_s, s, U_x, x)$
+  \State $U_s, s \gets combine\_uniform(U_s, s, U_x, x)$
   \State \Return $U_s, s, B$
 \EndProcedure
 \end{algorithmic}
@@ -569,7 +571,7 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 
 \begin{algorithm}
 \caption{Generating a weighted random variable}
-\label{alg:generate-distribution}
+\label{alg:generate-weighted}
 \begin{algorithmic}[1]
 \Require $U_s$, and $s$ are integers
 \Require $weights$ is an array of integers $w_i \ge 0$
@@ -577,13 +579,13 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 \Require $outputs$ generated by $make\_distribution$
 \Require $U_s \sim Uniform\{s\}$
 \Ensure $U_s \sim Uniform\{s\}$
-\Ensure $i \sim Weighted\{w\}$
-\Ensure $U_s$ and $W$ are independent
-\Procedure{generate\_distribution}{$U_s, s, weights, outputs, offsets$} 
+\Ensure $W \sim Weighted\{w\}$
+\Ensure $U_s \indep W$
+\Procedure{generate\_weighted}{$U_s, s, weights, outputs, offsets$} 
     \State $U_s, s, U_n \gets generate\_uniform(U_s, s, |outputs|)$
-    \State $i \gets outputs[U_n]$
-    \State $U_s, s = combine(U_n - offsets[i], weights[i], U_s, s)$
-    \State \Return $U_s, s, i$
+    \State $W \gets outputs[U_n]$
+    \State $U_s, s = combine\_uniform(U_n - offsets[W], weights[W], U_s, s)$
+    \State \Return $U_s, s, W$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -605,7 +607,7 @@ The inverse of $f_{distribute}$ is given by
 
 Extracting entropy means to transfer entropy from a random variable into our entropy store. The result is that the size $s$ of our entropy store increases, reflecting its increased entropy.
 
-Extracting entropy from a uniform variate can be done with Algorithm \ref{alg:combine}, and can be done directly by modifying step 4 of Algorithm \ref{alg:generate-uniform}.
+Extracting entropy from a uniform variate can be done with Algorithm \ref{alg:combine-uniform}, and can be done directly by modifying step 4 of Algorithm \ref{alg:generate-uniform}.
 
 For Bernoulli variables, we can absorb Bernoulli entropy into a uniform variable by fetching an appropriate sized uniform variable from the entropy store, using Algorithm \ref{alg:expand} to expand it, then combining it back into the entropy store. This is shown in Algorithm \ref{alg:combine-bernoulli}.
 
@@ -617,30 +619,34 @@ For Bernoulli variables, we can absorb Bernoulli entropy into a uniform variable
     \Require $0 \le m \le n$
     \Require $B \sim Bernoulli\{\frac{m}{n}\}$
     \Require $U_s \sim Uniform\{s\}$
+    \Require $B \indep U_s$
     \Ensure $U_s \sim Uniform\{s\}$
-\Procedure{combine\_distribution}{$U_s, s, m, n, B$} 
+\Procedure{combine\_bernoulli}{$U_s, s, m, n, B$} 
     \If{B=1}
         \State $x \gets m$
     \Else
         \State $x \gets n-m$
     \EndIf
     \State $U_s, s, U_x \gets generate\_uniform(U_s, s, x)$
-    \State $U_n \gets expand(U_s, B, m)$
-    \State $U_s, s \gets combine(U_n, n, U_s, s)$
+    \State $U_n \gets expand(U_x, B, m)$
+    \State $U_s, s \gets combine\_uniform(U_n, n, U_s, s)$
     \State \Return $U_s, s$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+
+The tricky part of Algorithm \ref{alg:combine-bernoulli} is that the variables are not necessarily independent.
 
 \begin{lemma}
 In Algorithm \ref{alg:combine-bernoulli}, $U_s \sim Uniform\{s\}$.
 \end{lemma}
 
 \begin{proof}
-    XX
+    If $B=1$ then $x=m$, and $U_x \sim Uniform\{x\}$ and $U_s \indep U_x$ by Lemma \ref{lem:combine-independent}.
+
 \end{proof}
 
-Algorithm \ref{alg:combine-distribution} performs the inverse of Algorithm \ref{alg:generate-distribution}. It reconstructs a uniform distribution $X$ of size $n$ from the weighted random variable $Y$, and combines it with a uniform distribution $Z$ of size $w_i$. This allows the entropy store to absorb the entropy from $i$.
+Algorithm \ref{alg:combine-weighted} performs the inverse of Algorithm \ref{alg:generate-distribution}. It reconstructs a uniform distribution $X$ of size $n$ from the weighted random variable $Y$, and combines it with a uniform distribution $Z$ of size $w_i$. This allows the entropy store to absorb the entropy from $i$.
 
 When performing the inverse of Algorithm \ref{alg:generate-distribution}, we don't need to supply it the \em same \em random variable $U_x$ that was originally used, and we can just get one from our entropy store.
 
@@ -650,15 +656,16 @@ We'll ignore potential integer overflows of $U_s$ and $s$, but $N$ can be adjust
 \caption{Extracting entropy from a weighted random variable}
 \label{alg:combine-weighted}
 \begin{algorithmic}[1]
-\Require $U_s$, $s$ and $i$ are integers
+\Require $U_s$, $s$ and $W$ are integers
 \Require $weights$, is an array of integers $\ge 0$
-\Require $offset$, $outputs$ generated by $make\_distribution$ 
-\Require $i \sim Weighted\{w_0, ...\}$
+\Require $outputs$ and $offset$ are generated by $make\_distribution$ 
+\Require $W \sim Weighted\{w_0, ...\}$
 \Require $U_s \sim Uniform\{s\}$
+    \Require $W \indep U_s$
 \Ensure $U_s \sim Uniform\{s\}$
-\Procedure{combine\_weighted}{$U_s, s, weights, outputs, offsets, i$} 
-    \State $U_s, s, U_x \gets generate\_uniform(U_s, s, weights[i])$
-    \State $U_s, s \gets combine(U_s, s, U_x + offsets[i], |outputs|)$
+\Procedure{combine\_weighted}{$U_s, s, weights, outputs, offsets, W$} 
+    \State $U_s, s, U_x \gets generate\_uniform(U_s, s, weights[W])$
+    \State $U_s, s \gets combine\_uniform(U_s, s, U_x + offsets[W], |outputs|)$
     \State \Return $U_s, s$
 \EndProcedure
 \end{algorithmic}
