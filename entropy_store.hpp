@@ -265,6 +265,9 @@ namespace entropy_store
     {
         return [&](auto &U_s, auto &s)
         {
+            // Put this in here to check we aren't fetching binary entropy more than necessary
+            std::cout << "b";
+
             // If fetch_entropy fails, we'll need to fall back to fetch_binary.
             // We want to avoid getting here by except during the bootstrap.
             assert(s < (1ull << (8 * sizeof(s) - 1)));
@@ -325,20 +328,30 @@ namespace entropy_store
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const distribution auto &source_dist, const uniform_distribution<T> &output_dist)
     {
+        N>>=source_dist.bits();
         auto fetch_entropy = fetch_from_source(source, source_dist, N);
-        return T(generate_uniform(U_s, s, N >> source_dist.bits(), uint_t(output_dist.size()), fetch_entropy)) + output_dist.min();
+        return T(generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy)) + output_dist.min();
     }
 
     template <std::integral uint_t>
     uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist, const bernoulli_distribution &output_dist)
     {
-        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.denominator() - 1)});
-        uint_t b = n < output_dist.numerator();
-        if(b)
-            combine(U_s, s, n, uint_t(output_dist.numerator()), U_s, s);
+        N>>=source_dist.bits();
+        uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.denominator(), fetch_from_source(source, source_dist, N));
+        uint32_t M = k * output_dist.numerator();
+        if(U_s < M)
+        {
+            s = M;
+            validate(U_s, s);
+            return 1;
+        }
         else
-            combine(U_s, s, n - uint_t(output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()), U_s, s);
-        return b;
+        {
+            U_s -= M;
+            s = s - M;
+            validate(U_s, s);
+            return 0;
+        }
     }
 
     template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
