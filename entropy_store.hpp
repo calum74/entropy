@@ -289,30 +289,34 @@ namespace entropy_store
         return b;
     }
 
-
-    template <std::integral uint_t, entropy_generator Source, std::integral T>
-    T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
+    template<typename Source>
+    auto fetch_bit_from_source(Source &source)
     {
-        N >>= source_dist.bits();
-
-        auto fetch_binary = [&](uint_t &U_s, uint_t &s)
+        return [&](auto &U_s, auto &s)
         {
             // If fetch_entropy fails, we'll need to fall back to fetch_binary.
             // We want to avoid getting here by except during the bootstrap.
-            assert(s < (uint_t(1) << (8 * sizeof(uint_t) - 1)));
+            assert(s < (1 << (8 * sizeof(s) - 1)));
             s <<= 1;
             auto b = source.fetch_bit();
             assert(b == 0 || b == 1);
             U_s = (U_s << 1) | b;
             validate(U_s, s);
         };
+    }
+
+
+    template <std::integral uint_t, entropy_generator Source, std::integral T>
+    T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
+    {
+        N >>= source_dist.bits();
 
         auto fetch_entropy = [&](uint_t &U_s, uint_t &s)
         {
             validate(U_s, s);
             auto i = source();
             uint_t n = source_dist.outputs().size();
-            uint_t U_n = source_dist.offsets()[i] + generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.weights()[i]), fetch_binary);
+            uint_t U_n = source_dist.offsets()[i] + generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.weights()[i]), fetch_bit_from_source(source));
             // Subtle: We need to be careful about the order of n and s
             // in the following combine, as it interacts with generate_uniform:
             combine(U_s, s, U_n, n, U_s, s);
@@ -326,18 +330,6 @@ namespace entropy_store
     {
         N >>= source_dist.bits();
 
-        auto fetch_binary = [&](uint_t &U_s, uint_t &s)
-        {
-            // If fetch_entropy fails, we'll need to fall back to fetch_binary.
-            // We want to avoid getting here by except during the bootstrap.
-            assert(s < (uint_t(1) << (8 * sizeof(uint_t) - 1)));
-            s <<= 1;
-            auto b = source.fetch_bit();
-            assert(b == 0 || b == 1);
-            U_s = (U_s << 1) | b;
-            validate(U_s, s);
-        };
-
         auto fetch_entropy = [&](uint_t &U_s, uint_t &s)
         {
             validate(U_s, s);
@@ -347,11 +339,11 @@ namespace entropy_store
 
             if(b)
             {
-                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.numerator()), fetch_binary);
+                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.numerator()), fetch_bit_from_source(source));
             }
             else
             {
-                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.denominator() - source_dist.numerator()), fetch_binary);
+                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.denominator() - source_dist.numerator()), fetch_bit_from_source(source));
                 U_s += k * source_dist.numerator();
             }
             s = k * source_dist.denominator();
