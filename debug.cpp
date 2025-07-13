@@ -18,7 +18,7 @@ int main()
     auto coins2 = entropy_store::entropy_converter{coins1, coin2};
 
     int counts[] = {0, 0};
-    for(int i=0; i<1000; ++i)
+    for(int i=0; i<1000000; ++i)
         counts[coins2()]++;
     std::cout << counts[0] << "," << counts[1] << std::endl;
 }

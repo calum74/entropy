@@ -342,24 +342,19 @@ namespace entropy_store
         {
             validate(U_s, s);
             auto b = source();
-            uint_t U_n;
+            uint_t k;
             uint_t n = source_dist.denominator();
 
             if(b)
             {
-                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.numerator()), fetch_binary);
+                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.numerator()), fetch_binary);
             }
             else
             {
-                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.denominator() - source_dist.numerator()), fetch_binary) + uint_t(source_dist.numerator());
+                k = generate_multiple(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.denominator() - source_dist.numerator()), fetch_binary);
+                U_s += k * source_dist.numerator();
             }
-            assert(U_n < n);
-            validate(U_s, s);
-
-            // Subtle: We need to be careful about the order of n and s
-            // in the following combine, as it interacts with generate_uniform:
-            // combine(U_s, s, U_n, n, U_s, s);
-            combine(U_n, n, U_s, s, U_s, s);
+            s = k * source_dist.denominator();
         };
 
         return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min();
