@@ -215,6 +215,7 @@ int main(int argc, char **argv)
     // Create some weighted distributions to use as input:
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
     auto biassed_input = entropy_converter{bits, weighted_distribution{1, 4}};
+    auto biassed_input2 = entropy_converter{bits, bernoulli_distribution{1, 5}};
     auto distribution_input = entropy_converter{bits, weighted_distribution{4, 3, 2, 1}};
     auto low_entropy_input1 = entropy_converter{bits, weighted_distribution{1, 99}};
     auto low_entropy_input2 = entropy_converter{bits, weighted_distribution{1, 999}};
@@ -234,6 +235,9 @@ int main(int argc, char **argv)
 
     std::cout << "Fair coin from 1:4 input:\n";
     count_totals(bits_fetched, entropy_converter{biassed_input, weighted_distribution{1, 1}}, N);
+
+    std::cout << "Fair coin from B{1/5} input:\n";
+    count_totals(bits_fetched, entropy_converter{biassed_input2, weighted_distribution{1, 1}}, N);
 
     std::cout << "Fair coin from 4:3:2:1 input:\n";
     count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{1, 1}}, N);

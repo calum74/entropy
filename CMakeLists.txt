@@ -5,6 +5,7 @@ enable_testing()
 
 add_executable(entropy entropy.cpp)
 add_executable(sample sample.cpp)
+add_executable(debug debug.cpp)
 
 add_test(entropy entropy)
 add_test(sample sample)

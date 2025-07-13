@@ -291,6 +291,50 @@ namespace entropy_store
         return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
     }
 
+    template <std::integral uint_t, entropy_generator Source, std::integral T>
+    T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const bernoulli_distribution &source_dist, const uniform_distribution<T> &output_dist)
+    {
+        N >>= source_dist.bits;
+
+        auto fetch_binary = [&](uint_t &U_s, uint_t &s)
+        {
+            // If fetch_entropy fails, we'll need to fall back to fetch_binary.
+            // We want to avoid getting here by except during the bootstrap.
+            assert(s < (uint_t(1) << (8 * sizeof(uint_t) - 1)));
+            s <<= 1;
+            auto b = source.fetch_bit();
+            assert(b == 0 || b == 1);
+            U_s = (U_s << 1) | b;
+            validate(U_s, s);
+        };
+
+        auto fetch_entropy = [&](uint_t &U_s, uint_t &s)
+        {
+            validate(U_s, s);
+            auto b = source();
+            uint_t U_n;
+            uint_t n = source_dist.denominator;
+
+            if(b)
+            {
+                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.numerator), fetch_binary);
+            }
+            else
+            {
+                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.denominator - source_dist.numerator), fetch_binary) + uint_t(source_dist.numerator);
+            }
+            assert(U_n < n);
+            validate(U_s, s);
+
+            // Subtle: We need to be careful about the order of n and s
+            // in the following combine, as it interacts with generate_uniform:
+            combine(U_s, s, U_n, n, U_s, s);
+        };
+
+        return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
+    }
+
+
     template <entropy_generator Source, std::integral Buffer = std::uint32_t>
     struct entropy_store
     {
@@ -351,4 +395,12 @@ namespace entropy_store
 
     template <entropy_generator Source>
     using entropy_store64 = entropy_store<Source, std::uint64_t>;
+
+    template <entropy_generator Source, std::integral Buffer, std::random_access_iterator It>
+    void shuffle(entropy_store<Source, Buffer> &store, It a, It b)
+    {
+        auto size = std::distance(a, b);
+        for(int i=1; i<size; ++i)
+            std::swap(a[i], a[store(uniform_distribution{0, i})]);
+    }
 }
