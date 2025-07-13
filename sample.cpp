@@ -39,5 +39,4 @@ int main()
     std::string str = "abcde";
     entropy_store::shuffle(es, str.begin(), str.end());
     std::cout << "Shuffle: " << str << std::endl;
-
 }
