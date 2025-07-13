@@ -266,7 +266,8 @@ namespace entropy_store
         return [&](auto &U_s, auto &s)
         {
             // Put this in here to check we aren't fetching binary entropy more than necessary
-            std::cout << "b";
+            // !! Delete this debug code
+            // std::cout << "b";
 
             // If fetch_entropy fails, we'll need to fall back to fetch_binary.
             // We want to avoid getting here by except during the bootstrap.
@@ -338,7 +339,7 @@ namespace entropy_store
     {
         N>>=source_dist.bits();
         uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.denominator(), fetch_from_source(source, source_dist, N));
-        uint32_t M = k * output_dist.numerator();
+        uint_t M = k * output_dist.numerator();
         if(U_s < M)
         {
             s = M;
@@ -348,21 +349,22 @@ namespace entropy_store
         else
         {
             U_s -= M;
-            s = s - M;
+            s -= M;
             validate(U_s, s);
             return 0;
         }
     }
 
-    template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
-    uint_t generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
+    template <std::integral uint_t>
+    uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist, const weighted_distribution &output_dist)
     {
-        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.outputs().size() - 1)});
-        uint_t i = output_dist.outputs()[n];
-        combine(U_s, s, n - output_dist.offsets()[i], uint_t(output_dist.weights()[i]), U_s, s);
-        return i;
+        N >>= source_dist.bits();
+        uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_from_source(source, source_dist, N));
+        auto W = output_dist.outputs()[U_s / k];
+        U_s -= k * output_dist.offsets()[W];
+        s = k * output_dist.weights()[W];
+        return W;
     }
-
 
     template <entropy_generator Source, std::integral Buffer = std::uint32_t>
     struct entropy_store
