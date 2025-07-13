@@ -53,11 +53,13 @@ namespace entropy_store
 
         bernoulli_distribution(uint_t numerator, uint_t denominator) :
             numerator(numerator), denominator(denominator)
-        {}
+        {
+            bits = std::ceil(std::log2(denominator));
+        }
 
         uint_t numerator, denominator;
         using value_type = uint_t;
-        const std::uint32_t bits = 1;
+        std::uint32_t bits;
     };
 
     template <typename Distribution>
@@ -328,7 +330,8 @@ namespace entropy_store
 
             // Subtle: We need to be careful about the order of n and s
             // in the following combine, as it interacts with generate_uniform:
-            combine(U_s, s, U_n, n, U_s, s);
+            // combine(U_s, s, U_n, n, U_s, s);
+            combine(U_n, n, U_s, s, U_s, s);
         };
 
         return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
