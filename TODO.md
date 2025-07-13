@@ -36,6 +36,74 @@ def combine_weighted(U_s, s, generate_multiple, weights, outputs, offsets, W):
     return U_s, s
 ```
 
+# Current status
+
+There's a bug when converting Bernoulli to Bernoulli distributions (and, weighted more generally). Focus on Bernoulli-Bernoulli for now.
+
+For some reason, the Bernoulli extractor causes bias when coupled with a Bernoulli generator. The problem is that the *size* of the output depends on the values of the input, and this *size* looks like a side-channel. But in theory, the output distribution shouldn't depend on the size.
+
+For example, converting B{1/3} to B{1/2} creates a bias of +7%. Converting B{2/3} to B{1/2} creates a bias of -7%. E.g. converting entropy B{1/3} to B{2/3} creates a significant bias.
+
+Possible explanations:
+- A bug in the implementation of an algorithm
+- An artefact or bug in the testing framework
+- Incorrectness of extractor
+- Incorrectness of generator
+- Variables that should be independent are not
+- A dataflow is invalid
+- Feedback is invalid
+- Size is a side-channel
+- Output depends on a size
+
+What experiment could I run to test these?
+- Debug in C++
+- Create a version that does not have a feedback loop?
+- Analyze multiple inputs
+- Create a debug log that explains the steps taken.
+
+Mysteries
+- Why are the same args passed to generate_multiple repeatedly?
+- When combining, why have generate_multiple{2} but never generate_multiple{1} 
+
+
+# Repartitioning
+
+- Talk about repartitioning
+- Talk about needing to bootstrap the entropy store from binary.
+- Define "generation" and "extraction"
+
+Rename algorithms?
+ - conv_uu_to_u
+ - conv_u_to_uu
+ - conv_u_to_ub
+ - conv_ub_to_u
+ - conv_u_to_u
+ - conv_ubin_to_u
+
+- Have a table of conversions?
+
+At the heart of ESA is the ability to manipulate a uniform variable, implemented as a pair of integers (its value and its size). To do this we can \em partition \em the range $[0,n)$ into smaller subranges, where each subrange $i$ has a uniform distribution $[0,w_i)$, and the subranges are distributed according to a weighted distribution.
+
+    Picture here
+
+We have two special cases of this. The first is where the range is a composite number $nm$, in which case we can partition the range $[0,nm)$ into $n$ equal ranges of $m$ as follows:
+
+    Picture here
+
+This allows us to partition a uniform variable $Uniform\{nm\}$ into two independent
+
+The second case is where we have two subranges, and we can partition the range $[0,n)$ into subranges $n$ and $n-m$ as follows:
+
+
+Crucially, these partitionings are reversible, meaning you can take two 
+
+
+
+Idea: Under a particular workload, one of the divmods can be avoided
+
+
+
+
 Problem with correctness of entropy extraction Algorithms 9 and 10.
 
 Why does the following fail?
