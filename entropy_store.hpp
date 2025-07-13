@@ -26,8 +26,8 @@ namespace entropy_store
         value_type max() const { return m_max; }
 
     private:
-        int m_min, m_max;       // Inclusive values, min<=max
-        std::uint32_t m_bits;   // Number of bits capacity required to fetch this
+        int m_min, m_max;     // Inclusive values, min<=max
+        std::uint32_t m_bits; // Number of bits capacity required to fetch this
     };
 
     uniform_distribution<std::uint32_t> binary() { return {0, 1}; }
@@ -70,8 +70,7 @@ namespace entropy_store
         using size_type = std::size_t;
         using value_type = std::uint32_t;
 
-        bernoulli_distribution(size_type numerator, size_type denominator) :
-            m_numerator(numerator), m_denominator(denominator)
+        bernoulli_distribution(size_type numerator, size_type denominator) : m_numerator(numerator), m_denominator(denominator)
         {
             m_bits = std::ceil(std::log2(denominator));
         }
@@ -280,7 +279,7 @@ namespace entropy_store
         };
     }
 
-    template<std::integral uint_t>
+    template <std::integral uint_t>
     auto fetch_from_source(entropy_generator auto &source, const bernoulli_distribution &source_dist, uint_t N)
     {
         N >>= source_dist.bits();
@@ -290,7 +289,7 @@ namespace entropy_store
             uint_t n = source_dist.denominator();
             uint_t k;
 
-            if(b)
+            if (b)
             {
                 k = generate_multiple(U_s, s, N, uint_t(source_dist.numerator()), fetch_bit_from_source(source));
             }
@@ -303,7 +302,7 @@ namespace entropy_store
         };
     }
 
-    template<std::integral uint_t, std::integral uint2>
+    template <std::integral uint_t, std::integral uint2>
     auto fetch_from_source(entropy_generator auto &source, const uniform_distribution<uint2> &source_dist, uint_t N)
     {
         N >>= source_dist.bits();
@@ -313,11 +312,11 @@ namespace entropy_store
         };
     }
 
-    template<std::integral uint_t>
+    template <std::integral uint_t>
     auto fetch_from_source(entropy_generator auto &source, const weighted_distribution &source_dist, uint_t N)
     {
         N >>= source_dist.bits();
-        return [&,N](uint_t &U_s, uint_t &s)
+        return [&, N](uint_t &U_s, uint_t &s)
         {
             auto W = source();
             auto k = generate_multiple(U_s, s, N, uint_t(source_dist.weights()[W]), fetch_bit_from_source(source));
@@ -329,7 +328,7 @@ namespace entropy_store
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const distribution auto &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N>>=source_dist.bits();
+        N >>= source_dist.bits();
         auto fetch_entropy = fetch_from_source(source, source_dist, N);
         return T(generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy)) + output_dist.min();
     }
@@ -337,10 +336,10 @@ namespace entropy_store
     template <std::integral uint_t>
     uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist, const bernoulli_distribution &output_dist)
     {
-        N>>=source_dist.bits();
+        N >>= source_dist.bits();
         uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.denominator(), fetch_from_source(source, source_dist, N));
         uint_t M = k * output_dist.numerator();
-        if(U_s < M)
+        if (U_s < M)
         {
             s = M;
             validate(U_s, s);
@@ -431,12 +430,12 @@ namespace entropy_store
     void shuffle(entropy_store<Source, Buffer> &store, It a, It b)
     {
         auto size = std::distance(a, b);
-        for(int i=1; i<size; ++i)
+        for (int i = 1; i < size; ++i)
             std::swap(a[i], a[store(uniform_distribution{0, i})]);
     }
 
     template <entropy_generator Source, std::integral Buffer>
-    void shuffle(entropy_store<Source, Buffer> &store, std::ranges::random_access_range auto& c)
+    void shuffle(entropy_store<Source, Buffer> &store, std::ranges::random_access_range auto &c)
     {
         return shuffle(store, c.begin(), c.end());
     }
