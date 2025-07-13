@@ -36,7 +36,7 @@ int main()
     std::cout << "Coin flip: " << es2(fair_coin) << std::endl;
 
     // Shuffle a string
-    std::string str = "abcde";
-    entropy_store::shuffle(es, str.begin(), str.end());
+    std::string str = "abcdefghijklmnopqrstuvwxyz";
+    entropy_store::shuffle(es, str);
     std::cout << "Shuffle: " << str << std::endl;
 }
