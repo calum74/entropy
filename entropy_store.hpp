@@ -24,7 +24,7 @@ namespace entropy_store
 
     private:
         int m_min, m_max;       // Inclusive values, min<=max
-        std::uint32_t m_bits; // Number of bits capacity required to represent this
+        std::uint32_t m_bits;   // Number of bits capacity required to fetch this
     };
 
     uniform_distribution<std::uint32_t> binary() { return {0, 1}; }
@@ -219,7 +219,7 @@ namespace entropy_store
     }
 
     template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
-    uint_t generate_uniform(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
+    uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
     {
         assert(N >= n);
         validate(U_s, s);
@@ -230,24 +230,32 @@ namespace entropy_store
             assert(s >= n);
             validate(U_s, s);
             // Resample entropy s to a multiple of m
-            uint_t r = s / n;
-            uint_t c = s % n;
-            if (U_s >= c) [[likely]]
+            uint_t k = s / n;
+            uint_t r = s % n;
+            s -= r;
+            if (U_s < s) [[likely]]
             {
                 // Resample successful
-                U_s -= c;
-                uint_t U_n = U_s % n;
-                U_s = U_s / n;
-                s = r;
                 validate(U_s, s);
-                return U_n;
+                return k;
             }
             else
             {
                 // Resample unsuccessful
-                s = c;
+                U_s -= s;
             }
         }
+    }
+
+    template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
+    uint_t generate_uniform(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
+    {
+        uint_t k = generate_multiple(U_s, s, N, n, fetch_entropy);
+        uint_t U_n;
+        divide(U_s, s, n, U_s, U_n, s);
+        validate(U_s, s);
+        validate(U_n, n);
+        return U_n;
     }
 
     template <std::integral uint_t, entropy_generator Source, std::integral U, std::integral T>
