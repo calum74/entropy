@@ -19,14 +19,14 @@ void mean_and_sd(const uniform_distribution<T> &dist, int sample, double total, 
 
 void mean_and_sd(weighted_distribution dist, int sample, double total, double &mean, double &sd)
 {
-    auto w = double(dist.weights[sample]) / dist.outputs.size();
+    auto w = double(dist.weights()[sample]) / dist.outputs().size();
     mean = total * w;
     sd = std::sqrt(total * w * (1.0 - w));
 }
 
 void mean_and_sd(bernoulli_distribution dist, int sample, double total, double &mean, double &sd)
 {
-    double p = double(dist.numerator)/double(dist.denominator);
+    double p = double(dist.numerator())/double(dist.denominator());
     auto w = sample ? p : (1-p);    
     mean = total * w;
     sd = std::sqrt(total * w * (1.0 - w));
@@ -44,8 +44,8 @@ void mean_and_sd(const uniform_distribution<T> &dist, int x, int y, double total
 
 void mean_and_sd(weighted_distribution dist, int x, int y, double total, double &mean, double &sd)
 {
-    auto w1 = double(dist.weights[x]) / dist.outputs.size();
-    auto w2 = double(dist.weights[y]) / dist.outputs.size();
+    auto w1 = double(dist.weights()[x]) / dist.outputs().size();
+    auto w2 = double(dist.weights()[y]) / dist.outputs().size();
     auto w = w1*w2;
     mean = total * w;
     sd = std::sqrt(total * w * (1.0 - w));
@@ -53,7 +53,7 @@ void mean_and_sd(weighted_distribution dist, int x, int y, double total, double 
 
 void mean_and_sd(bernoulli_distribution dist, int x, int y, double total, double &mean, double &sd)
 {
-    double p = double(dist.numerator)/double(dist.denominator);
+    double p = double(dist.numerator())/double(dist.denominator());
     auto w1 = x ? p : 1-p;
     auto w2 = y ? p : 1-p;
     auto w = w1*w2;
@@ -64,16 +64,16 @@ void mean_and_sd(bernoulli_distribution dist, int x, int y, double total, double
 
 double entropy(const bernoulli_distribution &dist)
 {
-    double p = double(dist.numerator)/double(dist.denominator);
+    double p = double(dist.numerator())/double(dist.denominator());
     return -p * std::log2(p) - (1-p) * std::log2(1-p);
 }
 
 double entropy(const weighted_distribution &dist)
 {
     double e = 0;
-    for (double w : dist.weights)
+    for (double w : dist.weights())
     {
-        auto p = w / dist.outputs.size();
+        auto p = w / dist.outputs().size();
         e -= p * std::log2(p);
     }
 

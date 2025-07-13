@@ -4,19 +4,27 @@
 #include <cmath>
 #include <random>
 #include <cassert>
+#include <span>
 
 namespace entropy_store
 {
     template <std::integral T>
-    struct uniform_distribution
+    class uniform_distribution
     {
+    public:
         using value_type = T;
-        int min, max;       // Inclusive values, min<=max
-        std::uint32_t bits; // Number of bits capacity required to represent this
+        using size_type = std::size_t;
 
-        uniform_distribution(T a, T b) : min(a), max(b), bits(std::ceil(std::log2(size()))) {}
+        uniform_distribution(value_type a, value_type b) : m_min(a), m_max(b), m_bits(std::ceil(std::log2(size()))) {}
 
-        uint32_t size() const { return max - min + 1; }
+        size_type size() const { return max() - min() + 1; }
+        size_type bits() const { return m_bits; }
+        value_type min() const { return m_min; }
+        value_type max() const { return m_max; }
+
+    private:
+        int m_min, m_max;       // Inclusive values, min<=max
+        std::uint32_t m_bits; // Number of bits capacity required to represent this
     };
 
     uniform_distribution<std::uint32_t> binary() { return {0, 1}; }
@@ -26,46 +34,58 @@ namespace entropy_store
     class weighted_distribution
     {
     public:
-        using uint_t = std::uint32_t;
         using value_type = std::uint32_t;
-        weighted_distribution(std::initializer_list<uint_t> weights) : weighted_distribution(std::vector(weights)) {}
-        weighted_distribution(std::vector<uint_t> w) : weights(std::move(w))
+        using size_type = std::size_t;
+
+        weighted_distribution(std::initializer_list<value_type> weights) : weighted_distribution(std::vector(weights)) {}
+        weighted_distribution(std::vector<value_type> w) : m_weights(std::move(w))
         {
-            for (int i = 0; i < weights.size(); ++i)
+            for (int i = 0; i < m_weights.size(); ++i)
             {
-                offsets.push_back(outputs.size());
-                for (int j = 0; j < weights[i]; ++j)
+                m_offsets.push_back(m_outputs.size());
+                for (int j = 0; j < m_weights[i]; ++j)
                 {
-                    outputs.push_back(i);
+                    m_outputs.push_back(i);
                 }
             }
-            bits = std::ceil(std::log2(outputs.size()));
+            m_bits = std::ceil(std::log2(m_outputs.size()));
         }
+        size_type bits() const { return m_bits; }
 
-        std::vector<uint_t> weights, outputs, offsets;
-        std::uint32_t bits;
+        std::span<const value_type> weights() const { return m_weights; }
+        std::span<const value_type> outputs() const { return m_outputs; }
+        std::span<const value_type> offsets() const { return m_offsets; }
+
+    private:
+        std::uint32_t m_bits;
+        std::vector<value_type> m_weights, m_outputs, m_offsets;
     };
 
     class bernoulli_distribution
     {
     public:
-        using uint_t = std::uint32_t;
+        using size_type = std::size_t;
+        using value_type = std::uint32_t;
 
-        bernoulli_distribution(uint_t numerator, uint_t denominator) :
-            numerator(numerator), denominator(denominator)
+        bernoulli_distribution(size_type numerator, size_type denominator) :
+            m_numerator(numerator), m_denominator(denominator)
         {
-            bits = std::ceil(std::log2(denominator));
+            m_bits = std::ceil(std::log2(denominator));
         }
 
-        uint_t numerator, denominator;
-        using value_type = uint_t;
-        std::uint32_t bits;
+        size_type bits() const { return m_bits; }
+        size_type numerator() const { return m_numerator; }
+        size_type denominator() const { return m_denominator; }
+
+    private:
+        size_type m_bits;
+        size_type m_numerator, m_denominator;
     };
 
     template <typename Distribution>
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
-        dist.bits;
+        dist.bits();
     };
 
     template <typename Source>
@@ -119,7 +139,7 @@ namespace entropy_store
             return fetch_bit();
         }
 
-        int fetch_bit()
+        value_type fetch_bit()
         {
             if (++m_shift >= 32)
             {
@@ -235,29 +255,29 @@ namespace entropy_store
     {
         auto fetch_entropy = [&](uint_t &U_s, uint_t &s)
         {
-            combine(U_s, s, uint_t(source() - source_dist.min), uint_t(source_dist.size()), U_s, s);
+            combine(U_s, s, uint_t(source() - source_dist.min()), uint_t(source_dist.size()), U_s, s);
         };
-        return T(generate_uniform(U_s, s, N >> source_dist.bits, uint_t(output_dist.size()), fetch_entropy)) + output_dist.min;
+        return T(generate_uniform(U_s, s, N >> source_dist.bits(), uint_t(output_dist.size()), fetch_entropy)) + output_dist.min();
     }
 
     template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
     uint_t generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const SourceDist &source_dist, const weighted_distribution &output_dist)
     {
-        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.outputs.size() - 1)});
-        uint_t i = output_dist.outputs[n];
-        combine(U_s, s, n - output_dist.offsets[i], uint_t(output_dist.weights[i]), U_s, s);
+        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.outputs().size() - 1)});
+        uint_t i = output_dist.outputs()[n];
+        combine(U_s, s, n - output_dist.offsets()[i], uint_t(output_dist.weights()[i]), U_s, s);
         return i;
     }
 
     template <std::integral uint_t, entropy_generator Source, distribution SourceDist>
     uint_t generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const SourceDist &source_dist, const bernoulli_distribution &output_dist)
     {
-        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.denominator - 1)});
-        uint_t b = n < output_dist.numerator;
+        uint_t n = generate(U_s, s, N, source, source_dist, uniform_distribution{uint_t(0), uint_t(output_dist.denominator() - 1)});
+        uint_t b = n < output_dist.numerator();
         if(b)
-            combine(U_s, s, n, uint_t(output_dist.numerator), U_s, s);
+            combine(U_s, s, n, uint_t(output_dist.numerator()), U_s, s);
         else
-            combine(U_s, s, n - uint_t(output_dist.numerator), uint_t(output_dist.denominator - output_dist.numerator), U_s, s);
+            combine(U_s, s, n - uint_t(output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()), U_s, s);
         return b;
     }
 
@@ -265,7 +285,7 @@ namespace entropy_store
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const weighted_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N >>= source_dist.bits;
+        N >>= source_dist.bits();
 
         auto fetch_binary = [&](uint_t &U_s, uint_t &s)
         {
@@ -283,20 +303,20 @@ namespace entropy_store
         {
             validate(U_s, s);
             auto i = source();
-            uint_t n = source_dist.outputs.size();
-            uint_t U_n = source_dist.offsets[i] + generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.weights[i]), fetch_binary);
+            uint_t n = source_dist.outputs().size();
+            uint_t U_n = source_dist.offsets()[i] + generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.weights()[i]), fetch_binary);
             // Subtle: We need to be careful about the order of n and s
             // in the following combine, as it interacts with generate_uniform:
             combine(U_s, s, U_n, n, U_s, s);
         };
 
-        return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
+        return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min();
     }
 
     template <std::integral uint_t, entropy_generator Source, std::integral T>
     T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const bernoulli_distribution &source_dist, const uniform_distribution<T> &output_dist)
     {
-        N >>= source_dist.bits;
+        N >>= source_dist.bits();
 
         auto fetch_binary = [&](uint_t &U_s, uint_t &s)
         {
@@ -315,15 +335,15 @@ namespace entropy_store
             validate(U_s, s);
             auto b = source();
             uint_t U_n;
-            uint_t n = source_dist.denominator;
+            uint_t n = source_dist.denominator();
 
             if(b)
             {
-                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.numerator), fetch_binary);
+                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.numerator()), fetch_binary);
             }
             else
             {
-                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits), uint_t(source_dist.denominator - source_dist.numerator), fetch_binary) + uint_t(source_dist.numerator);
+                U_n = generate_uniform(U_s, s, uint_t(N >> source_dist.bits()), uint_t(source_dist.denominator() - source_dist.numerator()), fetch_binary) + uint_t(source_dist.numerator());
             }
             assert(U_n < n);
             validate(U_s, s);
@@ -334,7 +354,7 @@ namespace entropy_store
             combine(U_n, n, U_s, s, U_s, s);
         };
 
-        return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min;
+        return generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy) + output_dist.min();
     }
 
 
