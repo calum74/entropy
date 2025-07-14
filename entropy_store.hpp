@@ -6,8 +6,7 @@
 #include <span>
 
 // Debugging only
-#include <cassert>
-#include <iostream>
+#include "testing.hpp"
 
 namespace entropy_store
 {
@@ -223,6 +222,9 @@ namespace entropy_store
     template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
     uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
     {
+        static debug_uniform x("generate_multiple");
+        x.record(U_s, s);
+
         assert(N >= n);
         validate(U_s, s);
         for (;;)
@@ -239,12 +241,14 @@ namespace entropy_store
             {
                 // Resample successful
                 validate(U_s, s);
+                assert(k == s/n);
                 return k;
             }
             else
             {
                 // Resample unsuccessful
                 U_s -= s;
+                s = r;
             }
         }
     }
