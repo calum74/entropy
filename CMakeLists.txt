@@ -3,7 +3,7 @@ project(entropy)
 set(CMAKE_CXX_STANDARD 23)
 enable_testing()
 
-add_executable(entropy entropy.cpp)
+add_executable(tests tests.cpp)
 add_executable(sample sample.cpp)
 add_executable(debug debug.cpp)
 
