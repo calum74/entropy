@@ -7,12 +7,16 @@
 
 namespace entropy_store
 {
+    // Checks that multiple samplings of a uniform distribution
+    // occur in the expected range. According to the central limit theorem
+    // However, they are not independent.     
     class debug_uniform
     {
     public:
         using value_type = std::uint64_t;
         void record(value_type value, value_type size)
         {
+            assert(value<size);
             total_value += value;
             total_size += size - 1;
             total_count++;

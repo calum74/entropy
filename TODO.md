@@ -31,6 +31,12 @@ Mysteries
 Next steps:
 - Need to validate invariants, for example implement a "check_uniform"
 
+What's gone wrong?
+I don't think the variables are independent. So when we generate a Bernoulli variable, the value in the entropy store is not independent of that somehow. But they shouldn't depend on the *size* of the distribution, only its value.
+
+For example when we generate a 1, it means that the uniform in the store is high. Then the next time we generate a Bernoulli, this is also high.
+
+No that's not true.
 
 # Repartitioning
 

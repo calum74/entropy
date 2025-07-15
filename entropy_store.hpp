@@ -224,7 +224,7 @@ namespace entropy_store
     {
         static debug_uniform x("generate_multiple");
         x.record(U_s, s);
-
+        
         assert(N >= n);
         validate(U_s, s);
         for (;;)
@@ -341,6 +341,23 @@ namespace entropy_store
     uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist, const bernoulli_distribution &output_dist)
     {
         N >>= source_dist.bits();
+
+        auto x = generate_uniform(U_s, s, N, uint_t(output_dist.denominator()), fetch_from_source(source, source_dist, N));
+
+        // !! This version is fine. Why ??
+        if(x<output_dist.numerator())
+        {
+            // combine(U_s, s, x, uint_t(output_dist.numerator()), U_s, s);
+            combine(x, uint_t(output_dist.numerator()), U_s, s, U_s, s);
+            return 1;
+        }
+        else
+        {
+            //combine(U_s, s, uint_t(x-output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()),U_s, s);
+            combine(uint_t(x-output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()), U_s, s, U_s, s);
+            return 0;
+        }
+
         uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.denominator(), fetch_from_source(source, source_dist, N));
         uint_t M = k * output_dist.numerator();
         if (U_s < M)
