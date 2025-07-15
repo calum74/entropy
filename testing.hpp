@@ -9,14 +9,14 @@ namespace entropy_store
 {
     // Checks that multiple samplings of a uniform distribution
     // occur in the expected range. According to the central limit theorem
-    // However, they are not independent.     
+    // However, they are not independent.
     class debug_uniform
     {
     public:
         using value_type = std::uint64_t;
         void record(value_type value, value_type size)
         {
-            assert(value<size);
+            assert(value < size);
             total_value += value;
             total_size += size - 1;
             total_count++;
@@ -38,15 +38,16 @@ namespace entropy_store
             return (total_value - mean()) / sd();
         }
 
+        double get_percentage_bias() const
+        {
+            return 100.0 * (total_value - mean()) / total_value;
+        }
+
         debug_uniform(const char *place) : place(place) {}
 
         ~debug_uniform()
         {
-            auto d = get_relative_bias();
-            if (std::abs(d) > 4)
-            {
-                std::cout << place << ": uniform distribution failed with SD=" << d << std::endl;
-            }
+            std::cout << place << ": uniform distribution bias = " << get_percentage_bias() << "%\n";
         }
 
     private:

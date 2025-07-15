@@ -343,31 +343,14 @@ namespace entropy_store
     {
         N >>= source_dist.bits();
 
- #if 0
-        auto x = generate_uniform(U_s, s, N, uint_t(output_dist.denominator()), fetch_from_source(source, source_dist, N));
-
-        // !! This version is fine. Why ??
-        if(x<output_dist.numerator())
-        {
-            // combine(U_s, s, x, uint_t(output_dist.numerator()), U_s, s);
-            combine(x, uint_t(output_dist.numerator()), U_s, s, U_s, s);
-            return 1;
-        }
-        else
-        {
-            //combine(U_s, s, uint_t(x-output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()),U_s, s);
-            combine(uint_t(x-output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()), U_s, s, U_s, s);
-            return 0;
-        }
-#endif
-
-        // This is the version that doesn't work. Why??
         uint_t m = output_dist.numerator();
         uint_t n = output_dist.denominator();
         assert(m<n);
         uint_t k = generate_multiple(U_s, s, N, n, fetch_from_source(source, source_dist, N));
         assert(s = k*n);
         uint_t M = k * m;
+        assert(M>=k);
+        assert(M>=m);
         if (U_s < M)
         {
             s = M;
@@ -417,7 +400,8 @@ namespace entropy_store
         }
 
     private:
-        value_type N = value_type(1) << (sizeof(value_type) * 8 - 1), U_s = 0, s = 1;
+        static constexpr value_type N = value_type(1) << (sizeof(value_type) * 8 - 1);
+        value_type U_s = 0, s = 1;
         source_type source;
     };
 

@@ -1,3 +1,30 @@
+# Summary of the bug
+
+The bug comes about because the U_i are correlated, which could possibly lead to the outputs being correlated. This means that we should not expect the U_i to have the same standard deviation according to the central limit theorem.
+
+Operations like `divide` are safe because they create 2 outputs that aren't correlated.
+
+Operations that consume can lead to potential biasses, but why?
+
+
+
+# Bugs
+1. When generating. Bernoulli{1/2}, we get artifacts in the distribution even though the outputs seem ok. Changing the output distribution to anything other than 1/2 and everything seems good.
+- Conclusion: This isn't a bug really, because the U_s is 
+2. When converting a Bernoulli{1/3} to Bernoulli{1/2}, the outputs are not fairly distributed. But when we change the generator algorithm to "combine", then the outputs are fair again.
+
+# Discussion
+1. This suggests that the method of generating (or consuming) Bernoulli distributions is in fact flawed.
+2. I need to understand this flaw.
+3. Things like swapping the parameters of a combine may be masking the problem rather than fixing it.
+
+# Thoughts
+Conclusion: The sequence of numbers U_s can be correlated with each other, which in turn leads to correlations between the outputs.
+
+This is a very deep problem to solve.
+
+The solution is to prove that no two numbers $U_i$ and $U_{i+1}$ are correlated.
+
 
 # Current status
 
@@ -53,7 +80,12 @@ The general operation of changing the range seems to be broken. It must be corre
 
 Interestingly, there's a consistent bias downwards when output coin12
 
-The uniform isn't correct when we 
+Mystery because coin13 works fine but coin12 has bugs. Suggests an overflow of some kind...
+
+1. Why when generating Bernoulli{1/3} do we get no uniform bias, but Uniform{1/2} does have a bias?? Is it an overflow?? It looks like some form of synchronisation between the input and the output.
+
+2. Back to the coins output.
+
 
 
 # Repartitioning
