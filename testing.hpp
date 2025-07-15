@@ -30,7 +30,7 @@ namespace entropy_store
 
         double mean() const
         {
-            return total_size / 2;
+            return total_size / 2.0;
         }
 
         double get_relative_bias() const

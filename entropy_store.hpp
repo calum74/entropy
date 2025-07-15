@@ -290,19 +290,20 @@ namespace entropy_store
         return [&, N](uint_t &U_s, uint_t &s)
         {
             auto b = source();
+            uint_t m = source_dist.numerator();
             uint_t n = source_dist.denominator();
             uint_t k;
 
             if (b)
             {
-                k = generate_multiple(U_s, s, N, uint_t(source_dist.numerator()), fetch_bit_from_source(source));
+                k = generate_multiple(U_s, s, N, m, fetch_bit_from_source(source));
             }
             else
             {
-                k = generate_multiple(U_s, s, N, uint_t(source_dist.denominator() - source_dist.numerator()), fetch_bit_from_source(source));
-                U_s += k * source_dist.numerator();
+                k = generate_multiple(U_s, s, N, n-m, fetch_bit_from_source(source));
+                U_s += k * m;
             }
-            s = k * source_dist.denominator();
+            s = k * n;
         };
     }
 
@@ -342,6 +343,7 @@ namespace entropy_store
     {
         N >>= source_dist.bits();
 
+ #if 0
         auto x = generate_uniform(U_s, s, N, uint_t(output_dist.denominator()), fetch_from_source(source, source_dist, N));
 
         // !! This version is fine. Why ??
@@ -357,9 +359,15 @@ namespace entropy_store
             combine(uint_t(x-output_dist.numerator()), uint_t(output_dist.denominator() - output_dist.numerator()), U_s, s, U_s, s);
             return 0;
         }
+#endif
 
-        uint_t k = generate_multiple(U_s, s, N, (uint_t)output_dist.denominator(), fetch_from_source(source, source_dist, N));
-        uint_t M = k * output_dist.numerator();
+        // This is the version that doesn't work. Why??
+        uint_t m = output_dist.numerator();
+        uint_t n = output_dist.denominator();
+        assert(m<n);
+        uint_t k = generate_multiple(U_s, s, N, n, fetch_from_source(source, source_dist, N));
+        assert(s = k*n);
+        uint_t M = k * m;
         if (U_s < M)
         {
             s = M;

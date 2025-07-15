@@ -10,21 +10,23 @@ int main()
     auto es = entropy_store::entropy_store{fetch};
 
     // Define some distributions we can generate or consume
-    entropy_store::bernoulli_distribution coin1{1, 3};
-    entropy_store::bernoulli_distribution coin2{1, 2};
+    entropy_store::bernoulli_distribution coin13{1, 3};
+    entropy_store::bernoulli_distribution coin12{1, 2};
 
     // Create a stream of coin1
-    auto coins1 = entropy_store::entropy_converter{fetch, coin1};
-    auto coins2 = entropy_store::entropy_converter{coins1, coin2};
+    auto coins13 = entropy_store::entropy_converter{fetch, coin13};
+    auto coins12 = entropy_store::entropy_converter{coins13, coin12};
 
+#if 1
     for(int i=0; i<10000; ++i)
     {
-        es(coin2);
+        es(coin13);
     }
     return 0;
+#endif
 
     int counts[] = {0, 0};
-    for (int i = 0; i < 1000000; ++i)
-        counts[coins2()]++;
+    for (int i = 0; i < 10000; ++i)
+        counts[coins12()]++;
     std::cout << counts[0] << "," << counts[1] << std::endl;
 }

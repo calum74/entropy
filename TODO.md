@@ -38,6 +38,24 @@ For example when we generate a 1, it means that the uniform in the store is high
 
 No that's not true.
 
+## More ideas
+
+What should happen: We take s, remove a tiny sliver and turn it into kn. Compare it with km, to yield a range of either km or k(n-m). Each subrange should be uniform. So either
+
+- our test harness is completely broken
+- we have a bug in generate_bernoulli (unlikely as it's so simple)
+- we have a bug in generate_multiple
+- the bug is only when generating a bernoulli.
+
+But it's quite strange that generating a bernoulli also causes uniform measurement failures, so perhaps there is a common cause...
+
+The general operation of changing the range seems to be broken. It must be correlated with something, but what?
+
+Interestingly, there's a consistent bias downwards when output coin12
+
+The uniform isn't correct when we 
+
+
 # Repartitioning
 
 - Talk about repartitioning
