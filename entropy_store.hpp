@@ -297,6 +297,7 @@ namespace entropy_store
             if (b)
             {
                 k = generate_multiple(U_s, s, N, m, fetch_bit_from_source(source));
+                assert(s==k*m);
             }
             else
             {
@@ -304,6 +305,7 @@ namespace entropy_store
                 U_s += k * m;
             }
             s = k * n;
+            validate(U_s, s);
         };
     }
 
@@ -378,8 +380,9 @@ namespace entropy_store
     }
 
     template <entropy_generator Source, std::integral Buffer = std::uint32_t>
-    struct entropy_store
+    class entropy_store
     {
+    public:
         using value_type = Buffer;
         using source_type = Source;
 

@@ -1,3 +1,13 @@
+# Next steps
+
+Look at the intervals that we generate when we use merge/split_bernoulli. Observe that the output will always be an interval in some range. Our "state" is a set of intervals, and probabilities that our number is in that range.
+
+We should then be able to add up the probability of outputs at each step and confirm that the probability isn't the Bernoulli distribution we expected.
+
+After that, we can look at the cause of the discrepancy and figure out a way to fix it.
+
+- rename generate_multiple to find_multiple followed by split_bernoulli
+
 # Summary of the bug
 
 The bug comes about because the U_i are correlated, which could possibly lead to the outputs being correlated. This means that we should not expect the U_i to have the same standard deviation according to the central limit theorem.
@@ -5,6 +15,30 @@ The bug comes about because the U_i are correlated, which could possibly lead to
 Operations like `divide` are safe because they create 2 outputs that aren't correlated.
 
 Operations that consume can lead to potential biasses, but why?
+
+Generating bernoulli source:
+
+U_0 = binary()
+U_1, B_1 = split_bernoulli(U_0)
+U_2 = combine(U_1, binary())
+U_2, B_2 = split_bernoulli(U_2)
+
+Consuming bernoulli #2:
+
+V_0 = binary()
+V_1 = merge_bernoulli(V_0, B_1)
+V_2, C_2 = split_bernoulli(V_1)
+V_3 = merge_bernoulli(V2, B2)
+V_4, C_4 = generate_bernoulli(V3)
+
+It looks like merge_bernoulli is simply wrong. A chunk of V_i ends up in V_{i+1}.
+
+Operations like generate_uniform manage to mask the bug probably.
+
+- [ ] Draw a picture of the flow of entropy (as dataflow)
+- [ ] Rename nodes as "split_bernoulli" and "merge_bernoulli"
+- [ ] Rename basic operations as split and merge?
+
 
 
 
