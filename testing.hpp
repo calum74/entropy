@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <cassert>
+#include <iomanip>
 
 namespace entropy_store
 {
@@ -58,25 +59,6 @@ namespace entropy_store
         double sum_s_squared = 0;
     };
 
-    template <std::integral T>
-    double p(const ::entropy_store::uniform_distribution<T> &dist, int sample)
-    {
-        if (sample >= dist.min() && sample <= dist.max())
-            return 1.0 / dist.size();
-        return 0;
-    }
-
-    inline double p(weighted_distribution dist, int sample)
-    {
-        return double(dist.weights()[sample]) / dist.outputs().size();
-    }
-
-    inline double p(bernoulli_distribution dist, int sample)
-    {
-        double p = double(dist.numerator()) / double(dist.denominator());
-        return sample ? p : 1 - p;
-    }
-
     void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
     {
         auto w = dist.p(sample);
@@ -86,33 +68,9 @@ namespace entropy_store
 
     void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
     {
-        auto w = p(dist, x) * p(dist, y);
+        auto w = dist.p(x) * dist.p(y);
         mean = total * w;
         sd = std::sqrt(total * w * (1.0 - w));
-    }
-
-    inline double entropy(const bernoulli_distribution &dist)
-    {
-        double p = double(dist.numerator()) / double(dist.denominator());
-        return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
-    }
-
-    inline double entropy(const weighted_distribution &dist)
-    {
-        double e = 0;
-        for (double w : dist.weights())
-        {
-            auto p = w / dist.outputs().size();
-            e -= p * std::log2(p);
-        }
-
-        return e;
-    }
-
-    template <std::integral T>
-    double entropy(const uniform_distribution<T> &dist)
-    {
-        return std::log2(dist.size());
     }
 
     // Checks that outputs from a distribution meet statistical tests
@@ -120,23 +78,110 @@ namespace entropy_store
     class check_distribution
     {
     public:
+        using size_type = std::size_t;
+        using value_type = typename Source::value_type;
+
         check_distribution(const Source &source) : m_source(source)
         {
+            m_counts.resize(distribution().max()+1, 0);
+            m_pair_counts.resize(distribution().max()+1, m_counts);
         }
 
         auto operator()()
         {
-            return m_source();
+            auto value = m_source();
+            ++m_counts[value];
+            if(m_previous != -1)
+                ++m_pair_counts[m_previous][value];
+            m_previous = value;
+            ++m_count;
+            return value;
         }
 
+        // !! This is inefficient
         auto distribution() const { return m_source.distribution(); }
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
         double internal_entropy() const { return m_source.internal_entropy(); }
 
+        void visit_counts(std::invocable<size_type, value_type, double, double, double> auto fn) const
+        {
+            auto dist = distribution();
+            for(auto i=0; i<m_counts.size(); ++i)
+            {
+                auto s = m_counts[i];
+                if(s>0)
+                {
+                    double mean, sd;
+                    mean_and_sd(dist, i, m_count, mean, sd);
+                    auto sigma = (s - mean) / sd;
+                    fn(i, s, mean, sd, sigma);
+                }
+            }
+        }
+
+        double max_sigma() const
+        {
+            double max = 0.0;
+            visit_counts([&](auto, auto, auto, auto, double sigma)
+            {
+                if(std::abs(sigma) > std::abs(max))
+                    max = sigma;
+            });
+
+            return max;
+        }
+
+        bool check_sigma(double max = 4.0) const
+        {
+            return std::abs(max_sigma()) < max;
+        }
+
+        template<std::invocable<value_type, value_type, value_type, double, double, double> Fn>
+        void visit_pairs(Fn fn) const
+        {
+            auto dist = distribution();
+            for(auto i=0; i<m_counts.size(); ++i)
+            {
+                for(auto j=0; j<m_counts.size(); ++j)
+                {
+                    auto s = m_pair_counts[i][j];
+                    if(s>0)
+                    {
+                        double mean, sd;
+                        mean_and_sd(dist, i, j, m_count, mean, sd);
+                        auto sigma = (s - mean) / sd;
+                        fn(i, j, s, mean, sd, sigma);
+                    }
+                }
+            }
+        }
+
     private:
+        value_type m_previous = -1;
         Source m_source;
 
+        std::vector<size_type> m_counts;
+        std::vector<std::vector<size_type>> m_pair_counts;
+        size_type m_count = 0;
+
     };
+
+    template<typename Source>
+    std::ostream & operator<<(std::ostream &os, const check_distribution<Source> & check)
+    {
+        check.visit_counts([&](auto i, auto c, double, double, double sigma)
+        {
+                os << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
+        });
+
+        check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma)
+        {
+                os << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
+        });
+
+
+        return os;
+    }
 }

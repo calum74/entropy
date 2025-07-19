@@ -7,5 +7,5 @@ add_executable(tests tests.cpp)
 add_executable(sample sample.cpp)
 add_executable(debug debug.cpp)
 
-add_test(entropy entropy)
+add_test(tests tests)
 add_test(sample sample)

@@ -25,7 +25,15 @@ int main()
     for (int i = 0; i < 10000; ++i)
         counts[test_out()]++;
 
-    // test_out.check();
-    // test_out.print();
-    std::cout << counts[0] << "," << counts[1] << std::endl;
+    std::cout << test_out;
+    if(test_out.check_sigma())
+    {
+        std::cout << "Test passed!\n";
+        return 0;
+    }
+    else
+    {
+        std::cout << "*** Test FAILED ***\n";
+        return 1;
+    }
 }
