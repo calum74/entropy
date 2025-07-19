@@ -2,89 +2,13 @@
 // #include <iostream>
 
 #include "entropy_store.hpp"
+#include "testing.hpp"
 
 #include <iostream>
 #include <iomanip>
 #include <array>
 
 using namespace entropy_store;
-
-template <std::integral T>
-void mean_and_sd(const uniform_distribution<T> &dist, int sample, double total, double &mean, double &sd)
-{
-    auto w = 1.0 / dist.size();
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-void mean_and_sd(weighted_distribution dist, int sample, double total, double &mean, double &sd)
-{
-    auto w = double(dist.weights()[sample]) / dist.outputs().size();
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-void mean_and_sd(bernoulli_distribution dist, int sample, double total, double &mean, double &sd)
-{
-    double p = double(dist.numerator())/double(dist.denominator());
-    auto w = sample ? p : (1-p);    
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-
-template <std::integral T>
-void mean_and_sd(const uniform_distribution<T> &dist, int x, int y, double total, double &mean, double &sd)
-{
-    auto w = 1.0 / dist.size();
-    w = w*w;
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-void mean_and_sd(weighted_distribution dist, int x, int y, double total, double &mean, double &sd)
-{
-    auto w1 = double(dist.weights()[x]) / dist.outputs().size();
-    auto w2 = double(dist.weights()[y]) / dist.outputs().size();
-    auto w = w1*w2;
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-void mean_and_sd(bernoulli_distribution dist, int x, int y, double total, double &mean, double &sd)
-{
-    double p = double(dist.numerator())/double(dist.denominator());
-    auto w1 = x ? p : 1-p;
-    auto w2 = y ? p : 1-p;
-    auto w = w1*w2;
-    mean = total * w;
-    sd = std::sqrt(total * w * (1.0 - w));
-}
-
-
-double entropy(const bernoulli_distribution &dist)
-{
-    double p = double(dist.numerator())/double(dist.denominator());
-    return -p * std::log2(p) - (1-p) * std::log2(1-p);
-}
-
-double entropy(const weighted_distribution &dist)
-{
-    double e = 0;
-    for (double w : dist.weights())
-    {
-        auto p = w / dist.outputs().size();
-        e -= p * std::log2(p);
-    }
-
-    return e;
-}
-
-template <std::integral T>
-double entropy(const uniform_distribution<T> &dist)
-{
-    return std::log2(dist.size());
-}
 
 template <entropy_generator Source>
 void count_totals(int &bits_fetched, Source source, int count, double min = 0.99, double max = 1.01)
@@ -94,7 +18,7 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     double internal_before = source.internal_entropy();
 
     std::array<int, 10> totals = {};
-    std::array<std::array<int,10>, 10> pairs = {};
+    std::array<std::array<int, 10>, 10> pairs = {};
 
     int prev = 0;
     int first = 0;
@@ -102,18 +26,20 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     for (int i = 0; i < count; i++)
     {
         auto x = source();
-        assert(x>=0 && x<totals.size());
+        assert(x >= 0 && x < totals.size());
         totals[x]++;
-        if(i>0) pairs[prev][x]++;
-        if(i==0) first = x;
+        if (i > 0)
+            pairs[prev][x]++;
+        if (i == 0)
+            first = x;
         prev = x;
     }
     pairs[prev][first]++; // Just to be pedantic
 
-    for(int value=0; value<totals.size(); ++value)
+    for (int value = 0; value < totals.size(); ++value)
     {
         auto s = totals[value];
-        if(s>0)
+        if (s > 0)
         {
             double mean, sd;
             mean_and_sd(source.distribution(), value, count, mean, sd);
@@ -123,12 +49,12 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
         }
     }
 
-    for(int x=0; x<totals.size(); ++x)
+    for (int x = 0; x < totals.size(); ++x)
     {
-        for(int y=0; y<totals.size(); ++y)
+        for (int y = 0; y < totals.size(); ++y)
         {
             auto s = pairs[x][y];
-            if(s>0)
+            if (s > 0)
             {
                 double mean, sd;
                 mean_and_sd(source.distribution(), x, y, count, mean, sd);
@@ -138,7 +64,6 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
             }
         }
     }
-
 
     double de = entropy(source.distribution());
     double internal_after = source.internal_entropy();

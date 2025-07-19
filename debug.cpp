@@ -1,4 +1,5 @@
 #include "entropy_store.hpp"
+#include "testing.hpp"
 #include <iostream>
 
 int main()
@@ -10,15 +11,21 @@ int main()
     auto es = entropy_store::entropy_store{fetch};
 
     // Define some distributions we can generate or consume
-    entropy_store::bernoulli_distribution coin13{1, 3};
-    entropy_store::bernoulli_distribution coin12{1, 2};
+    entropy_store::bernoulli_distribution coin_in{1, 3};
+    entropy_store::bernoulli_distribution coin_out{1, 2};
 
     // Create a stream of coin1
-    auto coins13 = entropy_store::entropy_converter{fetch, coin13};
-    auto coins12 = entropy_store::entropy_converter{coins13, coin12};
+    auto coins_in = entropy_store::entropy_converter{fetch, coin_in};
+
+    auto coins_out = entropy_store::entropy_converter{coins_in, coin_out};
+
+    auto test_out = entropy_store::check_distribution {coins_out};
 
     int counts[] = {0, 0};
     for (int i = 0; i < 10000; ++i)
-        counts[coins12()]++;
+        counts[test_out()]++;
+
+    // test_out.check();
+    // test_out.print();
     std::cout << counts[0] << "," << counts[1] << std::endl;
 }

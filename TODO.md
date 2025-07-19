@@ -1,35 +1,17 @@
+# The Bug
+
+The problem is that variables are not independent, which in turn leads the operations which should be generating non-uniform distributions. We have `split_bernoulli` and `merge_bernoulli` and at least one of them is wrong.
+
+If one of the Us is biassed, then that bias affects more than one output. That means that the outputs are not independent! And ultimately, the U_i has a concrete value so is biassed.
+
+
+
 # Next steps
 
-Look at the intervals that we generate when we use merge/split_bernoulli. Observe that the output will always be an interval in some range. Our "state" is a set of intervals, and probabilities that our number is in that range.
 
-We should then be able to add up the probability of outputs at each step and confirm that the probability isn't the Bernoulli distribution we expected.
-
-After that, we can look at the cause of the discrepancy and figure out a way to fix it.
+The outputs are biassed
 
 - rename generate_multiple to find_multiple followed by split_bernoulli
-
-# Summary of the bug
-
-The bug comes about because the U_i are correlated, which could possibly lead to the outputs being correlated. This means that we should not expect the U_i to have the same standard deviation according to the central limit theorem.
-
-Operations like `divide` are safe because they create 2 outputs that aren't correlated.
-
-Operations that consume can lead to potential biasses, but why?
-
-Generating bernoulli source:
-
-U_0 = binary()
-U_1, B_1 = split_bernoulli(U_0)
-U_2 = combine(U_1, binary())
-U_2, B_2 = split_bernoulli(U_2)
-
-Consuming bernoulli #2:
-
-V_0 = binary()
-V_1 = merge_bernoulli(V_0, B_1)
-V_2, C_2 = split_bernoulli(V_1)
-V_3 = merge_bernoulli(V2, B2)
-V_4, C_4 = generate_bernoulli(V3)
 
 It looks like merge_bernoulli is simply wrong. A chunk of V_i ends up in V_{i+1}.
 
@@ -40,24 +22,12 @@ Operations like generate_uniform manage to mask the bug probably.
 - [ ] Rename basic operations as split and merge?
 
 
-
-
-# Bugs
-1. When generating. Bernoulli{1/2}, we get artifacts in the distribution even though the outputs seem ok. Changing the output distribution to anything other than 1/2 and everything seems good.
-- Conclusion: This isn't a bug really, because the U_s is 
-2. When converting a Bernoulli{1/3} to Bernoulli{1/2}, the outputs are not fairly distributed. But when we change the generator algorithm to "combine", then the outputs are fair again.
-
-# Discussion
-1. This suggests that the method of generating (or consuming) Bernoulli distributions is in fact flawed.
-2. I need to understand this flaw.
-3. Things like swapping the parameters of a combine may be masking the problem rather than fixing it.
-
 # Thoughts
 Conclusion: The sequence of numbers U_s can be correlated with each other, which in turn leads to correlations between the outputs.
 
 This is a very deep problem to solve.
 
-The solution is to prove that no two numbers $U_i$ and $U_{i+1}$ are correlated.
+The solution is to prove that no two numbers $U_i$ and $U_{i+1}$ are correlated. But that's impossible.
 
 
 # Current status

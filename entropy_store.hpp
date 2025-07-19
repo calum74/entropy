@@ -4,9 +4,7 @@
 #include <cmath>
 #include <random>
 #include <span>
-
-// Debugging only
-#include "testing.hpp"
+#include <cassert>
 
 namespace entropy_store
 {
@@ -23,6 +21,18 @@ namespace entropy_store
         size_type bits() const { return m_bits; }
         value_type min() const { return m_min; }
         value_type max() const { return m_max; }
+
+        double p(value_type i) const
+        {
+            if (i >= min() && i <= max())
+                return 1.0 / size();
+            return 0;
+        }
+
+        double entropy() const
+        {
+            return std::log2(size());
+        }
 
     private:
         int m_min, m_max;     // Inclusive values, min<=max
@@ -58,6 +68,22 @@ namespace entropy_store
         std::span<const value_type> outputs() const { return m_outputs; }
         std::span<const value_type> offsets() const { return m_offsets; }
 
+        value_type min() const { return 0; }
+        value_type max() const { return m_weights.size() - 1; }
+
+        double p(value_type i) const { return double(weights()[i]) / outputs().size(); }
+        double entropy() const
+        {
+            double h = 0;
+            for (double w : weights())
+            {
+                auto p = w / outputs().size();
+                h -= p * std::log2(p);
+            }
+
+            return h;
+        }
+
     private:
         std::uint32_t m_bits;
         std::vector<value_type> m_weights, m_outputs, m_offsets;
@@ -77,6 +103,20 @@ namespace entropy_store
         size_type bits() const { return m_bits; }
         size_type numerator() const { return m_numerator; }
         size_type denominator() const { return m_denominator; }
+        value_type min() const { return 0; }
+        value_type max() const { return 1; }
+
+        double p(value_type i) const
+        {
+            double p = double(numerator()) / double(denominator());
+            return i ? p : (1.0 - p);
+        }
+
+        double entropy() const
+        {
+            double p = double(numerator()) / double(denominator());
+            return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
+        }
 
     private:
         size_type m_bits;
@@ -222,9 +262,6 @@ namespace entropy_store
     template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
     uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
     {
-        static debug_uniform x("generate_multiple");
-        x.record(U_s, s);
-        
         assert(N >= n);
         validate(U_s, s);
         for (;;)
@@ -241,7 +278,7 @@ namespace entropy_store
             {
                 // Resample successful
                 validate(U_s, s);
-                assert(k == s/n);
+                assert(k == s / n);
                 return k;
             }
             else
@@ -297,11 +334,11 @@ namespace entropy_store
             if (b)
             {
                 k = generate_multiple(U_s, s, N, m, fetch_bit_from_source(source));
-                assert(s==k*m);
+                assert(s == k * m);
             }
             else
             {
-                k = generate_multiple(U_s, s, N, n-m, fetch_bit_from_source(source));
+                k = generate_multiple(U_s, s, N, n - m, fetch_bit_from_source(source));
                 U_s += k * m;
             }
             s = k * n;
@@ -347,12 +384,12 @@ namespace entropy_store
 
         uint_t m = output_dist.numerator();
         uint_t n = output_dist.denominator();
-        assert(m<n);
+        assert(m < n);
         uint_t k = generate_multiple(U_s, s, N, n, fetch_from_source(source, source_dist, N));
-        assert(s = k*n);
+        assert(s = k * n);
         uint_t M = k * m;
-        assert(M>=k);
-        assert(M>=m);
+        assert(M >= k);
+        assert(M >= m);
         if (U_s < M)
         {
             s = M;

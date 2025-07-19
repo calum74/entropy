@@ -1,5 +1,7 @@
 #pragma once
 
+#include "entropy_store.hpp"
+
 #include <cstdint>
 #include <cmath>
 #include <iostream>
@@ -54,5 +56,87 @@ namespace entropy_store
         const char *place;
         std::uint64_t total_value = 0, total_size = 0, total_count = 0;
         double sum_s_squared = 0;
+    };
+
+    template <std::integral T>
+    double p(const ::entropy_store::uniform_distribution<T> &dist, int sample)
+    {
+        if (sample >= dist.min() && sample <= dist.max())
+            return 1.0 / dist.size();
+        return 0;
+    }
+
+    inline double p(weighted_distribution dist, int sample)
+    {
+        return double(dist.weights()[sample]) / dist.outputs().size();
+    }
+
+    inline double p(bernoulli_distribution dist, int sample)
+    {
+        double p = double(dist.numerator()) / double(dist.denominator());
+        return sample ? p : 1 - p;
+    }
+
+    void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
+    {
+        auto w = dist.p(sample);
+        mean = total * w;
+        sd = std::sqrt(total * w * (1.0 - w));
+    }
+
+    void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
+    {
+        auto w = p(dist, x) * p(dist, y);
+        mean = total * w;
+        sd = std::sqrt(total * w * (1.0 - w));
+    }
+
+    inline double entropy(const bernoulli_distribution &dist)
+    {
+        double p = double(dist.numerator()) / double(dist.denominator());
+        return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
+    }
+
+    inline double entropy(const weighted_distribution &dist)
+    {
+        double e = 0;
+        for (double w : dist.weights())
+        {
+            auto p = w / dist.outputs().size();
+            e -= p * std::log2(p);
+        }
+
+        return e;
+    }
+
+    template <std::integral T>
+    double entropy(const uniform_distribution<T> &dist)
+    {
+        return std::log2(dist.size());
+    }
+
+    // Checks that outputs from a distribution meet statistical tests
+    template<typename Source>
+    class check_distribution
+    {
+    public:
+        check_distribution(const Source &source) : m_source(source)
+        {
+        }
+
+        auto operator()()
+        {
+            return m_source();
+        }
+
+        auto distribution() const { return m_source.distribution(); }
+
+        int fetch_bit() { return m_source.fetch_bit(); }
+
+        double internal_entropy() const { return m_source.internal_entropy(); }
+
+    private:
+        Source m_source;
+
     };
 }
