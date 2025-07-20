@@ -61,20 +61,20 @@ namespace entropy_store
 
     void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
     {
-        auto w = dist.p(sample);
+        auto w = dist.P(sample);
         mean = total * w;
         sd = std::sqrt(total * w * (1.0 - w));
     }
 
     void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
     {
-        auto w = dist.p(x) * dist.p(y);
+        auto w = dist.P(x) * dist.P(y);
         mean = total * w;
         sd = std::sqrt(total * w * (1.0 - w));
     }
 
     // Checks that outputs from a distribution meet statistical tests
-    template<entropy_generator Source>
+    template <entropy_generator Source>
     class check_distribution
     {
     public:
@@ -86,15 +86,15 @@ namespace entropy_store
 
         check_distribution(const Source &source) : m_source(source)
         {
-            m_counts.resize(distribution().max()+1, 0);
-            m_pair_counts.resize(distribution().max()+1, m_counts);
+            m_counts.resize(distribution().max() + 1, 0);
+            m_pair_counts.resize(distribution().max() + 1, m_counts);
         }
 
         auto operator()()
         {
             auto value = m_source();
             ++m_counts[value];
-            if(m_previous != -1)
+            if (m_previous != -1)
                 ++m_pair_counts[m_previous][value];
             m_previous = value;
             ++m_count;
@@ -111,10 +111,10 @@ namespace entropy_store
         void visit_counts(std::invocable<size_type, value_type, double, double, double> auto fn) const
         {
             auto dist = distribution();
-            for(auto i=0; i<m_counts.size(); ++i)
+            for (auto i = 0; i < m_counts.size(); ++i)
             {
                 auto s = m_counts[i];
-                if(s>0)
+                if (s > 0)
                 {
                     double mean, sd;
                     mean_and_sd(dist, i, m_count, mean, sd);
@@ -128,10 +128,9 @@ namespace entropy_store
         {
             double max = 0.0;
             visit_counts([&](auto, auto, auto, auto, double sigma)
-            {
+                         {
                 if(std::abs(sigma) > std::abs(max))
-                    max = sigma;
-            });
+                    max = sigma; });
 
             return max;
         }
@@ -141,16 +140,16 @@ namespace entropy_store
             return std::abs(max_sigma()) < max;
         }
 
-        template<std::invocable<value_type, value_type, value_type, double, double, double> Fn>
+        template <std::invocable<value_type, value_type, value_type, double, double, double> Fn>
         void visit_pairs(Fn fn) const
         {
             auto dist = distribution();
-            for(auto i=0; i<m_counts.size(); ++i)
+            for (auto i = 0; i < m_counts.size(); ++i)
             {
-                for(auto j=0; j<m_counts.size(); ++j)
+                for (auto j = 0; j < m_counts.size(); ++j)
                 {
                     auto s = m_pair_counts[i][j];
-                    if(s>0)
+                    if (s > 0)
                     {
                         double mean, sd;
                         mean_and_sd(dist, i, j, m_count, mean, sd);
@@ -161,7 +160,7 @@ namespace entropy_store
             }
         }
 
-        const auto & source() const { return m_source.source(); }
+        const auto &source() const { return m_source.source(); }
 
     private:
         value_type m_previous = -1;
@@ -170,22 +169,16 @@ namespace entropy_store
         std::vector<size_type> m_counts;
         std::vector<std::vector<size_type>> m_pair_counts;
         size_type m_count = 0;
-
     };
 
-    template<typename Source>
-    std::ostream & operator<<(std::ostream &os, const check_distribution<Source> & check)
+    template <typename Source>
+    std::ostream &operator<<(std::ostream &os, const check_distribution<Source> &check)
     {
         check.visit_counts([&](auto i, auto c, double, double, double sigma)
-        {
-                os << "    " << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
-        });
+                           { os << "    " << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
 
         check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma)
-        {
-                os << "   " << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
-        });
-
+                          { os << "   " << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
 
         return os;
     }

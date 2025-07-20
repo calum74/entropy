@@ -1,7 +1,6 @@
 # The Bug
 
-The problem is that output variables seem to be correlated, leading to failures in distributions. The theory is that variables 
-
+The problem is that output variables seem to be correlated, leading to failures in distributions.
 
 
 

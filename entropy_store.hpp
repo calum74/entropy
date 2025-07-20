@@ -22,7 +22,7 @@ namespace entropy_store
         value_type min() const { return m_min; }
         value_type max() const { return m_max; }
 
-        double p(value_type i) const
+        double P(value_type i) const
         {
             if (i >= min() && i <= max())
                 return 1.0 / size();
@@ -71,7 +71,8 @@ namespace entropy_store
         value_type min() const { return 0; }
         value_type max() const { return m_weights.size() - 1; }
 
-        double p(value_type i) const { return double(weights()[i]) / outputs().size(); }
+        double P(value_type i) const { return double(weights()[i]) / outputs().size(); }
+
         double entropy() const
         {
             double h = 0;
@@ -106,7 +107,7 @@ namespace entropy_store
         value_type min() const { return 0; }
         value_type max() const { return 1; }
 
-        double p(value_type i) const
+        double P(value_type i) const
         {
             double p = double(numerator()) / double(denominator());
             return i ? p : (1.0 - p);
@@ -128,7 +129,7 @@ namespace entropy_store
         typename Distribution::value_type;
         dist.bits();
         dist.entropy();
-        dist.p(0);
+        dist.P(0);
     };
 
     template <typename Source>
@@ -425,7 +426,7 @@ namespace entropy_store
         using value_type = Buffer;
         using source_type = Source;
 
-        entropy_store(const Source &src) :m_source(src)
+        entropy_store(const Source &src) : m_source(src)
         {
         }
 
@@ -441,7 +442,7 @@ namespace entropy_store
             return std::log2(s) + m_source.internal_entropy();
         }
 
-        const source_type & source() const { return m_source; }
+        const source_type &source() const { return m_source; }
 
     private:
         static constexpr value_type N = value_type(1) << (sizeof(value_type) * 8 - 1);
@@ -464,13 +465,13 @@ namespace entropy_store
             return m_source(m_distribution);
         }
 
-        const distribution_type & distribution() const { return m_distribution; }
+        const distribution_type &distribution() const { return m_distribution; }
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
         double internal_entropy() const { return m_source.internal_entropy(); }
 
-        const auto & source() const { return m_source; }
+        const auto &source() const { return m_source; }
 
         entropy_store<source_type, Buffer> m_source;
         distribution_type m_distribution;
