@@ -17,7 +17,10 @@ int main()
     // Create a stream of coin1
     auto coins_in = entropy_store::entropy_converter{fetch, coin_in};
 
-    auto coins_out = entropy_store::entropy_converter{coins_in, coin_out};
+    auto check_in = entropy_store::check_distribution {coins_in};
+    static_assert(entropy_store::entropy_generator<decltype(check_in)>);
+
+    auto coins_out = entropy_store::entropy_converter{check_in, coin_out};
 
     auto test_out = entropy_store::check_distribution {coins_out};
 
@@ -25,7 +28,9 @@ int main()
     for (int i = 0; i < 10000; ++i)
         counts[test_out()]++;
 
-    std::cout << test_out;
+    std::cout << "Input B{1/3}:\n" << test_out.source().source();
+
+    std::cout << "Output B{1/2}:\n" << test_out;
     if(test_out.check_sigma())
     {
         std::cout << "Test passed!\n";

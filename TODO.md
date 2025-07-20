@@ -1,5 +1,11 @@
 # The Bug
 
+The problem is that output variables seem to be correlated, leading to failures in distributions. The theory is that variables 
+
+
+
+
+
 The problem is that variables are not independent, which in turn leads the operations which should be generating non-uniform distributions. We have `split_bernoulli` and `merge_bernoulli` and at least one of them is wrong.
 
 If one of the Us is biassed, then that bias affects more than one output. That means that the outputs are not independent! And ultimately, the U_i has a concrete value so is biassed.

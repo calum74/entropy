@@ -127,6 +127,8 @@ namespace entropy_store
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
         dist.bits();
+        dist.entropy();
+        dist.p(0);
     };
 
     template <typename Source>
@@ -423,26 +425,28 @@ namespace entropy_store
         using value_type = Buffer;
         using source_type = Source;
 
-        entropy_store(const Source &src) : source(src)
+        entropy_store(const Source &src) :m_source(src)
         {
         }
 
         auto operator()(const distribution auto &dist)
         {
-            return generate(U_s, s, N, source, source.distribution(), dist);
+            return generate(U_s, s, N, m_source, m_source.distribution(), dist);
         }
 
-        int fetch_bit() { return source.fetch_bit(); }
+        int fetch_bit() { return m_source.fetch_bit(); }
 
         double internal_entropy() const
         {
-            return std::log2(s) + source.internal_entropy();
+            return std::log2(s) + m_source.internal_entropy();
         }
+
+        const source_type & source() const { return m_source; }
 
     private:
         static constexpr value_type N = value_type(1) << (sizeof(value_type) * 8 - 1);
         value_type U_s = 0, s = 1;
-        source_type source;
+        source_type m_source;
     };
 
     template <entropy_generator Source, distribution Distribution, std::integral Buffer = std::uint32_t>
@@ -460,11 +464,13 @@ namespace entropy_store
             return m_source(m_distribution);
         }
 
-        auto distribution() const { return m_distribution; }
+        const distribution_type & distribution() const { return m_distribution; }
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
         double internal_entropy() const { return m_source.internal_entropy(); }
+
+        const auto & source() const { return m_source; }
 
         entropy_store<source_type, Buffer> m_source;
         distribution_type m_distribution;

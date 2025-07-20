@@ -74,12 +74,15 @@ namespace entropy_store
     }
 
     // Checks that outputs from a distribution meet statistical tests
-    template<typename Source>
+    template<entropy_generator Source>
     class check_distribution
     {
     public:
         using size_type = std::size_t;
         using value_type = typename Source::value_type;
+        using source_type = typename Source::source_type;
+        using distribution_type = typename Source::distribution_type;
+        // static_assert(entropy_generator<check_distribution>);
 
         check_distribution(const Source &source) : m_source(source)
         {
@@ -158,6 +161,8 @@ namespace entropy_store
             }
         }
 
+        const auto & source() const { return m_source.source(); }
+
     private:
         value_type m_previous = -1;
         Source m_source;
@@ -173,12 +178,12 @@ namespace entropy_store
     {
         check.visit_counts([&](auto i, auto c, double, double, double sigma)
         {
-                os << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
+                os << "    " << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
         });
 
         check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma)
         {
-                os << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
+                os << "   " << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ\n";;
         });
 
 
