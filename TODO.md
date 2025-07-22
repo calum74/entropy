@@ -1,11 +1,31 @@
 # The Bug
 
-The problem is that output variables seem to be correlated, leading to failures in distributions.
+Output variables seem to be correlated, leading to failures in distributions.
+
+Why can we read from a Bernoulli{1/2} without bias, but if we read from Bernoulli{1/4}, we get correlations?
+
+The problem appears to be that once you absorb entropy, you are essentially in one universe or another, so all downstream values will be biassed. But this doesn't explain why Bernoulli{1/2} appears to be correct.
+
+The simplest case this arises is for an input of B{1/4} being converted to B{1/2}.
+
+The problem appears to be that the U values are correlated with each other, so that if we get a biassed value in U, then it will bias multiple outputs. But this appears to contradict the idea that the two outputs from a split_bernoulli() are independent. The reality appears to be that they cannot be independent, even though they appear to be.
+
+If U1 is not uniform (and it is not!), then this lack of uniformity will affect all downstream variables. And once we read a specific value into U1, then by definition it is no longer uniform.
+
+       B1    B2    B3  
+        \     \     \
+   U1 -- U2 -- U3 -- U4 -- 
+          \     \     \
+           C3    C4    C5
+
+Supposedly, U3 and C3 are independent because they were created by split_bernoulli.
 
 
-
-
-The problem is that variables are not independent, which in turn leads the operations which should be generating non-uniform distributions. We have `split_bernoulli` and `merge_bernoulli` and at least one of them is wrong.
+- [x] Is U1 really uniformly distributed?
+- [x] Are B1 and U1 really independent?
+- [ ] Are V3 and C3 really independent?
+- [ ] Can I measure their independence?
+- [ ] If V3 and C3 are independent, does that imply they are correlated
 
 If one of the Us is biassed, then that bias affects more than one output. That means that the outputs are not independent! And ultimately, the U_i has a concrete value so is biassed.
 
@@ -13,35 +33,10 @@ If one of the Us is biassed, then that bias affects more than one output. That m
 
 # Next steps
 
-
-The outputs are biassed
-
-- rename generate_multiple to find_multiple followed by split_bernoulli
-
-It looks like merge_bernoulli is simply wrong. A chunk of V_i ends up in V_{i+1}.
-
-Operations like generate_uniform manage to mask the bug probably.
-
-- [ ] Draw a picture of the flow of entropy (as dataflow)
-- [ ] Rename nodes as "split_bernoulli" and "merge_bernoulli"
-- [ ] Rename basic operations as split and merge?
-
-
 # Thoughts
 Conclusion: The sequence of numbers U_s can be correlated with each other, which in turn leads to correlations between the outputs.
 
-This is a very deep problem to solve.
-
-The solution is to prove that no two numbers $U_i$ and $U_{i+1}$ are correlated. But that's impossible.
-
-
-# Current status
-
-There's a bug when converting Bernoulli to Bernoulli distributions (and, weighted more generally). Focus on Bernoulli-Bernoulli for now.
-
-For some reason, the Bernoulli extractor causes bias when coupled with a Bernoulli generator. The problem is that the *size* of the output depends on the values of the input, and this *size* looks like a side-channel. But in theory, the output distribution shouldn't depend on the size.
-
-For example, converting B{1/3} to B{1/2} creates a bias of +7%. Converting B{2/3} to B{1/2} creates a bias of -7%. E.g. converting entropy B{1/3} to B{2/3} creates a significant bias.
+- [ ] Talk about "pairs (x,y)" and the bijection more.
 
 Possible explanations:
 - A bug in the implementation of an algorithm
@@ -55,14 +50,7 @@ Possible explanations:
 - Output depends on a size
 
 What experiment could I run to test these?
-- Debug in C++
-- Create a version that does not have a feedback loop?
-- Analyze multiple inputs
 - Create a debug log that explains the steps taken.
-
-Mysteries
-- Why are the same args passed to generate_multiple repeatedly?
-- When combining, why have generate_multiple{2} but never generate_multiple{1} 
 
 Next steps:
 - Need to validate invariants, for example implement a "check_uniform"
@@ -72,7 +60,6 @@ I don't think the variables are independent. So when we generate a Bernoulli var
 
 For example when we generate a 1, it means that the uniform in the store is high. Then the next time we generate a Bernoulli, this is also high.
 
-No that's not true.
 
 ## More ideas
 

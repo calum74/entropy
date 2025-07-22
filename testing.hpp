@@ -106,6 +106,12 @@ namespace entropy_store
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
+        void read(size_type count)
+        {
+            for(auto i=0; i<count; ++i)
+                (*this)();
+        }
+
         double internal_entropy() const { return m_source.internal_entropy(); }
 
         void visit_counts(std::invocable<size_type, value_type, double, double, double> auto fn) const
@@ -174,6 +180,7 @@ namespace entropy_store
     template <typename Source>
     std::ostream &operator<<(std::ostream &os, const check_distribution<Source> &check)
     {
+        os << check.distribution() << ":\n";
         check.visit_counts([&](auto i, auto c, double, double, double sigma)
                            { os << "    " << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
 
@@ -181,5 +188,65 @@ namespace entropy_store
                           { os << "   " << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
 
         return os;
+    }
+
+    template<entropy_generator Source>
+    class stored_source
+    {
+    public:
+        using value_type = typename Source::value_type;
+        using distribution_type = typename Source::distribution_type;
+        using size_type = std::size_t;
+        using source_type = typename Source::source_type;
+
+        stored_source(const Source &source, size_type count) : m_source(source)
+        {
+            m_values.reserve(count);
+            for(; count>0; --count)
+                m_values.push_back(m_source());
+        }
+
+        auto operator()()
+        {
+            if(m_values.empty()) throw std::runtime_error("Out of values!");
+            auto result = m_values.back();
+            m_values.pop_back();
+            return result;
+        }
+
+        auto distribution() const { return m_source.distribution(); }
+
+        int fetch_bit() { return m_source.fetch_bit(); }
+
+        std::vector<value_type> m_values;
+    private:
+        Source m_source;
+    };
+
+    template<typename T>
+    std::ostream & operator<<(std::ostream & os, const uniform_distribution<T> &u)
+    {
+        return os << "Uniform{" << u.min() << "," << u.max() << "}";
+    }
+
+    inline std::ostream & operator<<(std::ostream & os, const bernoulli_distribution &b)
+    {
+        return os << "Bernoulli{" << b.numerator() << "/" << b.denominator() << "}";
+    }
+
+    inline std::ostream & operator<<(std::ostream & os, const weighted_distribution &w)
+    {
+        bool first = true;
+        auto comma =  [&]()
+        {
+            if(first) first = false;
+            else return ",";
+            return "";
+        };
+
+        os << "Weighted{";
+        for(auto &i : w.weights())
+            os << comma() << i;
+        return os << "}";
     }
 }
