@@ -323,32 +323,6 @@ namespace entropy_store
         };
     }
 
-    template <std::integral uint_t>
-    auto fetch_from_source(entropy_generator auto &source, const bernoulli_distribution &source_dist, uint_t N)
-    {
-        N >>= source_dist.bits();
-        return [&, N](uint_t &U_s, uint_t &s)
-        {
-            auto b = source();
-            uint_t m = source_dist.numerator();
-            uint_t n = source_dist.denominator();
-            uint_t k;
-
-            if (b)
-            {
-                k = generate_multiple(U_s, s, N, m, fetch_bit_from_source(source));
-                assert(s == k * m);
-            }
-            else
-            {
-                k = generate_multiple(U_s, s, N, n - m, fetch_bit_from_source(source));
-                U_s += k * m;
-            }
-            s = k * n;
-            validate(U_s, s);
-        };
-    }
-
     template <std::integral uint_t, std::integral uint2>
     auto fetch_from_source(entropy_generator auto &source, const uniform_distribution<uint2> &source_dist, uint_t N)
     {
@@ -356,19 +330,6 @@ namespace entropy_store
         return [&, N](uint_t &U_s, uint_t &s)
         {
             combine(U_s, s, uint_t(source() - source_dist.min()), uint_t(source_dist.size()), U_s, s);
-        };
-    }
-
-    template <std::integral uint_t>
-    auto fetch_from_source(entropy_generator auto &source, const weighted_distribution &source_dist, uint_t N)
-    {
-        N >>= source_dist.bits();
-        return [&, N](uint_t &U_s, uint_t &s)
-        {
-            auto W = source();
-            auto k = generate_multiple(U_s, s, N, uint_t(source_dist.weights()[W]), fetch_bit_from_source(source));
-            U_s += k * source_dist.offsets()[W];
-            s = k * source_dist.outputs().size();
         };
     }
 

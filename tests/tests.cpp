@@ -149,29 +149,8 @@ int main(int argc, char **argv)
     std::cout << "Fair coin from uniform input:\n";
     count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
 
-    std::cout << "Fair coin from 1:999 input (using 64-bit buffer):\n";
-    count_totals(bits_fetched, entropy_converter64{low_entropy_input3, weighted_distribution{1, 1}}, N, 0.95, 1.01);
-
-    std::cout << "Fair coin from 1:999 input (poor efficiency due to low buffer size):\n";
-    count_totals(bits_fetched, entropy_converter{low_entropy_input2, weighted_distribution{1, 1}}, N, 0.5);
-
-    std::cout << "Fair coin from 1:99 input:\n";
-    count_totals(bits_fetched, entropy_converter{low_entropy_input1, weighted_distribution{1, 1}}, N, 0.8);
-
-    std::cout << "Fair coin from 1:4 input:\n";
-    count_totals(bits_fetched, entropy_converter{biassed_input, weighted_distribution{1, 1}}, N);
-
-    std::cout << "Fair coin from B{1/5} input:\n";
-    count_totals(bits_fetched, entropy_converter{biassed_input2, weighted_distribution{1, 1}}, N);
-
-    std::cout << "Fair coin from 4:3:2:1 input:\n";
-    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{1, 1}}, N);
-
     std::cout << "4:1:5 distribution from 1:1 input:\n";
     count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
-
-    std::cout << "4:1:5 distribution from 4:3:2:1 input:\n";
-    count_totals(bits_fetched, entropy_converter{distribution_input, weighted_distribution{4, 1, 5}}, N, 0.95, 1.04);
 
     std::cout << "\nAll tests passed!\n";
 }
