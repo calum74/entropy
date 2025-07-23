@@ -1,87 +1,16 @@
 # The Bug
 
-Output variables seem to be correlated, leading to failures in distributions.
+I think the answer is that when you read an "unlikely" input, it creates a much larger uniform distribution, which is used for much longer. This biases the output towards unlikely inputs, which means that "reading" entropy from biassed sources is not correct.
 
-Why can we read from a Bernoulli{1/2} without bias, but if we read from Bernoulli{1/4}, we get correlations?
+However, only certain distributions (such as Bernoulli output) expose this error.
 
-The problem appears to be that once you absorb entropy, you are essentially in one universe or another, so all downstream values will be biassed. But this doesn't explain why Bernoulli{1/2} appears to be correct.
-
-The simplest case this arises is for an input of B{1/4} being converted to B{1/2}.
-
-The problem appears to be that the U values are correlated with each other, so that if we get a biassed value in U, then it will bias multiple outputs. But this appears to contradict the idea that the two outputs from a split_bernoulli() are independent. The reality appears to be that they cannot be independent, even though they appear to be.
-
-If U1 is not uniform (and it is not!), then this lack of uniformity will affect all downstream variables. And once we read a specific value into U1, then by definition it is no longer uniform.
-
-       B1    B2    B3  
-        \     \     \
-   U1 -- U2 -- U3 -- U4 -- 
-          \     \     \
-           C3    C4    C5
-
-Supposedly, U3 and C3 are independent because they were created by split_bernoulli.
-
-
-- [x] Is U1 really uniformly distributed?
-- [x] Are B1 and U1 really independent?
-- [ ] Are V3 and C3 really independent?
-- [ ] Can I measure their independence?
-- [ ] If V3 and C3 are independent, does that imply they are correlated
-
-If one of the Us is biassed, then that bias affects more than one output. That means that the outputs are not independent! And ultimately, the U_i has a concrete value so is biassed.
-
-
-
-# Next steps
+Basically, it means we can't read from arbitrary distributions as we were doing, and we need to delete the code.
 
 # Thoughts
-Conclusion: The sequence of numbers U_s can be correlated with each other, which in turn leads to correlations between the outputs.
 
 - [ ] Talk about "pairs (x,y)" and the bijection more.
 
-Possible explanations:
-- A bug in the implementation of an algorithm
-- An artefact or bug in the testing framework
-- Incorrectness of extractor
-- Incorrectness of generator
-- Variables that should be independent are not
-- A dataflow is invalid
-- Feedback is invalid
-- Size is a side-channel
-- Output depends on a size
-
-What experiment could I run to test these?
-- Create a debug log that explains the steps taken.
-
-Next steps:
-- Need to validate invariants, for example implement a "check_uniform"
-
-What's gone wrong?
-I don't think the variables are independent. So when we generate a Bernoulli variable, the value in the entropy store is not independent of that somehow. But they shouldn't depend on the *size* of the distribution, only its value.
-
-For example when we generate a 1, it means that the uniform in the store is high. Then the next time we generate a Bernoulli, this is also high.
-
-
 ## More ideas
-
-What should happen: We take s, remove a tiny sliver and turn it into kn. Compare it with km, to yield a range of either km or k(n-m). Each subrange should be uniform. So either
-
-- our test harness is completely broken
-- we have a bug in generate_bernoulli (unlikely as it's so simple)
-- we have a bug in generate_multiple
-- the bug is only when generating a bernoulli.
-
-But it's quite strange that generating a bernoulli also causes uniform measurement failures, so perhaps there is a common cause...
-
-The general operation of changing the range seems to be broken. It must be correlated with something, but what?
-
-Interestingly, there's a consistent bias downwards when output coin12
-
-Mystery because coin13 works fine but coin12 has bugs. Suggests an overflow of some kind...
-
-1. Why when generating Bernoulli{1/3} do we get no uniform bias, but Uniform{1/2} does have a bias?? Is it an overflow?? It looks like some form of synchronisation between the input and the output.
-
-2. Back to the coins output.
-
 
 
 # Repartitioning
@@ -121,36 +50,8 @@ Idea: Under a particular workload, one of the divmods can be avoided
 
 
 
-
-Problem with correctness of entropy extraction Algorithms 9 and 10.
-
-Why does the following fail?
-1. x = m(n-m)
-2. Get U_x
-3. Create U_N from B (should be uniform, right??)
-4. Combine with U_N
-
-Let's look at the expected entropy.
-
-p = m/n
-
-LHS entropy: log(m(n-m)) -p log p - (1-p)log(1-p)
-
-RHS entropy: plog(size1) + (1-p)log(size2)
-
-size1 =n(n-m)
-size2 = nm
-
-LHS entropy = 
-
 Fundamentally, the size of the distribution leaks information and causes correlations.
 
-
-Is step 3 still independent?
-
-Or how do I argue that the original algorithm is actually correct?
-
-E.g. 
 
 Set up the README
 
