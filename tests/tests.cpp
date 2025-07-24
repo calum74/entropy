@@ -12,11 +12,10 @@
 using namespace entropy_store;
 
 template <entropy_generator Source>
-void count_totals(int &bits_fetched, Source source, int count, double min = 0.99, double max = 1.01)
+void count_totals(Source source, int count, double min = 0.99, double max = 1.01)
 {
-    source(); // Warm up the cache
-    bits_fetched = 0;
-    double internal_before = source.internal_entropy();
+    
+    double internal_before = internal_entropy(source);
 
     std::array<int, 10> totals = {};
     std::array<std::array<int, 10>, 10> pairs = {};
@@ -67,15 +66,15 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
     }
 
     double de = entropy(source.distribution());
-    double internal_after = source.internal_entropy();
-    double net_input = bits_fetched - (internal_after - internal_before);
+    double internal_after = internal_entropy(source);
+    double net_input = bits_fetched(source) - (internal_after - internal_before);
     double net_output = de * count;
     double efficiency = net_output / net_input;
 
     std::cout << std::setprecision(10);
     std::cout << "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
     std::cout << "  Net output entropy = " << net_output << std::endl;
-    std::cout << "  Bits fetched = " << bits_fetched << std::endl;
+    std::cout << "  Bits fetched = " << bits_fetched(source) << std::endl;
     std::cout << "  Internal entropy delta = " << (internal_after - internal_before) << std::endl;
     std::cout << "  Net input entropy = " << net_input << std::endl;
     std::cout << "  Net efficiency = " << efficiency << std::endl;
@@ -91,12 +90,10 @@ int main(int argc, char **argv)
     if (argc == 2)
         N = atoi(argv[1]);
 
-    int bits_fetched = 0;
-
     // This bit generator is based on std::random_device
     // For debugging purposes, we've wrapped it in a counter
     // so we can see the number of bits it's generated.
-    auto bits = counted_bit_generator{bits_fetched};
+    auto bits = counted_bit_generator{};
 
     // To generate a fixed distribution
     auto d6 = entropy_converter{bits, uniform_distribution{1, 6}};
@@ -108,34 +105,34 @@ int main(int argc, char **argv)
     std::cout << "Here is a coin flip: " << gen(uniform_distribution{0, 1}) << std::endl;
 
     std::cout << "Fair coin:\n";
-    count_totals(bits_fetched, bits, N);
+    count_totals(bits, N);
 
     std::cout << "Fair coin as a uniform {0,1}:\n";
-    count_totals(bits_fetched, entropy_converter{bits, uniform_distribution{0, 1}}, N);
+    count_totals(entropy_converter{bits, uniform_distribution{0, 1}}, N);
 
     std::cout << "Fair coin as a 1:1 distribution:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 1}}, N);
+    count_totals(entropy_converter{bits, weighted_distribution{1, 1}}, N);
 
     std::cout << "Fair coin as a Bernoulli 1/2:\n";
-    count_totals(bits_fetched, entropy_converter{bits, bernoulli_distribution{1, 2}}, N);
+    count_totals(entropy_converter{bits, bernoulli_distribution{1, 2}}, N);
 
     std::cout << "Fair d6:\n";
-    count_totals(bits_fetched, entropy_converter{bits, uniform_distribution{1, 6}}, N);
+    count_totals(entropy_converter{bits, uniform_distribution{1, 6}}, N);
 
     std::cout << "1:2 biassed coin:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 2}}, N, 0.96, 1.04);
+    count_totals(entropy_converter{bits, weighted_distribution{1, 2}}, N, 0.96, 1.04);
 
     std::cout << "Bernoulli 1/3 biassed coin:\n";
-    count_totals(bits_fetched, entropy_converter{bits, bernoulli_distribution{1, 3}}, N, 0.96, 1.04);
+    count_totals(entropy_converter{bits, bernoulli_distribution{1, 3}}, N, 0.96, 1.04);
 
     std::cout << "49:2 biassed coin:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{49, 2}}, N, 0.7, 1.5);
+    count_totals(entropy_converter{bits, weighted_distribution{49, 2}}, N, 0.7, 1.5);
 
     std::cout << "1:999 biassed coin:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 999}}, N, 0.25, 8.0);
+    count_totals(entropy_converter{bits, weighted_distribution{1, 999}}, N, 0.25, 8.0);
 
     std::cout << "1:2:3:4 distribution:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{1, 2, 3, 4}}, N, 0.97, 1.03);
+    count_totals(entropy_converter{bits, weighted_distribution{1, 2, 3, 4}}, N, 0.97, 1.03);
 
     // Demonstrating converting *from* weighted distributions
     // Create some weighted distributions to use as input:
@@ -148,10 +145,10 @@ int main(int argc, char **argv)
     auto low_entropy_input3 = entropy_converter64{bits, weighted_distribution{1, 999}};
 
     std::cout << "Fair coin from uniform input:\n";
-    count_totals(bits_fetched, entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
+    count_totals(entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
 
     std::cout << "4:1:5 distribution from 1:1 input:\n";
-    count_totals(bits_fetched, entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
+    count_totals(entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
 
     std::cout << "\nAll tests passed!\n";
 }

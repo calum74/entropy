@@ -90,8 +90,6 @@ namespace entropy_store
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
         dist.bits();
-        //dist.entropy();
-        //dist.P(0);
     };
 
     template <typename Source>
@@ -112,6 +110,7 @@ namespace entropy_store
         using distribution_type = uniform_distribution<value_type>;
         random_device_generator() {}
         random_device_generator(const random_device_generator &) {}
+        random_device_generator(random_device_generator&&) {}
 
         value_type operator()()
         {
@@ -136,7 +135,11 @@ namespace entropy_store
         value_type m_value = 0, m_shift = 32;
         Source m_source;
 
+        const source_type & source() const { return m_source; }
+
         bit_generator(const source_type &source = {}) : m_source(source) {}
+        bit_generator(const bit_generator&src) : m_source(src.source()) {}
+        bit_generator(bit_generator&&src) : m_source(std::move(src.m_source)) {}
 
         distribution_type distribution() const { return binary(); }
 
@@ -159,44 +162,6 @@ namespace entropy_store
     };
 
     using random_bit_generator = bit_generator<random_device_generator>;
-
-    template <entropy_generator Source>
-    struct counter
-    {
-        using source_type = Source;
-        using value_type = typename source_type::value_type;
-        using distribution_type = typename source_type::distribution_type;
-
-        counter(int &count, const Source &source = {}) : m_source(source), m_count(count) {}
-        Source m_source;
-
-        auto distribution() const { return m_source.distribution(); }
-
-        auto operator()()
-        {
-            ++m_count;
-            return m_source();
-        }
-
-        template <typename Distribution>
-        auto operator()(const Distribution &dist)
-        {
-            ++m_count;
-            return m_source(dist);
-        }
-
-        auto fetch_bit()
-        {
-            ++m_count;
-            return m_source.fetch_bit();
-        }
-
-        double internal_entropy() const { return 0; }
-
-        int &m_count;
-    };
-
-    using counted_bit_generator = counter<random_bit_generator>;
 
     template <std::integral uint_t>
     void validate(uint_t U_n, uint_t n)
@@ -353,6 +318,14 @@ namespace entropy_store
         {
         }
 
+        entropy_store(entropy_store&&other) : m_source(std::move(other.m_source)), U_s(other.U_s), s(other.s)
+        {
+            other.U_s = 0;
+            other.s = 1;
+        }
+
+        entropy_store(const entropy_store&other) : m_source(other.m_source) {}
+
         auto operator()(const distribution auto &dist)
         {
             return generate(U_s, s, N, m_source, m_source.distribution(), dist);
@@ -360,10 +333,7 @@ namespace entropy_store
 
         int fetch_bit() { return m_source.fetch_bit(); }
 
-        double internal_entropy() const
-        {
-            return std::log2(s) + m_source.internal_entropy();
-        }
+        value_type size() const { return s; }
 
         const source_type &source() const { return m_source; }
 
@@ -391,8 +361,6 @@ namespace entropy_store
         const distribution_type &distribution() const { return m_distribution; }
 
         int fetch_bit() { return m_source.fetch_bit(); }
-
-        double internal_entropy() const { return m_source.internal_entropy(); }
 
         const auto &source() const { return m_source; }
 
