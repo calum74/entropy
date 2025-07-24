@@ -1,3 +1,11 @@
+# Next steps
+
+- Implement an entropy input/output/efficiency for any distribution or counter.
+- Rewrite tests to use the better "testing" header file
+- Seperate out the testing header a bit better
+  - entropy_metrics.hpp
+    -
+
 # The Bug
 
 I think the answer is that when you read an "unlikely" input, it creates a much larger uniform distribution, which is used for much longer. This biases the output towards unlikely inputs, which means that "reading" entropy from biassed sources is not correct.

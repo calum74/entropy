@@ -2,6 +2,7 @@
 // #include <iostream>
 
 #include "entropy_store.hpp"
+#include "entropy_metrics.hpp"
 #include "testing.hpp"
 
 #include <iostream>
@@ -65,14 +66,14 @@ void count_totals(int &bits_fetched, Source source, int count, double min = 0.99
         }
     }
 
-    double de = source.distribution().entropy();
+    double de = entropy(source.distribution());
     double internal_after = source.internal_entropy();
     double net_input = bits_fetched - (internal_after - internal_before);
     double net_output = de * count;
     double efficiency = net_output / net_input;
 
     std::cout << std::setprecision(10);
-    std::cout << "  Distribution entropy = " << source.distribution().entropy() << std::endl;
+    std::cout << "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
     std::cout << "  Net output entropy = " << net_output << std::endl;
     std::cout << "  Bits fetched = " << bits_fetched << std::endl;
     std::cout << "  Internal entropy delta = " << (internal_after - internal_before) << std::endl;

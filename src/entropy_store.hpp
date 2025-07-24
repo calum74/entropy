@@ -22,18 +22,6 @@ namespace entropy_store
         value_type min() const { return m_min; }
         value_type max() const { return m_max; }
 
-        double P(value_type i) const
-        {
-            if (i >= min() && i <= max())
-                return 1.0 / size();
-            return 0;
-        }
-
-        double entropy() const
-        {
-            return std::log2(size());
-        }
-
     private:
         int m_min, m_max;     // Inclusive values, min<=max
         std::uint32_t m_bits; // Number of bits capacity required to fetch this
@@ -71,20 +59,6 @@ namespace entropy_store
         value_type min() const { return 0; }
         value_type max() const { return m_weights.size() - 1; }
 
-        double P(value_type i) const { return double(weights()[i]) / outputs().size(); }
-
-        double entropy() const
-        {
-            double h = 0;
-            for (double w : weights())
-            {
-                auto p = w / outputs().size();
-                h -= p * std::log2(p);
-            }
-
-            return h;
-        }
-
     private:
         std::uint32_t m_bits;
         std::vector<value_type> m_weights, m_outputs, m_offsets;
@@ -107,18 +81,6 @@ namespace entropy_store
         value_type min() const { return 0; }
         value_type max() const { return 1; }
 
-        double P(value_type i) const
-        {
-            double p = double(numerator()) / double(denominator());
-            return i ? p : (1.0 - p);
-        }
-
-        double entropy() const
-        {
-            double p = double(numerator()) / double(denominator());
-            return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
-        }
-
     private:
         size_type m_bits;
         size_type m_numerator, m_denominator;
@@ -128,8 +90,8 @@ namespace entropy_store
     concept distribution = requires(Distribution dist) {
         typename Distribution::value_type;
         dist.bits();
-        dist.entropy();
-        dist.P(0);
+        //dist.entropy();
+        //dist.P(0);
     };
 
     template <typename Source>

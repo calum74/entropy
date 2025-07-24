@@ -61,14 +61,14 @@ namespace entropy_store
 
     void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
     {
-        auto w = dist.P(sample);
+        auto w = P(dist, sample);
         mean = total * w;
         sd = std::sqrt(total * w * (1.0 - w));
     }
 
     void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
     {
-        auto w = dist.P(x) * dist.P(y);
+        auto w = P(dist, x) * P(dist,y);
         mean = total * w;
         sd = std::sqrt(total * w * (1.0 - w));
     }
