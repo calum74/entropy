@@ -1,11 +1,11 @@
 #pragma once
 
 #include "entropy_store.hpp"
-#include <cstdint>
-#include <cmath>
-#include <iostream>
 #include <cassert>
+#include <cmath>
+#include <cstdint>
 #include <iomanip>
+#include <iostream>
 
 namespace entropy_store
 {
@@ -60,7 +60,9 @@ template <entropy_generator Source> struct counter
     {
     }
 
-    counter(const counter&src) : m_source(src.source()), m_count(0) {}
+    counter(const counter &src) : m_source(src.source()), m_count(0)
+    {
+    }
 
     counter(counter &&src) : m_source(std::move(src)), m_count(src.m_count)
     {
@@ -143,177 +145,210 @@ template <typename Source> inline std::size_t internal_entropy(const bit_generat
     return 0;
 }
 
+void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
+{
+    auto w = P(dist, sample);
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
 
+void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
+{
+    auto w = P(dist, x) * P(dist, y);
+    mean = total * w;
+    sd = std::sqrt(total * w * (1.0 - w));
+}
 
-    void mean_and_sd(const distribution auto &dist, int sample, double total, double &mean, double &sd)
+// Checks that outputs from a distribution meet statistical tests
+template <entropy_generator Source> class check_distribution
+{
+  public:
+    using size_type = std::size_t;
+    using value_type = typename Source::value_type;
+    using source_type = typename Source::source_type;
+    using distribution_type = typename Source::distribution_type;
+    // static_assert(entropy_generator<check_distribution>);
+
+    check_distribution(const Source &source) : m_source(source)
     {
-        auto w = P(dist, sample);
-        mean = total * w;
-        sd = std::sqrt(total * w * (1.0 - w));
+        m_counts.resize(distribution().max() + 1, 0);
+        m_pair_counts.resize(distribution().max() + 1, m_counts);
     }
 
-    void mean_and_sd(const distribution auto &dist, int x, int y, double total, double &mean, double &sd)
+    auto operator()()
     {
-        auto w = P(dist, x) * P(dist,y);
-        mean = total * w;
-        sd = std::sqrt(total * w * (1.0 - w));
+        auto value = m_source();
+        ++m_counts[value];
+        if (m_previous != -1)
+            ++m_pair_counts[m_previous][value];
+        m_previous = value;
+        ++m_count;
+        return value;
     }
 
-    // Checks that outputs from a distribution meet statistical tests
-    template <entropy_generator Source>
-    class check_distribution
+    // !! This is inefficient
+    auto distribution() const
     {
-    public:
-        using size_type = std::size_t;
-        using value_type = typename Source::value_type;
-        using source_type = typename Source::source_type;
-        using distribution_type = typename Source::distribution_type;
-        // static_assert(entropy_generator<check_distribution>);
+        return m_source.distribution();
+    }
 
-        check_distribution(const Source &source) : m_source(source)
+    int fetch_bit()
+    {
+        return m_source.fetch_bit();
+    }
+
+    void read(size_type count)
+    {
+        for (auto i = 0; i < count; ++i)
+            (*this)();
+    }
+
+    // double internal_entropy() const { return m_source.internal_entropy(); }
+
+    double output_entropy() const
+    {
+        return m_count * entropy(distribution());
+    }
+
+    double input_entropy() const
+    {
+        return bits_fetched(m_source) - internal_entropy(m_source);
+    }
+
+    double efficiency() const
+    {
+        return output_entropy() / input_entropy();
+    }
+
+    auto output_count() const
+    {
+        return m_count;
+    }
+
+    void visit_counts(std::invocable<size_type, value_type, double, double, double> auto fn) const
+    {
+        auto dist = distribution();
+        for (auto i = 0; i < m_counts.size(); ++i)
         {
-            m_counts.resize(distribution().max() + 1, 0);
-            m_pair_counts.resize(distribution().max() + 1, m_counts);
-        }
-
-        auto operator()()
-        {
-            auto value = m_source();
-            ++m_counts[value];
-            if (m_previous != -1)
-                ++m_pair_counts[m_previous][value];
-            m_previous = value;
-            ++m_count;
-            return value;
-        }
-
-        // !! This is inefficient
-        auto distribution() const { return m_source.distribution(); }
-
-        int fetch_bit() { return m_source.fetch_bit(); }
-
-        void read(size_type count)
-        {
-            for(auto i=0; i<count; ++i)
-                (*this)();
-        }
-
-        double internal_entropy() const { return m_source.internal_entropy(); }
-
-        void visit_counts(std::invocable<size_type, value_type, double, double, double> auto fn) const
-        {
-            auto dist = distribution();
-            for (auto i = 0; i < m_counts.size(); ++i)
+            auto s = m_counts[i];
+            if (s > 0)
             {
-                auto s = m_counts[i];
+                double mean, sd;
+                mean_and_sd(dist, i, m_count, mean, sd);
+                auto sigma = (s - mean) / sd;
+                fn(i, s, mean, sd, sigma);
+            }
+        }
+    }
+
+    double max_sigma() const
+    {
+        double max = 0.0;
+        visit_counts([&](auto, auto, auto, auto, double sigma) {
+            if (std::abs(sigma) > std::abs(max))
+                max = sigma;
+        });
+
+        return max;
+    }
+
+    bool check_sigma(double max = 4.0) const
+    {
+        return std::abs(max_sigma()) < max;
+    }
+
+    template <std::invocable<value_type, value_type, value_type, double, double, double> Fn>
+    void visit_pairs(Fn fn) const
+    {
+        auto dist = distribution();
+        for (auto i = 0; i < m_counts.size(); ++i)
+        {
+            for (auto j = 0; j < m_counts.size(); ++j)
+            {
+                auto s = m_pair_counts[i][j];
                 if (s > 0)
                 {
                     double mean, sd;
-                    mean_and_sd(dist, i, m_count, mean, sd);
+                    mean_and_sd(dist, i, j, m_count, mean, sd);
                     auto sigma = (s - mean) / sd;
-                    fn(i, s, mean, sd, sigma);
+                    fn(i, j, s, mean, sd, sigma);
                 }
             }
         }
+    }
 
-        double max_sigma() const
-        {
-            double max = 0.0;
-            visit_counts([&](auto, auto, auto, auto, double sigma)
-                         {
-                if(std::abs(sigma) > std::abs(max))
-                    max = sigma; });
+    const auto &source() const
+    {
+        return m_source;
+    }
 
-            return max;
-        }
+  private:
+    value_type m_previous = -1;
+    Source m_source;
 
-        bool check_sigma(double max = 4.0) const
-        {
-            return std::abs(max_sigma()) < max;
-        }
+    std::vector<size_type> m_counts;
+    std::vector<std::vector<size_type>> m_pair_counts;
+    size_type m_count = 0;
+};
 
-        template <std::invocable<value_type, value_type, value_type, double, double, double> Fn>
-        void visit_pairs(Fn fn) const
-        {
-            auto dist = distribution();
-            for (auto i = 0; i < m_counts.size(); ++i)
-            {
-                for (auto j = 0; j < m_counts.size(); ++j)
-                {
-                    auto s = m_pair_counts[i][j];
-                    if (s > 0)
-                    {
-                        double mean, sd;
-                        mean_and_sd(dist, i, j, m_count, mean, sd);
-                        auto sigma = (s - mean) / sd;
-                        fn(i, j, s, mean, sd, sigma);
-                    }
-                }
-            }
-        }
+template <typename Source> std::ostream &operator<<(std::ostream &os, const check_distribution<Source> &check)
+{
+    os << check.source().source().source().distribution() << " -> " << check.distribution() << ":\n";
+    check.visit_counts([&](auto i, auto c, double, double, double sigma) {
+        os << "    " << i << ": " << c << " = " << (100.0 * c / check.output_count()) << "% = " << std::setprecision(2)
+           << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n";
+    });
 
-        const auto &source() const { return m_source; }
+    check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma) {
+        os << "   " << i << j << ": " << c << " = " << (100.0 * c / check.output_count())
+           << "% = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ"
+           << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n";
+    });
 
-    private:
-        value_type m_previous = -1;
-        Source m_source;
+    os << "  Distribution entropy = " << std::setprecision(4) << entropy(check.distribution()) << " bits\n";
+    os << "  Bits fetched = " << bits_fetched(check) << std::endl;
+    os << "  Internal entropy = " << std::setprecision(6) << internal_entropy(check) << " bits\n";
+    os << "  Output entropy = " << check.output_entropy() << " bits\n";
+    os << "  Efficiency = " << std::setprecision(15) << check.efficiency() << std::endl;
 
-        std::vector<size_type> m_counts;
-        std::vector<std::vector<size_type>> m_pair_counts;
-        size_type m_count = 0;
+    return os;
+}
+
+template <typename T> std::ostream &operator<<(std::ostream &os, const uniform_distribution<T> &u)
+{
+    return os << "Uniform{" << u.min() << "," << u.max() << "}";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const bernoulli_distribution &b)
+{
+    return os << "Bernoulli{" << b.numerator() << "/" << b.denominator() << "}";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const weighted_distribution &w)
+{
+    bool first = true;
+    auto comma = [&]() {
+        if (first)
+            first = false;
+        else
+            return ",";
+        return "";
     };
 
-    template <typename Source>
-    std::ostream &operator<<(std::ostream &os, const check_distribution<Source> &check)
-    {
-        os << check.distribution() << ":\n";
-        check.visit_counts([&](auto i, auto c, double, double, double sigma)
-                           { os << "    " << i << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
-
-        check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma)
-                          { os << "   " << i << j << ": " << c << " = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n"; });
-
-        return os;
-    }
-
-
-    template<typename T>
-    std::ostream & operator<<(std::ostream & os, const uniform_distribution<T> &u)
-    {
-        return os << "Uniform{" << u.min() << "," << u.max() << "}";
-    }
-
-    inline std::ostream & operator<<(std::ostream & os, const bernoulli_distribution &b)
-    {
-        return os << "Bernoulli{" << b.numerator() << "/" << b.denominator() << "}";
-    }
-
-    inline std::ostream & operator<<(std::ostream & os, const weighted_distribution &w)
-    {
-        bool first = true;
-        auto comma =  [&]()
-        {
-            if(first) first = false;
-            else return ",";
-            return "";
-        };
-
-        os << "Weighted{";
-        for(auto &i : w.weights())
-            os << comma() << i;
-        return os << "}";
-    }
-
-    template<typename Source>
-    double internal_entropy(const check_distribution<Source> &source)
-    {
-        return internal_entropy(source.source());
-    }
-
-    template<typename Source>
-    std::size_t bits_fetched(const check_distribution<Source> &source)
-    {
-        return bits_fetched(source.source());
-    }
-
+    os << "Weighted{";
+    for (auto &i : w.weights())
+        os << comma() << i;
+    return os << "}";
 }
+
+template <typename Source> double internal_entropy(const check_distribution<Source> &source)
+{
+    return internal_entropy(source.source());
+}
+
+template <typename Source> std::size_t bits_fetched(const check_distribution<Source> &source)
+{
+    return bits_fetched(source.source());
+}
+
+} // namespace entropy_store

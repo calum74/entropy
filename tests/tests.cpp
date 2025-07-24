@@ -1,12 +1,9 @@
-#include "entropy_store.hpp"
 #include "entropy_metrics.hpp"
-
-#include <array>
+#include "entropy_store.hpp"
 
 using namespace entropy_store;
 
-template <entropy_generator Source>
-void count_totals(Source x, int count, double min = 0.99, double max = 1.01)
+template <entropy_generator Source> void count_totals(Source x, int count, double min = 0.99, double max = 1.01)
 {
     auto source = check_distribution{x};
     double internal_before = internal_entropy(source);
@@ -16,19 +13,7 @@ void count_totals(Source x, int count, double min = 0.99, double max = 1.01)
     std::cout << source;
     assert(source.check_sigma());
 
-    double de = entropy(source.distribution());
-    double internal_after = internal_entropy(source);
-    double net_input = bits_fetched(source) - (internal_after - internal_before);
-    double net_output = de * count;
-    double efficiency = net_output / net_input;
-
-    std::cout << std::setprecision(10);
-    std::cout << "  Distribution entropy = " << entropy(source.distribution()) << std::endl;
-    std::cout << "  Net output entropy = " << net_output << std::endl;
-    std::cout << "  Bits fetched = " << bits_fetched(source) << std::endl;
-    std::cout << "  Internal entropy delta = " << (internal_after - internal_before) << std::endl;
-    std::cout << "  Net input entropy = " << net_input << std::endl;
-    std::cout << "  Net efficiency = " << efficiency << std::endl;
+    double efficiency = source.efficiency();
 
     assert(efficiency >= min);
     assert(efficiency <= max);
@@ -55,50 +40,20 @@ int main(int argc, char **argv)
     std::cout << "Here is a d6 roll: " << gen(uniform_distribution{1, 6}) << std::endl;
     std::cout << "Here is a coin flip: " << gen(uniform_distribution{0, 1}) << std::endl;
 
-    std::cout << "Fair coin:\n";
     count_totals(bits, N);
-
-    std::cout << "Fair coin as a uniform {0,1}:\n";
     count_totals(entropy_converter{bits, uniform_distribution{0, 1}}, N);
-
-    std::cout << "Fair coin as a 1:1 distribution:\n";
     count_totals(entropy_converter{bits, weighted_distribution{1, 1}}, N);
-
-    std::cout << "Fair coin as a Bernoulli 1/2:\n";
     count_totals(entropy_converter{bits, bernoulli_distribution{1, 2}}, N);
-
-    std::cout << "Fair d6:\n";
     count_totals(entropy_converter{bits, uniform_distribution{1, 6}}, N);
-
-    std::cout << "1:2 biassed coin:\n";
     count_totals(entropy_converter{bits, weighted_distribution{1, 2}}, N, 0.96, 1.04);
-
-    std::cout << "Bernoulli 1/3 biassed coin:\n";
     count_totals(entropy_converter{bits, bernoulli_distribution{1, 3}}, N, 0.96, 1.04);
-
-    std::cout << "49:2 biassed coin:\n";
     count_totals(entropy_converter{bits, weighted_distribution{49, 2}}, N, 0.7, 1.5);
-
-    std::cout << "1:999 biassed coin:\n";
     count_totals(entropy_converter{bits, weighted_distribution{1, 999}}, N, 0.25, 8.0);
-
-    std::cout << "1:2:3:4 distribution:\n";
     count_totals(entropy_converter{bits, weighted_distribution{1, 2, 3, 4}}, N, 0.97, 1.03);
 
-    // Demonstrating converting *from* weighted distributions
-    // Create some weighted distributions to use as input:
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
-    auto biassed_input = entropy_converter{bits, weighted_distribution{1, 4}};
-    auto biassed_input2 = entropy_converter{bits, bernoulli_distribution{1, 5}};
-    auto distribution_input = entropy_converter{bits, weighted_distribution{4, 3, 2, 1}};
-    auto low_entropy_input1 = entropy_converter{bits, weighted_distribution{1, 99}};
-    auto low_entropy_input2 = entropy_converter{bits, weighted_distribution{1, 999}};
-    auto low_entropy_input3 = entropy_converter64{bits, weighted_distribution{1, 999}};
 
-    std::cout << "Fair coin from uniform input:\n";
     count_totals(entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
-
-    std::cout << "4:1:5 distribution from 1:1 input:\n";
     count_totals(entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
 
     std::cout << "\nAll tests passed!\n";
