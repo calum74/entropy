@@ -110,19 +110,18 @@ namespace entropy_store
         using distribution_type = uniform_distribution<value_type>;
         random_device_generator() {}
         random_device_generator(const random_device_generator &) {}
-        random_device_generator(random_device_generator&&) {}
 
         value_type operator()()
         {
-            return rd();
+            return m_rd();
         }
 
-        distribution_type distribution() const { return {rd.min(), rd.max()}; }
+        distribution_type distribution() const { return {m_rd.min(), m_rd.max()}; }
 
         int fetch_bit(); // Unused
 
     private:
-        std::random_device rd;
+        std::random_device m_rd;
     };
 
     template <entropy_generator Source>

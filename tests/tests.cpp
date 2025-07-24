@@ -1,69 +1,20 @@
-// Debugging !!
-// #include <iostream>
-
 #include "entropy_store.hpp"
 #include "entropy_metrics.hpp"
-#include "testing.hpp"
 
-#include <iostream>
-#include <iomanip>
 #include <array>
 
 using namespace entropy_store;
 
 template <entropy_generator Source>
-void count_totals(Source source, int count, double min = 0.99, double max = 1.01)
+void count_totals(Source x, int count, double min = 0.99, double max = 1.01)
 {
-    
+    auto source = check_distribution{x};
     double internal_before = internal_entropy(source);
 
-    std::array<int, 10> totals = {};
-    std::array<std::array<int, 10>, 10> pairs = {};
+    source.read(count);
 
-    int prev = 0;
-    int first = 0;
-
-    for (int i = 0; i < count; i++)
-    {
-        auto x = source();
-        assert(x >= 0 && x < totals.size());
-        totals[x]++;
-        if (i > 0)
-            pairs[prev][x]++;
-        if (i == 0)
-            first = x;
-        prev = x;
-    }
-    pairs[prev][first]++; // Just to be pedantic
-
-    for (int value = 0; value < totals.size(); ++value)
-    {
-        auto s = totals[value];
-        if (s > 0)
-        {
-            double mean, sd;
-            mean_and_sd(source.distribution(), value, count, mean, sd);
-            auto sigma = (s - mean) / sd;
-            std::cout << "  " << value << ": n=" << s << " σ=" << std::setprecision(2) << sigma << std::endl;
-            assert(std::abs(sigma) < 4);
-        }
-    }
-
-    for (int x = 0; x < totals.size(); ++x)
-    {
-        for (int y = 0; y < totals.size(); ++y)
-        {
-            auto s = pairs[x][y];
-            if (s > 0)
-            {
-                double mean, sd;
-                mean_and_sd(source.distribution(), x, y, count, mean, sd);
-                auto sigma = (s - mean) / sd;
-                std::cout << "  " << x << y << ": n=" << s << " σ=" << std::setprecision(2) << sigma << std::endl;
-                assert(std::abs(sigma) < 4);
-            }
-        }
-    }
+    std::cout << source;
+    assert(source.check_sigma());
 
     double de = entropy(source.distribution());
     double internal_after = internal_entropy(source);
