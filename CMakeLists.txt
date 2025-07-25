@@ -7,6 +7,7 @@ include_directories(src)
 
 add_executable(tests tests/tests.cpp)
 add_executable(sample tests/sample.cpp)
+add_executable(bench tests/bench.cpp)
 
 add_test(tests tests)
 add_test(sample sample)

@@ -334,7 +334,7 @@ template <std::integral uint_t> auto resample(uint_t U_n, uint_t n, uint_t m)
         x = n - m;
         r = 0;
     }
-    return std::tuple{U_n, n, r};
+    return std::tuple{U_x, x, r};
 }
 
 template <std::integral uint_t, std::invocable<uint_t, uint_t> Fn>
@@ -483,19 +483,9 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
     uint_t M = k * m;
     assert(M >= k);
     assert(M >= m);
-    if (U_s < M)
-    {
-        s = M;
-        validate(U_s, s);
-        return 1;
-    }
-    else
-    {
-        U_s -= M;
-        s -= M;
-        validate(U_s, s);
-        return 0;
-    }
+    uint_t b;
+    std::tie(U_s, s, b) = resample(U_s, s, M);
+    return b;
 }
 
 template <std::integral uint_t, uint_t Num, uint_t Den>
@@ -508,17 +498,9 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
     uint_t k;
     std::tie(U_s, s, k) = generate_const_multiple<Den>(U_s, s, N, fetch_from_source(source, source_dist, N));
     uint_t M = k * m;
-    if (U_s < M)
-    {
-        s = M;
-        return 1;
-    }
-    else
-    {
-        U_s -= M;
-        s -= M;
-        return 0;
-    }
+    uint_t b;
+    std::tie(U_s, s, b) = resample(U_s, s, M);
+    return b;
 }
 
 template <std::integral uint_t>
