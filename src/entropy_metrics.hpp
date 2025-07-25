@@ -306,7 +306,7 @@ template <typename Source> std::ostream &operator<<(std::ostream &os, const chec
     });
 
     os << "  Distribution entropy = " << std::setprecision(4) << entropy(check.distribution()) << " bits\n";
-    os << "  Bits fetched = " << bits_fetched(check) << std::endl;
+    os << "  Bits fetched = " << bits_fetched(check) << " bits\n";
     os << "  Internal entropy = " << std::setprecision(6) << internal_entropy(check) << " bits\n";
     os << "  Output entropy = " << check.output_entropy() << " bits\n";
     os << "  Efficiency = " << std::setprecision(15) << check.efficiency() << std::endl;

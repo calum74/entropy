@@ -59,6 +59,7 @@ class weighted_distribution
     weighted_distribution(std::initializer_list<value_type> weights) : weighted_distribution(std::vector(weights))
     {
     }
+
     weighted_distribution(std::vector<value_type> w) : m_weights(std::move(w))
     {
         for (int i = 0; i < m_weights.size(); ++i)
@@ -71,6 +72,7 @@ class weighted_distribution
         }
         m_bits = std::ceil(std::log2(m_outputs.size()));
     }
+
     size_type bits() const
     {
         return m_bits;
@@ -93,6 +95,7 @@ class weighted_distribution
     {
         return 0;
     }
+
     value_type max() const
     {
         return m_weights.size() - 1;
@@ -186,14 +189,12 @@ class random_device_generator
     std::random_device m_rd;
 };
 
-template <entropy_generator Source> struct bit_generator
+template <entropy_generator Source> class bit_generator
 {
+  public:
     using source_type = Source;
     using value_type = typename Source::value_type;
     using distribution_type = uniform_distribution<value_type>;
-
-    value_type m_value = 0, m_shift = 32;
-    Source m_source;
 
     const source_type &source() const
     {
@@ -230,10 +231,9 @@ template <entropy_generator Source> struct bit_generator
         return (m_value >> m_shift) & 1;
     }
 
-    double internal_entropy() const
-    {
-        return 32 - m_shift;
-    }
+  private:
+    value_type m_value = 0, m_shift = 32;
+    Source m_source;
 };
 
 using random_bit_generator = bit_generator<random_device_generator>;
@@ -243,33 +243,35 @@ template <std::integral uint_t> void validate(uint_t U_n, uint_t n)
     assert(U_n < n);
 }
 
-template <std::integral uint_t> void combine(uint_t U_n, uint_t n, uint_t U_m, uint_t m, uint_t &U_nm, uint_t &nm)
+template <std::integral uint_t> auto combine(uint_t U_n, uint_t n, uint_t U_m, uint_t m)
 {
     validate(U_n, n);
     validate(U_m, m);
-    U_nm = n * U_m + U_n;
-    nm = m * n;
+    uint_t U_nm = n * U_m + U_n;
+    uint_t nm = m * n;
     assert(n <= nm);
     assert(m <= nm);
     validate(U_nm, nm);
+    return std::tuple { U_nm, nm };
 }
 
-template <std::integral uint_t> void divide(uint_t U_nm, uint_t nm, uint_t m, uint_t &U_n, uint_t &U_m, uint_t &n)
+template <std::integral uint_t> auto divide(uint_t U_nm, uint_t nm, uint_t m)
 {
-    U_m = U_nm % m;
-    U_n = U_nm / m;
-    n = nm / m;
+    uint_t U_m = U_nm % m;
+    uint_t U_n = U_nm / m;
+    uint_t n = nm / m;
+    return std::tuple { U_n, n, U_m };
 }
 
-template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
-uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
+template <std::integral uint_t, std::invocable<uint_t, uint_t> Fn>
+auto generate_multiple(uint_t U_s, uint_t s, uint_t N, uint_t n, Fn fetch_entropy)
 {
     assert(N >= n);
     validate(U_s, s);
     for (;;)
     {
         while (s < N)
-            fetch_entropy(U_s, s);
+            std::tie(U_s, s) = fetch_entropy(U_s, s);
         assert(s >= n);
         validate(U_s, s);
         // Resample entropy s to a multiple of m
@@ -281,7 +283,7 @@ uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_en
             // Resample successful
             validate(U_s, s);
             assert(k == s / n);
-            return k;
+            return std::tuple { U_s, s, k };
         }
         else
         {
@@ -292,20 +294,21 @@ uint_t generate_multiple(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_en
     }
 }
 
-template <std::integral uint_t, std::invocable<uint_t &, uint_t &> Fn>
-uint_t generate_uniform(uint_t &U_s, uint_t &s, uint_t N, uint_t n, Fn fetch_entropy)
+template <std::integral uint_t, std::invocable<uint_t, uint_t> Fn>
+auto generate_uniform(uint_t U_s, uint_t s, uint_t N, uint_t n, Fn fetch_entropy)
 {
-    uint_t k = generate_multiple(U_s, s, N, n, fetch_entropy);
+    uint_t k;
     uint_t U_n;
-    divide(U_s, s, n, U_s, U_n, s);
+    std::tie(U_s, s, k) = generate_multiple(U_s, s, N, n, fetch_entropy);
+    std::tie(U_s, s, U_n) = divide(U_s, s, n);
     validate(U_s, s);
     validate(U_n, n);
-    return U_n;
+    return std::tuple { U_s, s, U_n };
 }
 
 auto fetch_bit_from_source(entropy_generator auto &source)
 {
-    return [&](auto &U_s, auto &s) {
+    return [&](auto U_s, auto s) {
         // Put this in here to check we aren't fetching binary entropy more than necessary
         // !! Delete this debug code
         // std::cout << "b";
@@ -318,6 +321,7 @@ auto fetch_bit_from_source(entropy_generator auto &source)
         assert(b == 0 || b == 1);
         U_s = (U_s << 1) | b;
         validate(U_s, s);
+        return std::tuple { U_s, s };
     };
 }
 
@@ -325,8 +329,8 @@ template <std::integral uint_t, std::integral uint2>
 auto fetch_from_source(entropy_generator auto &source, const uniform_distribution<uint2> &source_dist, uint_t N)
 {
     N >>= source_dist.bits();
-    return [&, N](uint_t &U_s, uint_t &s) {
-        combine(U_s, s, uint_t(source() - source_dist.min()), uint_t(source_dist.size()), U_s, s);
+    return [&, N](uint_t U_s, uint_t s) {
+        return combine(U_s, s, uint_t(source() - source_dist.min()), uint_t(source_dist.size()));        
     };
 }
 
@@ -336,7 +340,9 @@ T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const distribution 
 {
     N >>= source_dist.bits();
     auto fetch_entropy = fetch_from_source(source, source_dist, N);
-    return T(generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy)) + output_dist.min();
+    uint_t U_n;
+    std::tie(U_s, s, U_n) = generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy);
+    return U_n + output_dist.min();
 }
 
 template <std::integral uint_t>
@@ -348,7 +354,8 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
     uint_t m = output_dist.numerator();
     uint_t n = output_dist.denominator();
     assert(m < n);
-    uint_t k = generate_multiple(U_s, s, N, n, fetch_from_source(source, source_dist, N));
+    uint_t k;
+    std::tie(U_s, s, k) = generate_multiple(U_s, s, N, n, fetch_from_source(source, source_dist, N));
     assert(s = k * n);
     uint_t M = k * m;
     assert(M >= k);
@@ -373,7 +380,9 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
                 const weighted_distribution &output_dist)
 {
     N >>= source_dist.bits();
-    uint_t k =
+    uint_t k;
+    
+    std::tie(U_s, s, k) =
         generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_from_source(source, source_dist, N));
     auto W = output_dist.outputs()[U_s / k];
     U_s -= k * output_dist.offsets()[W];

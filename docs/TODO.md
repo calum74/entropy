@@ -1,10 +1,11 @@
 # Next steps
 
-- Implement an entropy input/output/efficiency for any distribution or counter.
-- Rewrite tests to use the better "testing" header file
-- Seperate out the testing header a bit better
-  - entropy_metrics.hpp
-    -
+- Remove more junk from entropy_store
+- Extract algorithms
+- Maybe abstract a random variable
+- Maybe have a static distribution?
+- Separate out the validation code and assertions?
+
 
 # The Bug
 
