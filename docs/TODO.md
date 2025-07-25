@@ -5,7 +5,7 @@
     - cmath
 
 - Refactor generate() to take a fetch_from_source() functor
-
+- Make ther bit generators not assume 32-bit all the time
 
 - Extract algorithms
 - Maybe abstract a random variable

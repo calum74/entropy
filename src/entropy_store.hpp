@@ -40,14 +40,34 @@ template <std::integral T> class uniform_distribution
     std::uint32_t m_bits; // Number of bits capacity required to fetch this
 };
 
-uniform_distribution<std::uint32_t> binary()
+template <std::integral T, T Min, T Max> class const_uniform_distribution
 {
-    return {0, 1};
-}
-uniform_distribution<std::uint32_t> empty()
-{
-    return {0, 0};
-}
+  public:
+    using value_type = T;
+    using size_type = std::size_t;
+
+    constexpr size_type size() const
+    {
+        return Max-Min+1;
+    }
+    constexpr size_type bits() const
+    {
+        return std::ceil(std::log2(size()));
+    }
+    constexpr value_type min() const
+    {
+        return Min;
+    }
+    constexpr value_type max() const
+    {
+        return Max;
+    }
+};
+
+template<std::uint32_t Min, std::uint32_t Max>
+using const_uniform = const_uniform_distribution<std::uint32_t, Min, Max>;
+
+using binary_distribution = const_uniform<0,1>;
 
 // Constructs the lookup tables for a weighted distribution
 class weighted_distribution
@@ -165,7 +185,7 @@ class random_device_generator
 {
   public:
     using value_type = std::uint32_t;
-    using distribution_type = uniform_distribution<value_type>;
+    using distribution_type = const_uniform<std::random_device::min(), std::random_device::max()>;
     random_device_generator()
     {
     }
@@ -180,7 +200,7 @@ class random_device_generator
 
     distribution_type distribution() const
     {
-        return {m_rd.min(), m_rd.max()};
+        return {};
     }
 
     int fetch_bit(); // Unused
@@ -194,7 +214,7 @@ template <entropy_generator Source> class bit_generator
   public:
     using source_type = Source;
     using value_type = typename Source::value_type;
-    using distribution_type = uniform_distribution<value_type>;
+    using distribution_type = binary_distribution;
 
     const source_type &source() const
     {
@@ -213,7 +233,7 @@ template <entropy_generator Source> class bit_generator
 
     distribution_type distribution() const
     {
-        return binary();
+        return {};
     }
 
     value_type operator()()
@@ -223,7 +243,7 @@ template <entropy_generator Source> class bit_generator
 
     value_type fetch_bit()
     {
-        if (++m_shift >= 32)
+        if (++m_shift >= m_bits)
         {
             m_value = m_source();
             m_shift = 0;
@@ -232,7 +252,8 @@ template <entropy_generator Source> class bit_generator
     }
 
   private:
-    value_type m_value = 0, m_shift = 32;
+    constexpr static value_type m_bits = 8 * sizeof(value_type);
+    value_type m_value = 0, m_shift = m_bits;
     Source m_source;
 };
 
@@ -348,6 +369,22 @@ auto fetch_from_source(entropy_generator auto &source, const uniform_distributio
     };
 }
 
+template <std::integral uint_t, std::integral uint2, uint2 MIN, uint2 MAX>
+auto fetch_from_source(entropy_generator auto &source, const const_uniform_distribution<uint2,MIN,MAX> &source_dist, uint_t N)
+{
+    return [&](uint_t U_s, uint_t s) {
+        return combine(U_s, s, uint_t(source() - source_dist.min()), uint_t(source_dist.size()));
+    };
+}
+
+template <std::integral uint_t>
+auto fetch_from_source(entropy_generator auto &source, const binary_distribution &source_dist, uint_t N)
+{
+    return [&](uint_t U_s, uint_t s) {
+        return std::tuple {(U_s<<1) | uint_t(source()), s<<1};
+    };
+}
+
 template <std::integral uint_t, entropy_generator Source, std::integral T>
 T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const distribution auto &source_dist,
            const uniform_distribution<T> &output_dist)
@@ -445,7 +482,7 @@ template <entropy_generator Source, std::integral Buffer = std::uint32_t> class 
     }
 
   private:
-    static constexpr value_type N = value_type(1) << (sizeof(value_type) * 8 - 1);
+    static constexpr value_type N = -1; //value_type(1) << (sizeof(value_type) * 8);
     value_type U_s = 0, s = 1;
     source_type m_source;
 };
@@ -501,8 +538,8 @@ void shuffle(entropy_store<Source, Buffer> &store, It a, It b)
 }
 
 template <entropy_generator Source, std::integral Buffer>
-void shuffle(entropy_store<Source, Buffer> &store, std::ranges::random_access_range auto &c)
+void shuffle(entropy_store<Source, Buffer> &store, std::ranges::random_access_range auto &cards)
 {
-    return shuffle(store, c.begin(), c.end());
+    return shuffle(store, cards.begin(), cards.end());
 }
 } // namespace entropy_store

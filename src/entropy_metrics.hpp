@@ -16,7 +16,20 @@ template <std::integral T> double P(const uniform_distribution<T> &dist, int i)
     return 0;
 }
 
+template <std::integral T, T MIN, T MAX> double P(const const_uniform_distribution<T,MIN,MAX> &dist, int i)
+{
+    if (i >= dist.min() && i <= dist.max())
+        return 1.0 / dist.size();
+    return 0;
+}
+
+
 template <std::integral T> double entropy(const uniform_distribution<T> &dist)
+{
+    return std::log2(dist.size());
+}
+
+template <std::integral T, T MIN, T MAX> double entropy(const const_uniform_distribution<T,MIN,MAX> &dist)
 {
     return std::log2(dist.size());
 }
@@ -318,6 +331,12 @@ template <typename T> std::ostream &operator<<(std::ostream &os, const uniform_d
 {
     return os << "Uniform{" << u.min() << "," << u.max() << "}";
 }
+
+template <typename T, T MIN, T MAX> std::ostream &operator<<(std::ostream &os, const const_uniform_distribution<T,MIN,MAX> &u)
+{
+    return os << "Uniform{" << u.min() << "," << u.max() << "}";
+}
+
 
 inline std::ostream &operator<<(std::ostream &os, const bernoulli_distribution &b)
 {
