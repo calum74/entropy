@@ -9,10 +9,16 @@ int main()
     // Create our entropy store
     auto es = entropy_store::entropy_store{fetch};
 
-    // Define some distributions we can generate or consume
-    entropy_store::uniform_distribution d6{1,6};
-    entropy_store::bernoulli_distribution fair_coin{1,2};
-    entropy_store::bernoulli_distribution biassed_coin{4,10};
+    // Define some distributions we can generate
+    // The const_distributions are compile-time constant and can lead to more efficient code
+    // (for example by optimising integer divisions)
+    entropy_store::const_uniform<1,6> d6;
+    entropy_store::const_bernoulli<1,2> fair_coin;
+    entropy_store::const_bernoulli<4,5> biassed_coin;
+
+    // The non-const distributions 
+    entropy_store::uniform_distribution d6_b{1,6};
+    entropy_store::bernoulli_distribution fair_coin_b{1,2};
     entropy_store::weighted_distribution biassed_d6{0,1,1,1,1,1,10};
 
     // Generate some random numbers

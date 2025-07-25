@@ -8,6 +8,34 @@
 
 namespace entropy_store
 {
+template <std::integral T, T Min, T Max> class const_uniform_distribution
+{
+    static_assert(Min<=Max);
+  public:
+    using value_type = T;
+    using size_type = std::size_t;
+
+    constexpr size_type size() const
+    {
+        return Max-Min+1;
+    }
+    constexpr size_type bits() const
+    {
+        return std::ceil(std::log2(size()));
+    }
+    constexpr value_type min() const
+    {
+        return Min;
+    }
+    constexpr value_type max() const
+    {
+        return Max;
+    }
+};
+
+template<std::uint32_t Min, std::uint32_t Max>
+using const_uniform = const_uniform_distribution<std::uint32_t, Min, Max>;
+
 template <std::integral T> class uniform_distribution
 {
   public:
@@ -40,33 +68,6 @@ template <std::integral T> class uniform_distribution
     std::uint32_t m_bits; // Number of bits capacity required to fetch this
 };
 
-template <std::integral T, T Min, T Max> class const_uniform_distribution
-{
-    static_assert(Min<=Max);
-  public:
-    using value_type = T;
-    using size_type = std::size_t;
-
-    constexpr size_type size() const
-    {
-        return Max-Min+1;
-    }
-    constexpr size_type bits() const
-    {
-        return std::ceil(std::log2(size()));
-    }
-    constexpr value_type min() const
-    {
-        return Min;
-    }
-    constexpr value_type max() const
-    {
-        return Max;
-    }
-};
-
-template<std::uint32_t Min, std::uint32_t Max>
-using const_uniform = const_uniform_distribution<std::uint32_t, Min, Max>;
 
 using binary_distribution = const_uniform<0,1>;
 
