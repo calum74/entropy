@@ -426,25 +426,24 @@ auto fetch_from_source(entropy_generator auto &source, const binary_distribution
     return [&](uint_t U_s, uint_t s) { return std::tuple{(U_s << 1) | uint_t(source()), s << 1}; };
 }
 
-template <std::integral uint_t, entropy_generator Source, std::integral T>
-T generate(uint_t &U_s, uint_t &s, uint_t N, Source &source, const distribution auto &source_dist,
+template <std::integral uint_t, std::integral T>
+T generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
            const uniform_distribution<T> &output_dist)
 {
-    auto fetch_entropy = fetch_from_source<uint_t>(source, source_dist);
     uint_t U_n;
     std::tie(U_s, s, U_n) = generate_uniform(U_s, s, N, uint_t(output_dist.size()), fetch_entropy);
     return U_n + output_dist.min();
 }
 
 template <std::integral uint_t>
-uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist,
+uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
                 const bernoulli_distribution &output_dist)
 {
     uint_t m = output_dist.numerator();
     uint_t n = output_dist.denominator();
     assert(m < n);
     uint_t k;
-    std::tie(U_s, s, k) = generate_multiple(U_s, s, N, n, fetch_from_source<uint_t>(source, source_dist));
+    std::tie(U_s, s, k) = generate_multiple(U_s, s, N, n, fetch_entropy);
     assert(s = k * n);
     uint_t M = k * m;
     assert(M >= k);
@@ -455,13 +454,13 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
 }
 
 template <std::integral uint_t, uint_t Num, uint_t Den>
-uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist,
+uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
                 const const_bernoulli_distribution<uint_t, Num, Den> &output_dist)
 {
     uint_t m = output_dist.numerator();
     uint_t n = output_dist.denominator();
     uint_t k;
-    std::tie(U_s, s, k) = generate_const_multiple<Den>(U_s, s, N, fetch_from_source<uint_t>(source, source_dist));
+    std::tie(U_s, s, k) = generate_const_multiple<Den>(U_s, s, N, fetch_entropy);
     uint_t M = k * m;
     uint_t b;
     std::tie(U_s, s, b) = resample(U_s, s, M);
@@ -469,13 +468,13 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
 }
 
 template <std::integral uint_t>
-uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist,
+uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
                 const weighted_distribution &output_dist)
 {
     uint_t k;
 
     std::tie(U_s, s, k) =
-        generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_from_source<uint_t>(source, source_dist));
+        generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_entropy);
     auto W = output_dist.outputs()[U_s / k];
     U_s -= k * output_dist.offsets()[W];
     s = k * output_dist.weights()[W];
@@ -483,10 +482,9 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source
 }
 
 template <std::integral uint_t, uint_t Min, uint_t Max>
-uint_t generate(uint_t &U_s, uint_t &s, uint_t N, entropy_generator auto &source, const distribution auto &source_dist,
+uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
                 const const_uniform_distribution<uint_t, Min, Max> &output_dist)
 {
-    auto fetch_entropy = fetch_from_source<uint_t>(source, source_dist);
     uint_t U_n;
     std::tie(U_s, s, U_n) = generate_const_uniform<Max - Min + 1>(U_s, s, N, fetch_entropy);
     return U_n + output_dist.min();
@@ -514,7 +512,7 @@ template <entropy_generator Source, std::integral Buffer = std::uint32_t> class 
 
     auto operator()(const distribution auto &dist)
     {
-        return generate(U_s, s, N, m_source, m_source.distribution(), dist);
+        return generate(U_s, s, N, fetch_from_source<value_type>(m_source, m_source.distribution()), dist);
     }
 
     value_type size() const
