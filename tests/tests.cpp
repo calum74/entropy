@@ -28,6 +28,7 @@ int main(int argc, char **argv)
     // so we can see the number of bits it's generated.
     auto bits = counted_bit_generator{};
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
+    auto const_uniform_input = entropy_converter{bits, const_uniform<1,6>{}};
 
     count_totals(bits, N);
     count_totals(entropy_converter{bits, uniform_distribution{0, 1}}, N);
@@ -40,7 +41,10 @@ int main(int argc, char **argv)
     count_totals(entropy_converter{bits, weighted_distribution{1, 999}}, N, 0.25, 8.0);
     count_totals(entropy_converter{bits, weighted_distribution{1, 2, 3, 4}}, N, 0.97, 1.03);
     count_totals(entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
+    count_totals(entropy_converter{const_uniform_input, weighted_distribution{1, 1}}, N);
     count_totals(entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
+    count_totals(entropy_converter{bits, const_uniform<1,3>{}}, N);
+    count_totals(entropy_converter{bits, const_bernoulli<1,3>{}}, N, 0.96, 1.04);
 
     std::cout << "\nAll tests passed!\n";
 }
