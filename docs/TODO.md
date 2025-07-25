@@ -1,6 +1,12 @@
 # Next steps
 
 - Remove more junk from entropy_store
+    - bits()
+    - cmath
+
+- Refactor generate() to take a fetch_from_source() functor
+
+
 - Extract algorithms
 - Maybe abstract a random variable
 - Maybe have a static distribution?
