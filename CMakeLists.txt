@@ -11,5 +11,4 @@ add_executable(bench tests/bench.cpp)
 
 add_test(tests tests)
 add_test(sample sample)
-add_test(static bench static 1000000)
-add_test(dynamic bench 6 1000000)
+add_test(bench bench)

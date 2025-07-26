@@ -88,11 +88,11 @@ template <entropy_generator Source> struct counter
     {
     }
 
-    counter(const counter &src) : m_source(src.source()), m_count(0)
+    counter(const counter &src) : m_source(src.source()), m_count(0), m_source_entropy(src.m_source_entropy)
     {
     }
 
-    counter(counter &&src) : m_source(std::move(src)), m_count(src.m_count)
+    counter(counter &&src) : m_source(std::move(src)), m_count(src.m_count), m_source_entropy(src.m_source_entropy)
     {
     }
 

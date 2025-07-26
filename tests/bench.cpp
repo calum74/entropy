@@ -4,15 +4,7 @@
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
-#include <string_view>
 
-using namespace std::literals;
-
-int usage()
-{
-    std::cout << "Usage: bench static|$output $count\n";
-    return 1;
-}
 
 void measure(const char *name, std::invocable<std::size_t> auto fn, std::size_t n)
 {
@@ -26,26 +18,28 @@ void measure(const char *name, std::invocable<std::size_t> auto fn, std::size_t 
 
 int main(int argc, const char **argv)
 {
+
+#ifdef NDEBUG
     std::size_t N = 10000000;
-
+#else
+    std::cout << "*** Warning: This is a debug build ***\n";
+    std::size_t N = 10000;
+#endif
     std::cout << "Measuring for " << N << " outputs\n";
-    if (!NDEBUG)
-        std::cout << "*** Warning: This is a debug build ***\n";
 
-    entropy_store::random_device_generator rd;
-    entropy_store::wrapped_source source{rd, 100000};
-    entropy_store::bit_generator fetch_cached{source};
+    entropy_store::random_device_generator rd_uncached;
+    entropy_store::wrapped_source rd_cached{rd_uncached, 100000};
+    entropy_store::bit_generator fetch_cached{rd_cached};
     entropy_store::random_bit_generator fetch_uncached;
 
     measure(
-        "const_uniform<1,6>",
+        "uniform_distribution<1,6>",
         [&](auto N) {
-            // const_uniform is faster (2.25ns vs 2.4ns vs per output)
-            // entropy_store::uniform_distribution d6(1, 6);
+            // This is a bit slower (3.23ns per output)
             auto es = entropy_store::entropy_store{fetch_cached};
-            entropy_store::const_uniform<1, 6> d6;
+            entropy_store::uniform_distribution dice(1, 6);
             for (int i = 0; i < N; i++)
-                es(d6);
+                es(dice);
         },
         N);
 
@@ -57,6 +51,18 @@ int main(int argc, const char **argv)
             entropy_store::uniform_distribution dice(1, 6);
             for (int i = 0; i < N; i++)
                 es(dice);
+        },
+        N);
+
+    measure(
+        "const_uniform<1,6>",
+        [&](auto N) {
+            // const_uniform is faster (2.25ns vs 2.4ns vs per output)
+            // entropy_store::uniform_distribution d6(1, 6);
+            auto es = entropy_store::entropy_store{fetch_cached};
+            entropy_store::const_uniform<1, 6> d6;
+            for (int i = 0; i < N; i++)
+                es(d6);
         },
         N);
 
@@ -77,7 +83,7 @@ int main(int argc, const char **argv)
         [&](auto N) {
             // This is a bit slower (3.23ns per output)
             auto es = entropy_store::entropy_store64{fetch_cached};
-            volatile int d = 6 + (argc >> 4);
+            volatile int d = 6 + (argc >> 4);  // Disable division optimizations
             entropy_store::uniform_distribution dice(1, d);
             for (int i = 0; i < N; i++)
                 es(dice);
@@ -106,7 +112,36 @@ int main(int argc, const char **argv)
         },
         N);
 
-    // Next: Demire's Go algorithm
+    measure(
+        "Von Neumann (uncached)",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto fdr = entropy_store::von_neumann{fetch_uncached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                fdr(dice);
+        },
+        N);
+
+    measure(
+        "Lemire",
+        [&](auto N) {
+            entropy_store::lemire L{rd_cached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                L(dice);
+        },
+        N);
+
+    measure(
+        "Lemire (uncached)",
+        [&](auto N) {
+            entropy_store::lemire L{rd_uncached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                L(dice);
+        },
+        N);
 
     return 0;
 }

@@ -55,10 +55,10 @@ int main(int argc, char **argv)
     count_totals(entropy_converter64{bits, const_bernoulli<1, 3>{}}, N, 0.96, 1.04);
 
     std::cout << "Von Neumann: ";
-    count_totals(bound_entropy_generator{von_neumann{bits}, uniform_distribution(1,6)}, N);
+    count_totals(bound_entropy_generator{von_neumann{bits}, uniform_distribution(1,6)}, N, 0.62);
     std::cout << "Knuth-Yao: ";
-    count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1,6)}, N);
+    count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1,6)}, N, 0.68);
     std::cout << "Lemire: ";
-    count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1,6)}, N);
+    count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1,6)}, N, 0.04);
     std::cout << "\nAll tests passed!\n";
 }
