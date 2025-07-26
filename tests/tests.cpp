@@ -1,5 +1,6 @@
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
+#include "testing.hpp"
 
 using namespace entropy_store;
 
@@ -28,13 +29,16 @@ int main(int argc, char **argv)
     // so we can see the number of bits it's generated.
     auto bits = counted_bit_generator{};
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
-    auto const_uniform_input = entropy_converter{bits, const_uniform<1,6>{}};
+    auto const_uniform_input = entropy_converter{bits, const_uniform<1, 6>{}};
+
+    // !! Test entropy_store_64
 
     count_totals(bits, N);
     count_totals(entropy_converter{bits, uniform_distribution{0, 1}}, N);
     count_totals(entropy_converter{bits, weighted_distribution{1, 1}}, N);
     count_totals(entropy_converter{bits, bernoulli_distribution{1, 2}}, N);
     count_totals(entropy_converter{bits, uniform_distribution{1, 6}}, N);
+    count_totals(entropy_converter64{bits, uniform_distribution{1, 6}}, N);
     count_totals(entropy_converter{bits, weighted_distribution{1, 2}}, N, 0.96, 1.04);
     count_totals(entropy_converter{bits, bernoulli_distribution{1, 3}}, N, 0.96, 1.04);
     count_totals(entropy_converter{bits, weighted_distribution{49, 2}}, N, 0.7, 1.5);
@@ -43,8 +47,18 @@ int main(int argc, char **argv)
     count_totals(entropy_converter{uniform_input, weighted_distribution{1, 1}}, N);
     count_totals(entropy_converter{const_uniform_input, weighted_distribution{1, 1}}, N);
     count_totals(entropy_converter{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
-    count_totals(entropy_converter{bits, const_uniform<1,3>{}}, N);
-    count_totals(entropy_converter{bits, const_bernoulli<1,3>{}}, N, 0.96, 1.04);
+    count_totals(entropy_converter64{bits, weighted_distribution{4, 1, 5}}, N, 0.96, 1.05);
 
+    count_totals(entropy_converter{bits, const_uniform<1, 3>{}}, N);
+    count_totals(entropy_converter64{bits, const_uniform<1, 3>{}}, N);
+    count_totals(entropy_converter{bits, const_bernoulli<1, 3>{}}, N, 0.96, 1.04);
+    count_totals(entropy_converter64{bits, const_bernoulli<1, 3>{}}, N, 0.96, 1.04);
+
+    std::cout << "Von Neumann: ";
+    count_totals(bound_entropy_generator{von_neumann{bits}, uniform_distribution(1,6)}, N);
+    std::cout << "Knuth-Yao: ";
+    count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1,6)}, N);
+    std::cout << "Lemire: ";
+    count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1,6)}, N);
     std::cout << "\nAll tests passed!\n";
 }

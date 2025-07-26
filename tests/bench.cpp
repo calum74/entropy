@@ -14,45 +14,99 @@ int usage()
     return 1;
 }
 
+void measure(const char *name, std::invocable<std::size_t> auto fn, std::size_t n)
+{
+    fn(n);
+    auto start_time = std::chrono::high_resolution_clock::now();
+    fn(n);
+    auto end_time = std::chrono::high_resolution_clock::now();
+    std::cout << name << ": Time per output = " << (std::chrono::duration<double>(end_time - start_time) / n)
+              << std::endl;
+}
+
 int main(int argc, const char **argv)
 {
-    if (argc != 3)
-    {
-        return usage();
-    }
-    bool static_type = argv[1] == "static"sv;
-    int count = std::atoi(argv[2]);
+    std::size_t N = 10000000;
 
-#if 1
-    // Buffer the entropy
+    std::cout << "Measuring for " << N << " outputs\n";
+    if (!NDEBUG)
+        std::cout << "*** Warning: This is a debug build ***\n";
+
     entropy_store::random_device_generator rd;
     entropy_store::wrapped_source source{rd, 100000};
-    entropy_store::bit_generator fetch{source};
-#else
-    // Read from std::random_device
-    entropy_store::random_bit_generator fetch;
-#endif
+    entropy_store::bit_generator fetch_cached{source};
+    entropy_store::random_bit_generator fetch_uncached;
 
-    auto es = entropy_store::entropy_store{fetch};
-    auto start_time = std::chrono::high_resolution_clock::now();
+    measure(
+        "const_uniform<1,6>",
+        [&](auto N) {
+            // const_uniform is faster (2.25ns vs 2.4ns vs per output)
+            // entropy_store::uniform_distribution d6(1, 6);
+            auto es = entropy_store::entropy_store{fetch_cached};
+            entropy_store::const_uniform<1, 6> d6;
+            for (int i = 0; i < N; i++)
+                es(d6);
+        },
+        N);
 
-    if (argv[1] == "static"sv)
-    {
-        entropy_store::const_uniform<1, 6> d6;
-        for (int i = 0; i < count; i++)
-            es(d6);
-    }
-    else if (int d = atoi(argv[1]))
-    {
-        entropy_store::uniform_distribution d6(1, d);
-        for (int i = 0; i < count; i++)
-            es(d6);
-    }
+    measure(
+        "uniform_distribution<1,6>",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto es = entropy_store::entropy_store{fetch_cached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                es(dice);
+        },
+        N);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
+    measure(
+        "volatile uniform_distribution<1,6>",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto es = entropy_store::entropy_store{fetch_cached};
+            volatile int d = 6;
+            entropy_store::uniform_distribution dice(1, d);
+            for (int i = 0; i < N; i++)
+                es(dice);
+        },
+        N);
 
-    std::cout << "Elapsed " << std::chrono::duration<double>(end_time - start_time) << "\n";
+    measure(
+        "volatile uniform_distribution<1,6> 64-bit",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto es = entropy_store::entropy_store64{fetch_cached};
+            volatile int d = 6 + (argc >> 4);
+            entropy_store::uniform_distribution dice(1, d);
+            for (int i = 0; i < N; i++)
+                es(dice);
+        },
+        N);
 
-    std::cout << "Per output: " << (std::chrono::duration<double>(end_time - start_time) / count) << "\n";
+    measure(
+        "fast dice roller",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto fdr = entropy_store::fast_dice_roller{fetch_cached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                fdr(dice);
+        },
+        N);
+
+    measure(
+        "Von Neumann",
+        [&](auto N) {
+            // This is a bit slower (3.23ns per output)
+            auto fdr = entropy_store::von_neumann{fetch_cached};
+            entropy_store::uniform_distribution dice(1, 6);
+            for (int i = 0; i < N; i++)
+                fdr(dice);
+        },
+        N);
+
+    // Next: Demire's Go algorithm
+
     return 0;
 }

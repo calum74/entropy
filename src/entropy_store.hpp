@@ -15,7 +15,7 @@ concept distribution = requires(Distribution dist) {
     dist.max();
 };
 
-template <int N> struct count_bits
+template <std::uint32_t N> struct count_bits
 {
     static const int value = 1 + count_bits<(N >> 1)>::value;
 };
@@ -60,7 +60,12 @@ template <std::integral T> class uniform_distribution
     using value_type = T;
     using size_type = std::size_t;
 
-    uniform_distribution(value_type a, value_type b) : m_min(a), m_max(b), m_bits(std::ceil(std::log2(size())))
+    uniform_distribution(value_type a, value_type b) : m_min(a), m_max(b)
+    {
+    }
+
+    template <std::integral U, U Min, U Max>
+    uniform_distribution(const_uniform_distribution<U, Min, Max>) : uniform_distribution(Min, Max)
     {
     }
 
@@ -70,7 +75,7 @@ template <std::integral T> class uniform_distribution
     }
     size_type bits() const
     {
-        return m_bits;
+        return std::ceil(std::log2(size()));
     }
     value_type min() const
     {
@@ -82,8 +87,7 @@ template <std::integral T> class uniform_distribution
     }
 
   private:
-    int m_min, m_max;     // Inclusive values, min<=max
-    std::uint32_t m_bits; // Number of bits capacity required to fetch this
+    int m_min, m_max; // Inclusive values, m_min<=m_max
 };
 
 using binary_distribution = const_uniform<0, 1>;
@@ -125,6 +129,11 @@ class bernoulli_distribution
     {
     }
 
+    template <std::integral U, U M, U N>
+    bernoulli_distribution(const_bernoulli_distribution<U, M, N>) : bernoulli_distribution(M, N)
+    {
+    }
+
     size_type numerator() const
     {
         return m_numerator;
@@ -148,7 +157,7 @@ class bernoulli_distribution
 
 template <std::uint32_t M, std::uint32_t N> using const_bernoulli = const_bernoulli_distribution<std::uint32_t, M, N>;
 
-// Constructs the lookup tables for a weighted distribution
+// Contains the lookup tables for a weighted distribution
 class weighted_distribution
 {
   public:
@@ -169,12 +178,6 @@ class weighted_distribution
                 m_outputs.push_back(i);
             }
         }
-        m_bits = std::ceil(std::log2(m_outputs.size()));
-    }
-
-    size_type bits() const
-    {
-        return m_bits;
     }
 
     std::span<const value_type> weights() const
@@ -201,7 +204,6 @@ class weighted_distribution
     }
 
   private:
-    std::uint32_t m_bits;
     std::vector<value_type> m_weights, m_outputs, m_offsets;
 };
 
@@ -212,6 +214,10 @@ concept entropy_generator = requires(Source source) {
     source.distribution(); // !! Check types
     source();              // !! Check types
 };
+
+template <typename Source>
+concept binary_entropy_generator = entropy_generator<Source> and 
+    std::is_same_v<typename Source::distribution_type, binary_distribution>;
 
 class random_device_generator
 {
@@ -234,6 +240,8 @@ class random_device_generator
     {
         return {};
     }
+
+    constexpr auto bits() const { return count_bits<std::random_device::max()>::value; }
 
   private:
     std::random_device m_rd;
@@ -276,6 +284,8 @@ template <entropy_generator Source> class bit_generator
         return (m_value >> m_shift) & 1;
     }
 
+    constexpr int bits() const { return 1; }
+
   private:
     constexpr static value_type m_bits = 8 * sizeof(value_type);
     value_type m_value = 0, m_shift = m_bits;
@@ -284,7 +294,7 @@ template <entropy_generator Source> class bit_generator
 
 using random_bit_generator = bit_generator<random_device_generator>;
 
-template <std::integral uint_t> void validate(uint_t U_n, uint_t n)
+void validate(std::integral auto U_n, std::integral auto n)
 {
     assert(U_n < n);
 }
@@ -301,7 +311,7 @@ template <std::integral uint_t> auto combine(uint_t U_n, uint_t n, uint_t U_m, u
     return std::tuple{U_nm, nm};
 }
 
-template <std::integral uint_t> auto divide(uint_t U_nm, uint_t nm, uint_t m)
+template <std::integral uint_t> auto divide(uint_t U_nm, uint_t nm, std::integral auto m)
 {
     uint_t U_m = U_nm % m;
     uint_t U_n = U_nm / m;
@@ -473,17 +483,16 @@ uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t>
 {
     uint_t k;
 
-    std::tie(U_s, s, k) =
-        generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_entropy);
+    std::tie(U_s, s, k) = generate_multiple(U_s, s, N, (uint_t)output_dist.outputs().size(), fetch_entropy);
     auto W = output_dist.outputs()[U_s / k];
     U_s -= k * output_dist.offsets()[W];
     s = k * output_dist.weights()[W];
     return W;
 }
 
-template <std::integral uint_t, uint_t Min, uint_t Max>
-uint_t generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
-                const const_uniform_distribution<uint_t, Min, Max> &output_dist)
+template <std::integral uint_t, typename U2, U2 Min, U2 Max>
+U2 generate(uint_t &U_s, uint_t &s, uint_t N, std::invocable<uint_t, uint_t> auto fetch_entropy,
+                const const_uniform_distribution<U2, Min, Max> &output_dist)
 {
     uint_t U_n;
     std::tie(U_s, s, U_n) = generate_const_uniform<Max - Min + 1>(U_s, s, N, fetch_entropy);

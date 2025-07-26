@@ -84,7 +84,7 @@ template <entropy_generator Source> struct counter
     using value_type = typename source_type::value_type;
     using distribution_type = typename source_type::distribution_type;
 
-    counter(const Source &source = {}) : m_source(source), m_count(0)
+    counter(const Source &source = {}) : m_source(source), m_count(0), m_source_entropy(source.bits())
     {
     }
 
@@ -103,20 +103,14 @@ template <entropy_generator Source> struct counter
 
     auto operator()()
     {
-        ++m_count;
+        m_count += m_source_entropy;
         return m_source();
     }
 
     template <typename Distribution> auto operator()(const Distribution &dist)
     {
-        ++m_count;
+        m_count += m_source_entropy;
         return m_source(dist);
-    }
-
-    auto fetch_bit()
-    {
-        ++m_count;
-        return m_source.fetch_bit();
     }
 
     double internal_entropy() const
@@ -130,6 +124,7 @@ template <entropy_generator Source> struct counter
     }
 
     std::size_t m_count;
+    std::size_t m_source_entropy;
     Source m_source;
 };
 
