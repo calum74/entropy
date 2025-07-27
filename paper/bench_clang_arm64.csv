@@ -1,0 +1,122 @@
+Measuring for 1000000 outputs
+Iteration, Generator, Distribution, Source, Time per output, Relative output
+0, ES32, d6, random_device, 5.33975e-09s, 0.910023
+0, ES32, cd6, random_device, 4.62354e-09s, 0.787964
+0, ES32, vd6, random_device, 4.82887e-09s, 0.822958
+0, ES64, d6, random_device, 4.90438e-09s, 0.835825
+0, ES64, cd6, random_device, 4.36696e-09s, 0.744236
+0, ES64, vd6, random_device, 4.80871e-09s, 0.819521
+0, Von Neumann, vd6, random_device, 8.44929e-09s, 1.43996
+0, Fast Dice Roller, vd6, random_device, 7.01121e-09s, 1.19488
+0, Huber-Vargas, vd6, random_device, 1.04572e-08s, 1.78216
+0, Lemire, vd6, random_device, 4.76405e-08s, 8.11909
+0, ES32, d6, cached, 2.25546e-09s, 0.718337
+0, ES32, cd6, cached, 2.29863e-09s, 0.732085
+0, ES32, vd6, cached, 3.14592e-09s, 1.00194
+0, ES64, d6, cached, 2.95133e-09s, 0.939965
+0, ES64, cd6, cached, 2.89558e-09s, 0.922209
+0, ES64, vd6, cached, 4.06479e-09s, 1.29459
+0, Von Neumann, vd6, cached, 4.07917e-09s, 1.29917
+0, Fast Dice Roller, vd6, cached, 3.58392e-09s, 1.14144
+0, Huber-Vargas, vd6, cached, 7.61292e-09s, 2.42462
+0, Lemire, vd6, cached, 1.37933e-09s, 0.439302
+0, ES32, d6, mt_19937, 3.18025e-09s, 1.0092
+0, ES32, cd6, mt_19937, 3.52812e-09s, 1.1196
+0, ES32, vd6, mt_19937, 3.13054e-09s, 0.993428
+0, ES64, d6, mt_19937, 2.844e-09s, 0.902499
+0, ES64, cd6, mt_19937, 8.08108e-09s, 2.56441
+0, ES64, vd6, mt_19937, 4.0085e-09s, 1.27203
+0, Von Neumann, vd6, mt_19937, 4.88175e-09s, 1.54915
+0, Fast Dice Roller, vd6, mt_19937, 4.3395e-09s, 1.37707
+0, Huber-Vargas, vd6, mt_19937, 8.04833e-09s, 2.55401
+0, Lemire, vd6, mt_19937, 3.53396e-09s, 1.12145
+0, ES32, d6, xoshiro128, 3.164e-09s, 0.987297
+0, ES32, cd6, xoshiro128, 2.39625e-09s, 0.747728
+0, ES32, vd6, xoshiro128, 3.2755e-09s, 1.02209
+0, ES64, d6, xoshiro128, 3.93833e-09s, 1.22892
+0, ES64, cd6, xoshiro128, 2.83521e-09s, 0.884701
+0, ES64, vd6, xoshiro128, 3.93979e-09s, 1.22938
+0, Von Neumann, vd6, xoshiro128, 5.54813e-09s, 1.73124
+0, Fast Dice Roller, vd6, xoshiro128, 5.47308e-09s, 1.70783
+0, Huber-Vargas, vd6, xoshiro128, 7.42646e-09s, 2.31736
+0, Lemire, vd6, xoshiro128, 1.39871e-09s, 0.436454
+1, ES32, d6, random_device, 4.00504e-09s, 0.956789
+1, ES32, cd6, random_device, 4.00517e-09s, 0.956819
+1, ES32, vd6, random_device, 4.17558e-09s, 0.997531
+1, ES64, d6, random_device, 4.50938e-09s, 1.07727
+1, ES64, cd6, random_device, 3.92625e-09s, 0.937967
+1, ES64, vd6, random_device, 4.60538e-09s, 1.10021
+1, Von Neumann, vd6, random_device, 7.7595e-09s, 1.85372
+1, Fast Dice Roller, vd6, random_device, 6.55825e-09s, 1.56674
+1, Huber-Vargas, vd6, random_device, 1.05317e-08s, 2.51599
+1, Lemire, vd6, random_device, 4.79115e-08s, 11.4459
+1, ES32, d6, cached, 2.26338e-09s, 0.722719
+1, ES32, cd6, cached, 2.22342e-09s, 0.70996
+1, ES32, vd6, cached, 3.13238e-09s, 1.0002
+1, ES64, d6, cached, 2.84533e-09s, 0.908544
+1, ES64, cd6, cached, 2.88183e-09s, 0.920199
+1, ES64, vd6, cached, 3.96817e-09s, 1.26708
+1, Von Neumann, vd6, cached, 4.08917e-09s, 1.30571
+1, Fast Dice Roller, vd6, cached, 3.42108e-09s, 1.09239
+1, Huber-Vargas, vd6, cached, 7.78408e-09s, 2.48554
+1, Lemire, vd6, cached, 1.40342e-09s, 0.448125
+1, ES32, d6, mt_19937, 3.17883e-09s, 1.02407
+1, ES32, cd6, mt_19937, 3.69458e-09s, 1.19022
+1, ES32, vd6, mt_19937, 3.14083e-09s, 1.01183
+1, ES64, d6, mt_19937, 2.95329e-09s, 0.951409
+1, ES64, cd6, mt_19937, 8.13358e-09s, 2.62025
+1, ES64, vd6, mt_19937, 3.96871e-09s, 1.27853
+1, Von Neumann, vd6, mt_19937, 4.89125e-09s, 1.57573
+1, Fast Dice Roller, vd6, mt_19937, 4.48121e-09s, 1.44363
+1, Huber-Vargas, vd6, mt_19937, 8.30471e-09s, 2.67538
+1, Lemire, vd6, mt_19937, 3.53958e-09s, 1.14028
+1, ES32, d6, xoshiro128, 3.28433e-09s, 0.98157
+1, ES32, cd6, xoshiro128, 2.32833e-09s, 0.695856
+1, ES32, vd6, xoshiro128, 3.26608e-09s, 0.976116
+1, ES64, d6, xoshiro128, 3.93588e-09s, 1.17629
+1, ES64, cd6, xoshiro128, 2.81079e-09s, 0.840045
+1, ES64, vd6, xoshiro128, 3.98825e-09s, 1.19195
+1, Von Neumann, vd6, xoshiro128, 5.67983e-09s, 1.6975
+1, Fast Dice Roller, vd6, xoshiro128, 5.48167e-09s, 1.63827
+1, Huber-Vargas, vd6, xoshiro128, 7.51683e-09s, 2.24651
+1, Lemire, vd6, xoshiro128, 1.40108e-09s, 0.418734
+2, ES32, d6, random_device, 4.28337e-09s, 1.00662
+2, ES32, cd6, random_device, 4.05867e-09s, 0.953811
+2, ES32, vd6, random_device, 4.24054e-09s, 0.996553
+2, ES64, d6, random_device, 4.50633e-09s, 1.05902
+2, ES64, cd6, random_device, 3.99287e-09s, 0.93835
+2, ES64, vd6, random_device, 4.57771e-09s, 1.07579
+2, Von Neumann, vd6, random_device, 7.68837e-09s, 1.80681
+2, Fast Dice Roller, vd6, random_device, 6.59267e-09s, 1.54932
+2, Huber-Vargas, vd6, random_device, 1.04293e-08s, 2.45096
+2, Lemire, vd6, random_device, 4.93584e-08s, 11.5995
+2, ES32, d6, cached, 2.3295e-09s, 0.739671
+2, ES32, cd6, cached, 2.35217e-09s, 0.746868
+2, ES32, vd6, cached, 3.15812e-09s, 1.00278
+2, ES64, d6, cached, 2.96213e-09s, 0.940544
+2, ES64, cd6, cached, 2.95679e-09s, 0.93885
+2, ES64, vd6, cached, 3.95875e-09s, 1.257
+2, Von Neumann, vd6, cached, 4.07783e-09s, 1.29481
+2, Fast Dice Roller, vd6, cached, 3.49996e-09s, 1.11132
+2, Huber-Vargas, vd6, cached, 7.89825e-09s, 2.50788
+2, Lemire, vd6, cached, 1.42075e-09s, 0.451121
+2, ES32, d6, mt_19937, 3.22292e-09s, 1.00689
+2, ES32, cd6, mt_19937, 3.70813e-09s, 1.15847
+2, ES32, vd6, mt_19937, 3.19475e-09s, 0.998086
+2, ES64, d6, mt_19937, 2.97396e-09s, 0.929108
+2, ES64, cd6, mt_19937, 8.12067e-09s, 2.53701
+2, ES64, vd6, mt_19937, 3.95162e-09s, 1.23455
+2, Von Neumann, vd6, mt_19937, 4.98567e-09s, 1.5576
+2, Fast Dice Roller, vd6, mt_19937, 4.52992e-09s, 1.41521
+2, Huber-Vargas, vd6, mt_19937, 8.33971e-09s, 2.60545
+2, Lemire, vd6, mt_19937, 3.53979e-09s, 1.10588
+2, ES32, d6, xoshiro128, 3.20725e-09s, 0.948224
+2, ES32, cd6, xoshiro128, 2.36204e-09s, 0.698338
+2, ES32, vd6, xoshiro128, 3.25954e-09s, 0.963684
+2, ES64, d6, xoshiro128, 3.96321e-09s, 1.17172
+2, ES64, cd6, xoshiro128, 2.8415e-09s, 0.84009
+2, ES64, vd6, xoshiro128, 3.95504e-09s, 1.16931
+2, Von Neumann, vd6, xoshiro128, 5.71117e-09s, 1.68851
+2, Fast Dice Roller, vd6, xoshiro128, 5.49025e-09s, 1.62319
+2, Huber-Vargas, vd6, xoshiro128, 7.63696e-09s, 2.25787
+2, Lemire, vd6, xoshiro128, 1.40225e-09s, 0.414576
