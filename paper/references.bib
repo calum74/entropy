@@ -57,6 +57,26 @@ keywords = {variance, uniform distribution, random number generator, multithread
   keywords={Cryptography;Hardware;Field programmable gate arrays;Lenses;Hamming weight;Registers;Polynomials;Discrete gaussian sampling;knuth yao sampler;lattice based cryptography;post-quantum cryptography},
   doi={10.1109/LCA.2024.3454490}}
 
+@article{blackman21,
+author = {Blackman, David and Vigna, Sebastiano},
+title = {Scrambled Linear Pseudorandom Number Generators},
+year = {2021},
+issue_date = {December 2021},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {47},
+number = {4},
+issn = {0098-3500},
+url = {https://doi.org/10.1145/3460772},
+doi = {10.1145/3460772},
+abstract = {F2-linear pseudorandom number generators are very popular due to their high speed, to the ease with which generators with a sizable state space can be created, and to their provable theoretical properties. However, they suffer from linear artifacts that show as failures in linearity-related statistical tests such as the binary-rank and the linear-complexity test. In this article, we give two new contributions. First, we introduce two new F2-linear transformations that have been handcrafted to have good statistical properties and at the same time to be programmable very efficiently on superscalar processors, or even directly in hardware. Then, we describe some scramblers, that is, nonlinear functions applied to the state array that reduce or delete the linear artifacts, and propose combinations of linear transformations and scramblers that give extremely fast pseudorandom number generators of high quality. A novelty in our approach is that we use ideas from the theory of filtered linear-feedback shift registers to prove some properties of our scramblers, rather than relying purely on heuristics. In the end, we provide simple, extremely fast generators that use a few hundred bits of memory, have provable properties, and pass strong statistical tests.},
+journal = {ACM Trans. Math. Softw.},
+month = sep,
+articleno = {36},
+numpages = {32},
+keywords = {Pseudorandom number generators}
+}
+
 @book{cover1999elements,
   title={Elements of information theory},
   author={Cover, Thomas M},
@@ -129,6 +149,42 @@ keywords = {variance, uniform distribution, random number generator, multithread
   author={Goldreich, Oded},
   year={2004},
   publisher={Cambridge university press Cambridge}
+}
+
+@article{10.1145/773473.178249,
+author = {Granlund, Torbj\"{o}rn and Montgomery, Peter L.},
+title = {Division by invariant integers using multiplication},
+year = {1994},
+issue_date = {June 1994},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {29},
+number = {6},
+issn = {0362-1340},
+url = {https://doi.org/10.1145/773473.178249},
+doi = {10.1145/773473.178249},
+abstract = {Integer division remains expensive on today's processors as the cost of integer multiplication declines. We present code sequences for division by arbitrary nonzero integer constants and run-time invariants using integer multiplication. The algorithms assume a two's complement architecture. Most also require that the upper half of an integer product be quickly accessible. We treat unsigned division, signed division where the quotient rounds towards zero, signed division where the quotient rounds towards -∞, and division where the result is known a priori to be exact. We give some implementation results using the C compiler GCC.},
+journal = {SIGPLAN Not.},
+month = jun,
+pages = {61–72},
+numpages = {12}
+}
+
+@inproceedings{granlund96,
+author = {Granlund, Torbj\"{o}rn and Montgomery, Peter L.},
+title = {Division by invariant integers using multiplication},
+year = {1994},
+isbn = {089791662X},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/178243.178249},
+doi = {10.1145/178243.178249},
+abstract = {Integer division remains expensive on today's processors as the cost of integer multiplication declines. We present code sequences for division by arbitrary nonzero integer constants and run-time invariants using integer multiplication. The algorithms assume a two's complement architecture. Most also require that the upper half of an integer product be quickly accessible. We treat unsigned division, signed division where the quotient rounds towards zero, signed division where the quotient rounds towards -∞, and division where the result is known a priori to be exact. We give some implementation results using the C compiler GCC.},
+booktitle = {Proceedings of the ACM SIGPLAN 1994 Conference on Programming Language Design and Implementation},
+pages = {61–72},
+numpages = {12},
+location = {Orlando, Florida, USA},
+series = {PLDI '94}
 }
 
 @article{han97,
@@ -224,6 +280,17 @@ keywords = {Random number generation, randomized algorithms, rejection method}
   author={Lumbroso, J{\'e}r{\'e}mie},
   journal={arXiv preprint arXiv:1304.1916},
   year={2013}
+}
+
+@article{matsumoto1998mersenne,
+  title={Mersenne twister: a 623-dimensionally equidistributed uniform pseudo-random number generator},
+  author={Matsumoto, Makoto and Nishimura, Takuji},
+  journal={ACM Transactions on Modeling and Computer Simulation (TOMACS)},
+  volume={8},
+  number={1},
+  pages={3--30},
+  year={1998},
+  publisher={ACM}
 }
 
 @article{norman1972computer,

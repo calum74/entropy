@@ -19,15 +19,31 @@
 - [ ] Cite Xoshiro https://vigna.di.unimi.it/papers.php#BlVSLPNG
 - [ ] Cite Fill&Huber "The randomness recycler", and "Huber" "Perfect simulation"
 
-Evaluation: Graphs on performance:
-- Show the timings relative to ES32(volatile).
-(a) Reading from random-device
+# Evaluation
 
-Evaluation:
-We can compare the speed of ES relative to common. One of the fastest high quality PRNGs is 
+Table 1 shows the speed of Entropy Store generating a uniform integer, compared with some other algorithms, for different entropy sources. These numbers were obtained on an Intel i5-1240P using GCC, but comparable values were obtained on ARM64 using clang. The exact numbers are hardware and compiler dependent, and are only a guide.
+
+ES32 is the entropy store with a 32-bit entropy buffer, and the `const` variant allows the compiler to optimize division operations \cite{granlund94}, which can result in significant performance improvements. The ES64 variant uses a 64-bit entropy store, as well a compiler-optimized "const" version.
+
+When reading directly from a random device (typically using a CPU instruction), the bottleneck is the rate of entropy input, so the performance is determined by the entropy efficiency, so the ES algorithms are the best. When using pseudo-random sources, Lemire's algorithm is the best. We can also observe that using a 64-bit entropy buffer is not beneficial.
+
+                     Entropy source
+    Algorithm        Random device      MT19937     Xoshiro-128  
+    ES32 const       1                  0.48        0.47
+    ES32             1                  1           1
+    ES64 const       1.0                0.56        0.54
+    ES64             1.0                1.3         1.3
+    Von Neumann      1.5                0.61        0.8 
+    Fast Dice Roller 1.4                0.68        0.85
+    Huber-Vargas     1.4                0.72        1.0
+    Lemire           24                 0.34        0.26
+
+    Table 1: Comparing Entropy Store with other uniform random generators (relative to ES32, lower is better)
 
 Conclusions:
 - When using a slow source like mt13397, ES is actually better
+
+Contribution: Practical benefit when 
 
 # The Bug
 

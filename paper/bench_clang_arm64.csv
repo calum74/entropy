@@ -1,5 +1,4 @@
-Measuring for 1000000 outputs
-Iteration, Generator, Distribution, Source, Time per output, Relative output
+Iteration, Generator, Distribution, Source, Time per output, Relative time
 0, ES32, d6, random_device, 5.33975e-09s, 0.910023
 0, ES32, cd6, random_device, 4.62354e-09s, 0.787964
 0, ES32, vd6, random_device, 4.82887e-09s, 0.822958

@@ -63,7 +63,6 @@ int main(int argc, const char **argv)
     std::cout << "*** Warning: This is a debug build ***\n";
     std::size_t N = 10000;
 #endif
-    std::cout << "Measuring for " << N << " outputs\n";
 
     // 32-bit sources
     entropy_store::random_device_generator rd_uncached;
@@ -113,7 +112,7 @@ int main(int argc, const char **argv)
     const entropy_store::uniform_distribution d6(1, 6);
     const entropy_store::uniform_distribution vd6(1, 6 + (argc >> 6)); // Disable some compiler optimizations
 
-    std::cout << "Iteration, Generator, Distribution, Source, Time per output, Relative output\n";
+    std::cout << "Iteration, Generator, Distribution, Source, Time per output, Relative time\n";
     for (int i = 0; i < 3; i++)
     {
         benchmark_rng(rd_uncached, i, N, "random_device");
