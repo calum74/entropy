@@ -17,8 +17,8 @@ int main()
     entropy_store::const_bernoulli<4,5> biassed_coin;
 
     // The non-const distributions 
-    entropy_store::uniform_distribution d6_b{1,6};
-    entropy_store::bernoulli_distribution fair_coin_b{1,2};
+    entropy_store::uniform_distribution d6_2{1,6};
+    entropy_store::bernoulli_distribution fair_coin_2{1,2};
     entropy_store::weighted_distribution biassed_d6{0,1,1,1,1,1,10};
 
     // Generate some random numbers

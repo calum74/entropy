@@ -27,9 +27,11 @@ int main(int argc, char **argv)
     // This bit generator is based on std::random_device
     // For debugging purposes, we've wrapped it in a counter
     // so we can see the number of bits it's generated.
-    auto bits = counted_bit_generator{};
+    auto rd = random_device_generator{};
+    auto bits = counter{bit_generator{rd}};  // Count bits, not words
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
     auto const_uniform_input = entropy_converter{bits, const_uniform<1, 6>{}};
+    auto xoshiro128_rd = counter{xoshiro128{rd}};
 
     // !! Test entropy_store_64
 
@@ -60,5 +62,12 @@ int main(int argc, char **argv)
     count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1,6)}, N, 0.68);
     std::cout << "Lemire: ";
     count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1,6)}, N, 0.04);
+
+    std::cout << "Lemire Xoshiro: ";
+    count_totals(bound_entropy_generator{lemire{xoshiro128_rd}, uniform_distribution(1,6)}, N, 0.04);
+
+    std::cout << "Huber-Vargas Xoshiro: ";
+    count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1,6)}, N, 0.04);
+
     std::cout << "\nAll tests passed!\n";
 }

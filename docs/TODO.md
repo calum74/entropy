@@ -4,14 +4,30 @@
     - bits()
     - cmath
 
-- Refactor generate() to take a fetch_from_source() functor
-- Make ther bit generators not assume 32-bit all the time
-
 - Extract algorithms
 - Maybe abstract a random variable
-- Maybe have a static distribution?
 - Separate out the validation code and assertions?
 
+- Testing: Performance graph
+(a) reading directly from random device
+(b) reading from mt19937
+
+(c) reading from an array
+
+- [ ] Talk about cryptographically secure
+
+- [ ] Cite Xoshiro https://vigna.di.unimi.it/papers.php#BlVSLPNG
+- [ ] Cite Fill&Huber "The randomness recycler", and "Huber" "Perfect simulation"
+
+Evaluation: Graphs on performance:
+- Show the timings relative to ES32(volatile).
+(a) Reading from random-device
+
+Evaluation:
+We can compare the speed of ES relative to common. One of the fastest high quality PRNGs is 
+
+Conclusions:
+- When using a slow source like mt13397, ES is actually better
 
 # The Bug
 

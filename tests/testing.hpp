@@ -1,4 +1,6 @@
+#pragma once
 #include <iostream>
+#include <random>
 
 namespace entropy_store
 {
@@ -133,24 +135,25 @@ template <entropy_generator Source> class wrapped_source
     std::size_t m_index = 0;
 };
 
-template<binary_entropy_generator Source> class fast_dice_roller
+template <binary_entropy_generator Source> class fast_dice_roller
 {
-    public:
-    fast_dice_roller(const Source & source) : m_source(source) {}
-
-    template<std::integral T>
-    auto operator()(const uniform_distribution<T> &dist)
+  public:
+    fast_dice_roller(const Source &source) : m_source(source)
     {
-        T r=0, s=1;
+    }
+
+    template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
+    {
+        T r = 0, s = 1;
         const auto N = dist.size();
-        for(;;)
+        for (;;)
         {
-            while(s<N)
+            while (s < N)
             {
-                s = s<<1;
-                r = (r<<1) | m_source();
+                s = s << 1;
+                r = (r << 1) | m_source();
             }
-            if(r < N)
+            if (r < N)
             {
                 return r + dist.min();
             }
@@ -159,83 +162,96 @@ template<binary_entropy_generator Source> class fast_dice_roller
         }
     }
 
-    const Source & source() const { return m_source; }
+    const Source &source() const
+    {
+        return m_source;
+    }
 
-    private:
+  private:
     Source m_source;
 };
 
-template<binary_entropy_generator Source> class von_neumann
+template <binary_entropy_generator Source> class von_neumann
 {
-    public:
-    von_neumann(const Source & source) : m_source(source) {}
+  public:
+    von_neumann(const Source &source) : m_source(source)
+    {
+    }
 
-    template<std::integral T>
-    auto operator()(const uniform_distribution<T> &dist)
+    template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
     {
         const auto N = dist.size();
-        for(;;)
+        for (;;)
         {
-            T r=0, s=1;
-            while(s<N)
+            T r = 0, s = 1;
+            while (s < N)
             {
-                s = s<<1;
-                r = (r<<1) | m_source();
+                s = s << 1;
+                r = (r << 1) | m_source();
             }
-            if(r < N)
+            if (r < N)
             {
                 return r + dist.min();
             }
         }
     }
 
-    const Source & source() const { return m_source; }
+    const Source &source() const
+    {
+        return m_source;
+    }
 
-    private:
+  private:
     Source m_source;
 };
 
-template<typename Source, distribution Dist>
-class bound_entropy_generator
+template <typename Source, distribution Dist> class bound_entropy_generator
 {
-    public:
-    bound_entropy_generator(const Source & source, const Dist & dist) : m_source(source), m_dist(dist) {}
+  public:
+    bound_entropy_generator(const Source &source, const Dist &dist) : m_source(source), m_dist(dist)
+    {
+    }
 
-    auto operator()() { return m_source(m_dist); }
+    auto operator()()
+    {
+        return m_source(m_dist);
+    }
 
     using distribution_type = Dist;
     using value_type = typename distribution_type::value_type;
     using source_type = Source;
 
-    const Dist & distribution() const { return m_dist; }
+    const Dist &distribution() const
+    {
+        return m_dist;
+    }
 
-    const source_type & source() const { return m_source; }
+    const source_type &source() const
+    {
+        return m_source;
+    }
 
-    private:
+  private:
     Source m_source;
     Dist m_dist;
 };
 
-template<typename Source, distribution Dist>
-auto bits_fetched(const bound_entropy_generator<Source, Dist> &g)
+template <typename Source, distribution Dist> auto bits_fetched(const bound_entropy_generator<Source, Dist> &g)
 {
     return bits_fetched(g.source());
 }
 
-template<typename Source, distribution Dist>
-auto internal_entropy(const bound_entropy_generator<Source, Dist> &g)
+template <typename Source, distribution Dist> auto internal_entropy(const bound_entropy_generator<Source, Dist> &g)
 {
     return 0;
 }
 
-template<typename Source>
-auto bits_fetched(const von_neumann<Source> &g)
+template <typename Source> auto bits_fetched(const von_neumann<Source> &g)
 {
     return bits_fetched(g.source());
 }
 
-template<typename Source>
-auto bits_fetched(const fast_dice_roller<Source> &g)
+template <typename Source> auto bits_fetched(const fast_dice_roller<Source> &g)
 {
     return bits_fetched(g.source());
 }
@@ -247,41 +263,178 @@ uint64_t nearlydivisionless(uint64_t s, auto random64)
     uint64_t x = random64();
     __uint128_t m = (__uint128_t)x * (__uint128_t)s;
     uint64_t l = (uint64_t)m;
-    if(l<s) [[unlikely]]
+    if (l < s) [[unlikely]]
     {
-        uint64_t t = -s%s;
-        while(l<t)
+        uint64_t t = -s % s;
+        while (l < t)
         {
             x = random64();
             m = (__uint128_t)x * (__uint128_t)s;
             l = (uint64_t)m;
         }
     }
-    return m>>64;
+    return m >> 64;
 }
 
-template<entropy_generator Source> class lemire
+template <entropy_generator Source> class lemire
 {
-    public:
-    lemire(const Source & source) : m_source(source) {}
-
-    template<std::integral T>
-    auto operator()(const uniform_distribution<T> &dist)
+  public:
+    lemire(const Source &source) : m_source(source)
     {
-        return nearlydivisionless(dist.size(), [&]() { return (uint64_t(m_source()) << 32) | m_source(); }) + dist.min();
     }
 
-    const auto & source() const { return m_source; }
+    template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
+    {
+        return nearlydivisionless(dist.size(), [&]() { return (uint64_t(m_source()) << 32) | m_source(); }) +
+               dist.min();
+    }
 
-    private:
+    const auto &source() const
+    {
+        return m_source;
+    }
+
+  private:
     Source m_source;
 };
 
-template<entropy_generator Source> 
-auto bits_fetched(const lemire<Source> & l)
+template <typename PRNG = std::mt19937> class prng_source
+{
+  public:
+    prng_source(const PRNG &prng = {}) : m_prng(prng)
+    {
+    }
+
+    using value_type = typename PRNG::result_type;
+    auto max() const
+    {
+        return m_prng.max();
+    }
+    auto min() const
+    {
+        return m_prng.min();
+    }
+
+    value_type operator()()
+    {
+        return m_prng();
+    }
+
+    using distribution_type = const_uniform<PRNG::min(), PRNG::max()>;
+
+    distribution_type distribution() const
+    {
+        return distribution_type{};
+    }
+
+  private:
+    PRNG m_prng;
+};
+
+template <entropy_generator Source> auto bits_fetched(const lemire<Source> &l)
 {
     return bits_fetched(l.source());
 }
 
+// Code copied from https://prng.di.unimi.it/xoshiro128plusplus.c
+class xoshiro128
+{
+  public:
+    xoshiro128(entropy_generator auto &seed)
+    {
+        for (int i = 0; i < 4; i++)
+            s[i] = seed();
+    }
+
+    using value_type = uint32_t;
+    using distribution_type = const_uniform_distribution<value_type, std::numeric_limits<value_type>::min(),
+                                                         std::numeric_limits<value_type>::max()>;
+
+    constexpr distribution_type distribution() const
+    {
+        return {};
+    }
+
+    constexpr value_type min() const
+    {
+        return 0;
+    }
+    constexpr value_type max() const
+    {
+        return std::numeric_limits<value_type>::max();
+    }
+
+    value_type operator()()
+    {
+        const uint32_t result = rotl(s[0] + s[3], 7) + s[0];
+
+        const uint32_t t = s[1] << 9;
+
+        s[2] ^= s[0];
+        s[3] ^= s[1];
+        s[1] ^= s[2];
+        s[0] ^= s[3];
+
+        s[2] ^= t;
+
+        s[3] = rotl(s[3], 11);
+
+        return result;
+    }
+
+    int bits() const
+    {
+        return 32;
+    }
+
+  private:
+    uint32_t rotl(const uint32_t x, int k)
+    {
+        return (x << k) | (x >> (32 - k));
+    }
+
+    uint32_t s[4];
+};
+
+template <binary_entropy_generator Source> class huber_vargas
+{
+  public:
+    huber_vargas(Source source) : m_source(source)
+    {
+    }
+
+    template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
+    {
+        // See Huber & Vargas (2024), "Optimal rolling of fair dice using fair coins"
+        T m = 1, X = 1;
+        T n = dist.size();
+        while (m < n)
+        {
+            auto B = m_source();
+            X = X + B * m;
+            m = m << 1;
+            if (m >= n && X <= n)
+                m = n;
+            if (m >= n && X > n)
+            {
+                X = X - n;
+                m = m - n;
+            }
+        }
+
+        return X + dist.min() -1;
+    }
+
+    const auto & source() const { return m_source; }
+
+  private:
+    Source m_source;
+};
+
+template<binary_entropy_generator Source>
+auto bits_fetched(const huber_vargas<Source> & src)
+{
+    return bits_fetched(src.source());
+}
 
 } // namespace entropy_store
