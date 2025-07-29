@@ -29,7 +29,7 @@
 \geometry{margin=1in}
 
 % Title
-\title{Efficient entropy conversion using an entropy store}
+\title{Efficient discrete random variate generation using an entropy store}
 \author{Calum Grant \\
 OxFORD Asset Management \\
 calum.grant@oxam.com}
@@ -63,7 +63,7 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for converting random integers between different forms using an \em entropy store \em to cache unused entropy. The method can generate exact random variables for any weighted integer distribution, and consume entropy from any such distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy conversion efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical "optimal" algorithms that only have $\approxeq 0.81$ efficiency.  The algorithm requires two 32-bit integer divmod operations per output, making it a bit slower than other methods.
+    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to improve the entropy efficiency. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency as established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is a performance bottleneck.    
 \end{abstract}
 
 \section{Introduction}
@@ -81,14 +81,14 @@ To mitigate these entropy losses, it is possible to generate random integers in 
 
 In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
 
-The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is calculated in Theorem \ref{thm:loss}. 
+The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is given in Theorem \ref{thm:loss}. 
 
 For example to roll a 6-sided die with a 32-bit entropy store (holding at least 31 bits of entropy) has an entropy efficiency of $>0.99999997$. To shuffle a deck of 52 cards with a 32-bit entropy store has an entropy efficiency $>0.99999992$. By increasing the size of the store, we can achieve entropy efficiency arbitrarily close to 1.
 
 
 \subsection {Contribution}
 
-We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the distribution. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are usually constant.  For uniform or Bernoulli distributions, $n=O(1)$. A weighted distribution covers other distribution types such as uniform, rational weights, dyadic and Bernoulli distributions.
+We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the weighted distribution. For uniform or Bernoulli outputs, $n=O(1)$. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are usually constant.  A weighted distribution covers other discrete distribution types such as uniform, rational weights, dyadic and Bernoulli distributions.
 
 \begin{table}[h!]
 \centering
@@ -96,16 +96,18 @@ We present new algorithms, called \em entropy store algorithms \em, that have lo
 \hline
 Input & Output & Entropy & Time & Space \\
 \hline
-Weighted & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & Weighted: $O(mn)$ \\
-Exact & Exact & (amortised) & Per output: $O(m \log m)$  &  Uniform/Bernoulli: \\
-Markov & Markov &  &   & $O(m)$  \\
+Unbiassed & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & $O(mn)$ \\
+coin & Exact & (amortised) & Per output: $O(m \log m)$  &  \\
+ & Markov &  &   & \\
 \hline
 \end{tabular}
 \caption{Entropy store algorithm overview.}
     \label{tab:entropy-store}
 \end{table}
 
-No other algorithm has achieved this level of entropy efficiency in practice.
+No other algorithm has achieved this level of entropy efficiency.
+
+We show that this algorithm outperforms other random number generators when reading directly from a hardware entropy source, where the limiting factor is the rate of entropy input.
 
 \subsection{Related work}
 
@@ -127,15 +129,13 @@ Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum
 
 Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithms to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
 
-\em Entropy extraction\em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
+\em Entropy extraction \em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
 A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary output precision or data structure sizes.
 
-
-
-
+Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em randomness recycler \em protocol which is a general purpose strategy to identify excess entropy in an algorithm and store it for the next state. This ideas has been used to generate entropy-optimal uniform \cite{lumbroso2013optimal, huber2024optimal} or weighted \cite{huber2024optimal} variables, but only within a single output, so does not improve on the efficiency established by Knuth-Yao and Han-Hoshi.
 
 
 \section{Algorithms for entropy conversion}

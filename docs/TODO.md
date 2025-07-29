@@ -21,14 +21,14 @@
 
 # Evaluation
 
-Table 1 shows the speed of Entropy Store generating a uniform integer, compared with some other algorithms, for different entropy sources. These numbers were obtained on an Intel i5-1240P using GCC, but comparable values were obtained on ARM64 using clang. The exact numbers are hardware and compiler dependent, and are only a guide.
+Table 1 shows the speed of Entropy Store generating a uniform integer U(6), compared with some other algorithms, for different entropy sources. These numbers were obtained on an Intel i5-1240P using GCC, but comparable values were obtained on ARM64 using clang. The exact numbers are hardware and compiler dependent, and are only a guide.
 
-ES32 is the entropy store with a 32-bit entropy buffer, and the `const` variant allows the compiler to optimize division operations \cite{granlund94}, which can result in significant performance improvements. The ES64 variant uses a 64-bit entropy store, as well a compiler-optimized "const" version.
+ES32 is the entropy store with a 32-bit entropy buffer, and the `const` variant allows the compiler to rewrite division operations into a multiply and a shift \cite{granlund94}, which can result in significant performance improvements. The ES64 variant uses a 64-bit entropy store, as well a compiler-optimized "const" version.
 
-When reading directly from a random device (typically using a CPU instruction), the bottleneck is the rate of entropy input, so the performance is determined by the entropy efficiency, so the ES algorithms are the best. When using pseudo-random sources, Lemire's algorithm is the best. We can also observe that using a 64-bit entropy buffer is not beneficial.
+When reading directly from a random device (typically using a CPU instruction), the bottleneck is the rate of entropy input, so the performance is determined by the entropy efficiency, so the ES algorithms are the best. When using pseudo-random sources, Lemire's algorithm is the best of the algorithms tested. We can also observe that using a 64-bit entropy buffer is not beneficial, mainly due to the extra CPU cycles performing a 64-bit divmod..
 
                      Entropy source
-    Algorithm        Random device      MT19937     Xoshiro-128  
+    Algorithm        Random device      MT19937     Xoshiro-128++  
     ES32 const       1                  0.48        0.47
     ES32             1                  1           1
     ES64 const       1.0                0.56        0.54
@@ -43,7 +43,9 @@ When reading directly from a random device (typically using a CPU instruction), 
 Conclusions:
 - When using a slow source like mt13397, ES is actually better
 
-Contribution: Practical benefit when 
+Contribution: Practical benefit when entropy is limiting factor
+
+Previous work: Huber: Randomness recycler, talk about the randomness recycler protocol
 
 # The Bug
 
