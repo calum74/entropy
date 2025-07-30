@@ -1,5 +1,10 @@
 # Next steps
 
+- [ ] Provide and test the stand-alone C implementation
+- [ ] Measure performance of ALDR and FLDR
+- [x] Measure entropy efficiency of Lemire on the graph
+
+
 - Remove more junk from entropy_store
     - bits()
     - cmath
