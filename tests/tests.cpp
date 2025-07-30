@@ -17,6 +17,22 @@ template <entropy_generator Source> void count_totals(Source src, int count, dou
     assert(efficiency <= max);
 }
 
+// random_bit_generator bits;
+auto bits = counter{random_bit_generator{}};
+
+extern "C" int fetch()
+{
+    return bits();
+}
+
+namespace entropy_store
+{
+int bits_fetched(c_code_source)
+{
+    return bits_fetched(bits);
+}
+}
+
 int main(int argc, char **argv)
 {
     int N = 1000;
@@ -28,7 +44,7 @@ int main(int argc, char **argv)
     // For debugging purposes, we've wrapped it in a counter
     // so we can see the number of bits it's generated.
     auto rd = random_device_generator{};
-    auto bits = counter{bit_generator{rd}};  // Count bits, not words
+    auto bits = counter{bit_generator{rd}}; // Count bits, not words
     auto uniform_input = entropy_converter{bits, uniform_distribution{1, 6}};
     auto const_uniform_input = entropy_converter{bits, const_uniform<1, 6>{}};
     auto xoshiro128_rd = counter{xoshiro128{rd}};
@@ -57,17 +73,20 @@ int main(int argc, char **argv)
     count_totals(entropy_converter64{bits, const_bernoulli<1, 3>{}}, N, 0.96, 1.04);
 
     std::cout << "Von Neumann: ";
-    count_totals(bound_entropy_generator{von_neumann{bits}, uniform_distribution(1,6)}, N, 0.62);
+    count_totals(bound_entropy_generator{von_neumann{bits}, uniform_distribution(1, 6)}, N, 0.62);
     std::cout << "Knuth-Yao: ";
-    count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1,6)}, N, 0.68);
+    count_totals(bound_entropy_generator{fast_dice_roller{bits}, uniform_distribution(1, 6)}, N, 0.68);
     std::cout << "Lemire: ";
-    count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1,6)}, N, 0.04);
+    count_totals(bound_entropy_generator{lemire{counter{random_device_generator{}}}, uniform_distribution(1, 6)}, N,
+                 0.04);
 
     std::cout << "Lemire Xoshiro: ";
-    count_totals(bound_entropy_generator{lemire{xoshiro128_rd}, uniform_distribution(1,6)}, N, 0.04);
+    count_totals(bound_entropy_generator{lemire{xoshiro128_rd}, uniform_distribution(1, 6)}, N, 0.04);
 
     std::cout << "Huber-Vargas Xoshiro: ";
-    count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1,6)}, N, 0.04);
+    count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1, 6)}, N, 0.04);
+
+    count_totals(bound_entropy_generator{c_code_source(), uniform_distribution(1,6)}, N);
 
     std::cout << "\nAll tests passed!\n";
 }

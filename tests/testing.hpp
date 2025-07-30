@@ -243,7 +243,17 @@ template <typename Source, distribution Dist> auto bits_fetched(const bound_entr
 
 template <typename Source, distribution Dist> auto internal_entropy(const bound_entropy_generator<Source, Dist> &g)
 {
-    return 0;
+    return internal_entropy(g.source());
+}
+
+template <typename Source> auto internal_entropy(const von_neumann<Source> &source)
+{
+    return internal_entropy(source.source());
+}
+
+template <typename Source> auto internal_entropy(const fast_dice_roller<Source> &source)
+{
+    return internal_entropy(source.source());
 }
 
 template <typename Source> auto bits_fetched(const von_neumann<Source> &g)
@@ -297,6 +307,16 @@ template <entropy_generator Source> class lemire
   private:
     Source m_source;
 };
+
+template <typename Source> auto internal_entropy(const lemire<Source> &source)
+{
+    return internal_entropy(source.source());
+}
+
+inline double internal_entropy(const random_device_generator &)
+{
+    return 0;
+}
 
 template <typename PRNG = std::mt19937> class prng_source
 {
@@ -422,19 +442,59 @@ template <binary_entropy_generator Source> class huber_vargas
             }
         }
 
-        return X + dist.min() -1;
+        return X + dist.min() - 1;
     }
 
-    const auto & source() const { return m_source; }
+    const auto &source() const
+    {
+        return m_source;
+    }
 
   private:
     Source m_source;
 };
 
-template<binary_entropy_generator Source>
-auto bits_fetched(const huber_vargas<Source> & src)
+template <binary_entropy_generator Source> auto bits_fetched(const huber_vargas<Source> &src)
 {
     return bits_fetched(src.source());
+}
+
+template <typename Source> double internal_entropy(const huber_vargas<Source> &s)
+{
+    return internal_entropy(s.source());
+}
+
+inline double internal_entropy(const xoshiro128 &s)
+{
+    return 0;
+}
+
+extern "C" uint32_t generate_uniform32(uint32_t n);
+
+extern "C" uint32_t s_range;
+
+class c_code_source
+{
+  public:
+    template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
+    {
+        return dist.min() + generate_uniform32(dist.size());
+    }
+
+    auto distribution() const
+    {
+        return binary_distribution{};
+    }
+
+    auto &source() const
+    {
+        return *this;
+    }
+};
+
+inline double internal_entropy(const c_code_source &s)
+{
+    return std::log2(s_range);
 }
 
 } // namespace entropy_store
