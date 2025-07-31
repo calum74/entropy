@@ -1,6 +1,6 @@
 #include "entropy_store.hpp"
-#include "testing.hpp"
 #include "fldr.hpp"
+#include "testing.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -25,7 +25,7 @@ void report(auto i, auto generator, auto dist, auto source, auto time, auto rela
               << std::endl;
 }
 
-void benchmark_rng(auto source, int i, std::size_t N, const char * source_name)
+void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
 {
     auto fetch = entropy_store::bit_generator{source};
     auto es32 = entropy_store::entropy_store32{fetch};
@@ -50,10 +50,10 @@ void benchmark_rng(auto source, int i, std::size_t N, const char * source_name)
     report(i, "ES64", "vd6", source_name, measure(es64, vd6, N), benchmark);
     report(i, "Von Neumann", "vd6", source_name, measure(von_neumann, vd6, N), benchmark);
     report(i, "Fast Dice Roller", "vd6", source_name, measure(fdr, vd6, N), benchmark);
+    report(i, "Fast Loaded Dice Roller", "vd6", source_name, measure(fldr_source{vd6}, vd6, N), benchmark);
     report(i, "Huber-Vargas", "vd6", source_name, measure(huber_vargas, vd6, N), benchmark);
     report(i, "Lemire", "vd6", source_name, measure(lemire, vd6, N), benchmark);
 }
-
 
 int main(int argc, const char **argv)
 {

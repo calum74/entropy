@@ -37,7 +37,7 @@ class fldr_source
             fldr_free(m_fldr);
     }
 
-    auto operator()()
+    auto operator()(...)
     {
         return fldr_sample(m_fldr);
     }
