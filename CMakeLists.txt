@@ -11,6 +11,7 @@ add_library(fldr third-party/fast-loaded-dice-roller/src/c/fldr.c)
 add_library(aldr third-party/amplified-loaded-dice-roller/aldr.c)
 add_library(testing src/entropy_store.c tests/fetch.cpp)
 link_libraries(fldr)
+link_libraries(aldr)
 link_libraries(testing)
 
 add_executable(tests tests/tests.cpp)

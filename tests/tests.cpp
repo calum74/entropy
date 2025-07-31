@@ -1,9 +1,9 @@
-#include "fwd.hpp"
+#include "aldr.hpp"
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
-#include "testing.hpp"
 #include "fldr.hpp"
-#include "aldr.hpp"
+#include "fwd.hpp"
+#include "testing.hpp"
 
 using namespace entropy_store;
 
@@ -73,9 +73,12 @@ int main(int argc, char **argv)
     std::cout << "Huber-Vargas Xoshiro: ";
     count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1, 6)}, N, 0.04);
 
-    count_totals(bound_entropy_generator{c_code_source(), uniform_distribution(1,6)}, N);
+    count_totals(bound_entropy_generator{c_code_source(), uniform_distribution(1, 6)}, N);
 
-    count_totals(fldr_source{uniform_distribution(1,6)}, N);
+    std::cout << "FLDR: ";
+    count_totals(fldr_source{uniform_distribution(1, 6)}, N);
+    std::cout << "ALDR: ";
+    count_totals(aldr_source{uniform_distribution(1, 6)}, N);
 
     std::cout << "\nAll tests passed!\n";
 }

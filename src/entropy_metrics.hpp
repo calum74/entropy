@@ -8,12 +8,15 @@
 #include <iostream>
 
 class fldr_source; // !! Move
+class aldr_source;
 
 namespace entropy_store
 {
 // !! Move this somehow
 double internal_entropy(const fldr_source &);
 int bits_fetched(const fldr_source &);
+double internal_entropy(const aldr_source &);
+int bits_fetched(const aldr_source &);
 
 template <std::integral T> double P(const uniform_distribution<T> &dist, int i)
 {

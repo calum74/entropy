@@ -1,5 +1,7 @@
+#include "fwd.hpp"
 #include "entropy_store.hpp"
 #include "fldr.hpp"
+#include "aldr.hpp"
 #include "testing.hpp"
 
 #include <chrono>
@@ -51,6 +53,7 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     report(i, "Von Neumann", "vd6", source_name, measure(von_neumann, vd6, N), benchmark);
     report(i, "Fast Dice Roller", "vd6", source_name, measure(fdr, vd6, N), benchmark);
     report(i, "Fast Loaded Dice Roller", "vd6", source_name, measure(fldr_source{vd6}, vd6, N), benchmark);
+    report(i, "Amplified Loaded Dice Roller", "vd6", source_name, measure(aldr_source{vd6}, vd6, N), benchmark);
     report(i, "Huber-Vargas", "vd6", source_name, measure(huber_vargas, vd6, N), benchmark);
     report(i, "Lemire", "vd6", source_name, measure(lemire, vd6, N), benchmark);
 }
