@@ -1,0 +1,6 @@
+[submodule "third-party/amplified-loaded-dice-roller"]
+	path = third-party/amplified-loaded-dice-roller
+	url = https://github.com/probsys/amplified-loaded-dice-roller.git
+[submodule "third-party/fast-loaded-dice-roller"]
+	path = third-party/fast-loaded-dice-roller
+	url = https://github.com/probsys/fast-loaded-dice-roller.git

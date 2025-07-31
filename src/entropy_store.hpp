@@ -168,6 +168,18 @@ class weighted_distribution
     {
     }
 
+    template<typename T>
+    static std::vector<value_type> make_weights(const uniform_distribution<T> &dist)
+    {
+        std::vector<value_type> ret(dist.max()+1);
+        for(int i=dist.min(); i<=dist.max(); ++i)
+            ret[i] = 1;
+        return ret;
+    }
+
+    template<typename T>
+    weighted_distribution(const uniform_distribution<T> & unif) : weighted_distribution(make_weights(unif)) {}
+
     weighted_distribution(std::vector<value_type> w) : m_weights(std::move(w))
     {
         for (int i = 0; i < m_weights.size(); ++i)
@@ -230,6 +242,9 @@ class random_device_generator
     random_device_generator(const random_device_generator &)
     {
     }
+    random_device_generator(random_device_generator &&)
+    {
+    }
 
     value_type operator()()
     {
@@ -259,9 +274,13 @@ template <entropy_generator Source> class bit_generator
         return m_source;
     }
 
-    bit_generator(const source_type &source = {}) : m_source(source)
+    bit_generator(const source_type &source) : m_source(source)
     {
     }
+    bit_generator(source_type &&source = {}) : m_source(std::move(source))
+    {
+    }
+
     bit_generator(const bit_generator &src) : m_source(src.source())
     {
     }

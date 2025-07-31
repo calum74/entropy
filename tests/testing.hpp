@@ -2,6 +2,9 @@
 #include <iostream>
 #include <random>
 
+#include "fwd.hpp"
+#include "fetch.hpp"
+
 namespace entropy_store
 {
 // Checks that multiple samplings of a uniform distribution
@@ -486,15 +489,20 @@ class c_code_source
         return binary_distribution{};
     }
 
-    auto &source() const
-    {
-        return *this;
-    }
+    const auto & source() const { return m_source; }
+
+    fetch_source m_source;
 };
 
 inline double internal_entropy(const c_code_source &s)
 {
     return std::log2(s_range);
 }
+
+inline int bits_fetched(const c_code_source&s)
+{
+    return bits_fetched(s.source());
+}
+
 
 } // namespace entropy_store

@@ -7,8 +7,14 @@
 #include <iomanip>
 #include <iostream>
 
+class fldr_source; // !! Move
+
 namespace entropy_store
 {
+// !! Move this somehow
+double internal_entropy(const fldr_source &);
+int bits_fetched(const fldr_source &);
+
 template <std::integral T> double P(const uniform_distribution<T> &dist, int i)
 {
     if (i >= dist.min() && i <= dist.max())
@@ -16,20 +22,19 @@ template <std::integral T> double P(const uniform_distribution<T> &dist, int i)
     return 0;
 }
 
-template <std::integral T, T MIN, T MAX> double P(const const_uniform_distribution<T,MIN,MAX> &dist, int i)
+template <std::integral T, T MIN, T MAX> double P(const const_uniform_distribution<T, MIN, MAX> &dist, int i)
 {
     if (i >= dist.min() && i <= dist.max())
         return 1.0 / dist.size();
     return 0;
 }
 
-
 template <std::integral T> double entropy(const uniform_distribution<T> &dist)
 {
     return std::log2(dist.size());
 }
 
-template <std::integral T, T Min, T Max> double entropy(const const_uniform_distribution<T,Min,Max> &dist)
+template <std::integral T, T Min, T Max> double entropy(const const_uniform_distribution<T, Min, Max> &dist)
 {
     return std::log2(dist.size());
 }
@@ -57,7 +62,7 @@ inline double P(const bernoulli_distribution &dist, int i)
     return i ? p : (1.0 - p);
 }
 
-template<std::integral uint_t, uint_t M, uint_t N>
+template <std::integral uint_t, uint_t M, uint_t N>
 double P(const const_bernoulli_distribution<uint_t, M, N> &dist, int i)
 {
     double p = double(dist.numerator()) / double(dist.denominator());
@@ -70,13 +75,12 @@ inline double entropy(const bernoulli_distribution &dist)
     return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
 }
 
-template<std::integral uint_t, uint_t M, uint_t N>
+template <std::integral uint_t, uint_t M, uint_t N>
 double entropy(const const_bernoulli_distribution<uint_t, M, N> &dist)
 {
     double p = double(dist.numerator()) / double(dist.denominator());
     return -p * std::log2(p) - (1 - p) * std::log2(1 - p);
 }
-
 
 template <entropy_generator Source> struct counter
 {
@@ -92,7 +96,8 @@ template <entropy_generator Source> struct counter
     {
     }
 
-    counter(counter &&src) : m_source(std::move(src)), m_count(src.m_count), m_source_entropy(src.m_source_entropy)
+    counter(counter &&src)
+        : m_source(std::move(src.source())), m_count(src.m_count), m_source_entropy(src.m_source_entropy)
     {
     }
 
@@ -191,7 +196,7 @@ template <entropy_generator Source> class check_distribution
     using source_type = typename Source::source_type;
     using distribution_type = typename Source::distribution_type;
 
-    check_distribution(const Source &source) : m_source(source)
+    check_distribution(Source source) : m_source(std::move(source))
     {
         m_counts.resize(distribution().max() + 1, 0);
         m_pair_counts.resize(distribution().max() + 1, m_counts);
@@ -339,23 +344,22 @@ template <typename T> std::ostream &operator<<(std::ostream &os, const uniform_d
     return os << "Uniform{" << u.min() << "," << u.max() << "}";
 }
 
-template <typename T, T Min, T Max> std::ostream &operator<<(std::ostream &os, const const_uniform_distribution<T,Min,Max> &u)
+template <typename T, T Min, T Max>
+std::ostream &operator<<(std::ostream &os, const const_uniform_distribution<T, Min, Max> &u)
 {
     return os << "Uniform{" << u.min() << "," << u.max() << "}";
 }
-
 
 inline std::ostream &operator<<(std::ostream &os, const bernoulli_distribution &b)
 {
     return os << "Bernoulli{" << b.numerator() << "/" << b.denominator() << "}";
 }
 
-template<std::integral uint_t, uint_t M, uint_t N>
+template <std::integral uint_t, uint_t M, uint_t N>
 std::ostream &operator<<(std::ostream &os, const const_bernoulli_distribution<uint_t, M, N> &b)
 {
     return os << "Bernoulli{" << b.numerator() << "/" << b.denominator() << "}";
 }
-
 
 inline std::ostream &operator<<(std::ostream &os, const weighted_distribution &w)
 {

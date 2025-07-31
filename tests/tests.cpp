@@ -1,12 +1,14 @@
+#include "fwd.hpp"
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
 #include "testing.hpp"
+#include "fldr.hpp"
 
 using namespace entropy_store;
 
 template <entropy_generator Source> void count_totals(Source src, int count, double min = 0.99, double max = 1.01)
 {
-    auto source = check_distribution{src};
+    auto source = check_distribution{std::move(src)};
 
     source.read(count);
     std::cout << source;
@@ -15,22 +17,6 @@ template <entropy_generator Source> void count_totals(Source src, int count, dou
     double efficiency = source.efficiency();
     assert(efficiency >= min);
     assert(efficiency <= max);
-}
-
-// random_bit_generator bits;
-auto bits = counter{random_bit_generator{}};
-
-extern "C" int fetch()
-{
-    return bits();
-}
-
-namespace entropy_store
-{
-int bits_fetched(c_code_source)
-{
-    return bits_fetched(bits);
-}
 }
 
 int main(int argc, char **argv)
@@ -87,6 +73,8 @@ int main(int argc, char **argv)
     count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1, 6)}, N, 0.04);
 
     count_totals(bound_entropy_generator{c_code_source(), uniform_distribution(1,6)}, N);
+
+    count_totals(fldr_source{uniform_distribution(1,6)}, N);
 
     std::cout << "\nAll tests passed!\n";
 }

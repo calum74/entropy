@@ -1,5 +1,6 @@
 #include "entropy_store.hpp"
 #include "testing.hpp"
+#include "fldr.hpp"
 
 #include <chrono>
 #include <cstdlib>
