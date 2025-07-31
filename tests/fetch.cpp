@@ -26,3 +26,8 @@ double entropy_store::internal_entropy(const fetch_source &)
 {
     return 0;
 }
+
+fetch_source::fetch_source()
+{
+    random_bits.reset();
+}

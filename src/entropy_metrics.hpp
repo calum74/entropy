@@ -49,8 +49,11 @@ inline double entropy(const weighted_distribution &dist)
     double h = 0;
     for (double w : dist.weights())
     {
-        auto p = w / dist.outputs().size();
-        h -= p * std::log2(p);
+        if(w>0)
+        {
+            auto p = w / dist.outputs().size();
+            h -= p * std::log2(p);
+        }
     }
 
     return h;
@@ -126,6 +129,11 @@ template <entropy_generator Source> struct counter
     const source_type &source() const
     {
         return m_source;
+    }
+
+    void reset()
+    {
+        m_count=0;
     }
 
     std::size_t m_count;
@@ -321,16 +329,17 @@ template <typename Source> std::ostream &operator<<(std::ostream &os, const chec
     os << check.source().source().source().distribution() << " -> " << check.distribution() << ":\n";
     check.visit_counts([&](auto i, auto c, double, double, double sigma) {
         os << "    " << i << ": " << c << " = " << (100.0 * c / check.output_count()) << "% = " << std::setprecision(2)
-           << std::showpos << sigma << std::noshowpos << "σ" << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n";
+           << std::showpos << sigma << std::noshowpos << "σ"
+           << (std::abs(sigma) > 4 ? "  *** FAILED ***" : ""); //  << "\n";
     });
 
     check.visit_pairs([&](auto i, auto j, auto c, double, double, double sigma) {
-        os << "   " << i << j << ": " << c << " = " << (100.0 * c / check.output_count())
+        os << "   " << i << "," << j << ": " << c << " = " << (100.0 * c / check.output_count())
            << "% = " << std::setprecision(2) << std::showpos << sigma << std::noshowpos << "σ"
-           << (std::abs(sigma) > 4 ? "  *** FAILED ***" : "") << "\n";
+           << (std::abs(sigma) > 4 ? "  *** FAILED ***" : ""); // << "\n";
     });
 
-    os << "  Distribution entropy = " << std::setprecision(4) << entropy(check.distribution()) << " bits\n";
+    os << "\n  Distribution entropy = " << std::setprecision(4) << entropy(check.distribution()) << " bits\n";
     os << "  Bits fetched = " << bits_fetched(check) << " bits\n";
     os << "  Internal entropy = " << std::setprecision(6) << internal_entropy(check) << " bits\n";
     os << "  Output entropy = " << check.output_entropy() << " bits\n";

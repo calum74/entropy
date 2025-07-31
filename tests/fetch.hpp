@@ -8,6 +8,8 @@ class fetch_source
   public:
     using distribution_type = entropy_store::binary_distribution;
 
+    fetch_source();
+
     distribution_type distribution() const
     {
         return {};
