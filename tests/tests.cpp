@@ -3,6 +3,7 @@
 #include "entropy_store.hpp"
 #include "testing.hpp"
 #include "fldr.hpp"
+#include "aldr.hpp"
 
 using namespace entropy_store;
 
