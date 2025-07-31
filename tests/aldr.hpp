@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
 #include "fetch.hpp"
@@ -18,28 +17,13 @@ class aldr_source
     using value_type = int;
     using source_type = fetch_source;
 
-    aldr_source(const distribution_type &dist)
-        : m_distribution(dist), m_aldr(aldr_preprocess((uint32_t*)dist.weights().data(), dist.weights().size()))
+    aldr_source(const distribution_type &dist) : m_distribution(dist), m_impl(std::make_shared<impl>(dist))
     {
-    }
-
-    aldr_source(const aldr_source &) = delete;
-    aldr_source(aldr_source &&src) : m_distribution(std::move(src.distribution())), m_aldr(src.m_aldr)
-    {
-        // src.m_aldr = nullptr;
-    }
-
-    aldr_source &operator=(const aldr_source &) = delete;
-    aldr_source &operator=(aldr_source &&) = delete;
-
-    ~aldr_source()
-    {
-        // Don't free
     }
 
     auto operator()(...)
     {
-        return aldr_sample(&m_aldr);
+        return aldr_sample(&m_impl->m_aldr);
     }
 
     const distribution_type &distribution() const
@@ -53,8 +37,23 @@ class aldr_source
     }
 
   private:
+    struct impl
+    {
+        impl(const distribution_type &dist)
+        {
+            m_aldr = aldr_preprocess((uint32_t *)dist.weights().data(), dist.weights().size());
+        }
+        ~impl()
+        {
+            aldr_free(m_aldr);
+        }
+        aldr_s m_aldr;
+    };
+
+    // Deal with copying etc
+    std::shared_ptr<impl> m_impl;
+
     const distribution_type m_distribution;
-    aldr_s m_aldr;
     fetch_source m_source;
 };
 

@@ -18,28 +18,13 @@ class fldr_source
     using source_type = fetch_source;
 
     fldr_source(const distribution_type &dist)
-        : m_distribution(dist), m_fldr(fldr_preprocess((int *)dist.weights().data(), dist.weights().size()))
+        : m_distribution(dist), m_fldr {fldr_preprocess((int *)dist.weights().data(), dist.weights().size()), fldr_free}
     {
-    }
-
-    fldr_source(const fldr_source &) = delete;
-    fldr_source(fldr_source &&src) : m_distribution(std::move(src.distribution())), m_fldr(src.m_fldr)
-    {
-        src.m_fldr = nullptr;
-    }
-
-    fldr_source &operator=(const fldr_source &) = delete;
-    fldr_source &operator=(fldr_source &&) = delete;
-
-    ~fldr_source()
-    {
-        if (m_fldr)
-            fldr_free(m_fldr);
     }
 
     auto operator()(...)
     {
-        return fldr_sample(m_fldr);
+        return fldr_sample(m_fldr.get());
     }
 
     const distribution_type &distribution() const
@@ -54,7 +39,7 @@ class fldr_source
 
   private:
     const distribution_type m_distribution;
-    fldr_preprocess_t *m_fldr;
+    std::unique_ptr<fldr_preprocess_t, void(*)(fldr_preprocess_t*)> m_fldr;
     fetch_source m_source;
 };
 
