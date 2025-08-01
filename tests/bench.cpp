@@ -52,8 +52,8 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     report(i, "ES64", "vd6", source_name, measure(es64, vd6, N), benchmark);
     report(i, "Von Neumann", "vd6", source_name, measure(von_neumann, vd6, N), benchmark);
     report(i, "Fast Dice Roller", "vd6", source_name, measure(fdr, vd6, N), benchmark);
-    report(i, "Fast Loaded Dice Roller", "vd6", source_name, measure(fldr_source{source, vd6}, vd6, N), benchmark);
-    report(i, "Amplified Loaded Dice Roller", "vd6", source_name, measure(aldr_source{source, vd6}, vd6, N), benchmark);
+    report(i, "Fast Loaded Dice Roller", "vd6", source_name, measure(fldr_source{fetch, vd6}, vd6, N), benchmark);
+    report(i, "Amplified Loaded Dice Roller", "vd6", source_name, measure(aldr_source{fetch, vd6}, vd6, N), benchmark);
     report(i, "Huber-Vargas", "vd6", source_name, measure(huber_vargas, vd6, N), benchmark);
     report(i, "Lemire", "vd6", source_name, measure(lemire, vd6, N), benchmark);
 }

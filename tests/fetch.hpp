@@ -8,23 +8,32 @@ class fetch_base
 public:
     virtual int fetch() = 0;
 
-    void install();
 };
 
+void install_fetch(std::shared_ptr<fetch_base> p);
+
 template<typename Source>
-class fetch_source : public fetch_base
+class fetch_source
 {
   public:
     using distribution_type = entropy_store::binary_distribution;
 
-    fetch_source(Source src) : m_source(std::move(src))
+    class fetch_impl : public fetch_base
     {
-        install();
-    }
+    public:
+        fetch_impl(Source s) : m_source(std::move(s)) {}
+        Source m_source;
+        int fetch() override
+        {
+            return m_source();
+        }
+    };
 
-    fetch_source(fetch_source&&src) : m_source(src.source())
+    std::shared_ptr<fetch_impl> m_source;
+
+    fetch_source(Source src) : m_source(std::make_shared<fetch_impl>(std::move(src)))
     {
-        install();
+        install_fetch(m_source);
     }
 
     distribution_type distribution() const
@@ -35,20 +44,13 @@ class fetch_source : public fetch_base
 
     const Source &source() const
     {
-        return m_source;
+        return m_source->m_source;
     }
 
     int operator()()
     {
-        return m_source();
+        return m_source->m_source();
     }
-
-    int fetch() override
-    {
-        return m_source();
-    }
-
-    Source m_source;
 };
 
 namespace entropy_store
