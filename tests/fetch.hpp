@@ -1,6 +1,8 @@
 #pragma once
 #include "entropy_store.hpp"
 
+#include <memory>
+
 // For algorithms that have a fixed "fetch" or "flip" backend
 
 class fetch_base
