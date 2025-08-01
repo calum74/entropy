@@ -211,7 +211,7 @@ template <binary_entropy_generator Source> class von_neumann
 template <typename Source, distribution Dist> class bound_entropy_generator
 {
   public:
-    bound_entropy_generator(const Source &source, const Dist &dist) : m_source(source), m_dist(dist)
+    bound_entropy_generator(Source source, const Dist &dist) : m_source(std::move(source)), m_dist(dist)
     {
     }
 
@@ -476,9 +476,12 @@ extern "C" uint32_t generate_uniform32(uint32_t n);
 
 extern "C" uint32_t s_range;
 
+template<typename Source>
 class c_code_source
 {
   public:
+    c_code_source(Source src) : m_source(src) {}
+
     template <std::integral T> auto operator()(const uniform_distribution<T> &dist)
     {
         return dist.min() + generate_uniform32(dist.size());
@@ -491,15 +494,17 @@ class c_code_source
 
     const auto & source() const { return m_source; }
 
-    fetch_source m_source;
+    fetch_source<Source> m_source;
 };
 
-inline double internal_entropy(const c_code_source &s)
+template<typename S> 
+inline double internal_entropy(const c_code_source<S> &s)
 {
     return std::log2(s_range);
 }
 
-inline int bits_fetched(const c_code_source&s)
+template<typename S> 
+inline int bits_fetched(const c_code_source<S>&s)
 {
     return bits_fetched(s.source());
 }

@@ -4,30 +4,25 @@
 
 #include "mt19937.hpp"
 
-// random_bit_generator bits;
+entropy_store::random_bit_generator bits;
+
 auto random_bits = entropy_store::counter{entropy_store::random_bit_generator{}};
+fetch_base * fetch_instance = nullptr;
+
+void fetch_base::install()
+{
+    fetch_instance = this;
+}
 
 extern "C" int fetch()
 {
-    return random_bits();
+    return bits();
+    return fetch_instance->fetch();
 }
 
 extern "C" int flip()
 {
-    return random_bits();
+    return bits();
+    return fetch_instance->fetch();
 }
 
-int entropy_store::bits_fetched(const fetch_source &source)
-{
-    return bits_fetched(random_bits);
-}
-
-double entropy_store::internal_entropy(const fetch_source &)
-{
-    return 0;
-}
-
-fetch_source::fetch_source()
-{
-    random_bits.reset();
-}

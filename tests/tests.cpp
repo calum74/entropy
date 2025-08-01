@@ -73,12 +73,12 @@ int main(int argc, char **argv)
     std::cout << "Huber-Vargas Xoshiro: ";
     count_totals(bound_entropy_generator{huber_vargas{bits}, uniform_distribution(1, 6)}, N, 0.04);
 
-    count_totals(bound_entropy_generator{c_code_source(), uniform_distribution(1, 6)}, N);
+    count_totals(bound_entropy_generator{c_code_source{bits}, uniform_distribution(1, 6)}, N);
 
     std::cout << "FLDR: ";
-    count_totals(fldr_source{uniform_distribution(1, 6)}, N);
+    count_totals(fldr_source{bits, uniform_distribution(1, 6)}, N, 0.69);
     std::cout << "ALDR: ";
-    count_totals(aldr_source{uniform_distribution(1, 6)}, N);
+    count_totals(aldr_source{bits, uniform_distribution(1, 6)}, N, 0.69);
 
     std::cout << "\nAll tests passed!\n";
 }

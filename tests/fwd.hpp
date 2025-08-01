@@ -1,9 +1,9 @@
 #pragma once
 
-class fldr_source;
+template<typename S> class fldr_source;
 
 namespace entropy_source
 {
-    double internal_entropy(const fldr_source&);
-    int bits_fetched(const fldr_source&s);
+    template<typename S> double internal_entropy(const fldr_source<S>&);
+    template<typename S> int bits_fetched(const fldr_source<S>&s);
 }

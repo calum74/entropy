@@ -10,14 +10,15 @@ extern "C"
 #include "aldr.h"
 }
 
+template<typename Source>
 class aldr_source
 {
   public:
     using distribution_type = entropy_store::weighted_distribution;
     using value_type = int;
-    using source_type = fetch_source;
+    using source_type = fetch_source<Source>;
 
-    aldr_source(const distribution_type &dist) : m_distribution(dist), m_impl(std::make_shared<impl>(dist))
+    aldr_source(Source src, const distribution_type &dist) : m_source(src), m_distribution(dist), m_impl(std::make_shared<impl>(dist))
     {
     }
 
@@ -54,17 +55,18 @@ class aldr_source
     std::shared_ptr<impl> m_impl;
 
     const distribution_type m_distribution;
-    fetch_source m_source;
+    source_type m_source;
 };
 
 namespace entropy_store
 {
-inline double internal_entropy(const aldr_source &)
+template<typename S> 
+    inline double internal_entropy(const aldr_source<S> &)
 {
     return 0;
 }
 
-int bits_fetched(const aldr_source &s)
+template<typename S> int bits_fetched(const aldr_source<S> &s)
 {
     return bits_fetched(s.source());
 }
