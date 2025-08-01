@@ -23,7 +23,12 @@ class fldr_source
     {
     }
 
-    auto operator()(...)
+    auto operator()()
+    {
+        return fldr_sample(m_fldr.get());
+    }
+
+    auto operator()(const distribution_type&)
     {
         return fldr_sample(m_fldr.get());
     }

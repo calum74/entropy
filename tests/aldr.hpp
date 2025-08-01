@@ -22,10 +22,16 @@ class aldr_source
     {
     }
 
-    auto operator()(...)
+    auto operator()()
     {
         return aldr_sample(&m_impl->m_aldr);
     }
+
+    auto operator()(const distribution_type&)
+    {
+        return aldr_sample(&m_impl->m_aldr);
+    }
+
 
     const distribution_type &distribution() const
     {

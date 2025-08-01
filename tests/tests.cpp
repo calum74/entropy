@@ -80,5 +80,8 @@ int main(int argc, char **argv)
     std::cout << "ALDR: ";
     count_totals(aldr_source{bits, uniform_distribution(1, 6)}, N, 0.69);
 
+    std::cout << "ALDR: ";
+    count_totals(aldr_source{bits, weighted_distribution{1, 99}}, N, 0.69);
+
     std::cout << "\nAll tests passed!\n";
 }
