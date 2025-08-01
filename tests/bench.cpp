@@ -49,6 +49,11 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
 
     measure(es32, vd6, N);
     auto benchmark = measure(es32, vd6, N);
+    measure(es32, rb1_99, N);
+    auto benchmark_b1_99 = measure(es32, rb1_99, N);
+    measure(es32, w12345, N);
+    auto benchmark_w12345 = measure(es32, w12345, N);
+
     report(i, "ES32", "d6", source_name, measure(es32, d6, N), benchmark);
     report(i, "ES32", "cd6", source_name, measure(es32, cd6, N), benchmark);
     report(i, "ES32", "vd6", source_name, measure(es32, vd6, N), benchmark);
@@ -57,20 +62,21 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     report(i, "ES64", "vd6", source_name, measure(es64, vd6, N), benchmark);
     report(i, "Von Neumann", "vd6", source_name, measure(von_neumann, vd6, N), benchmark);
     report(i, "Fast Dice Roller", "vd6", source_name, measure(fdr, vd6, N), benchmark);
-    report(i, "Fast Loaded Dice Roller", "vd6", source_name, measure(fldr_source{fetch, wd6}, wd6, N), benchmark);
+    report(i, "FLDR", "vd6", source_name, measure(fldr_source{fetch, wd6}, wd6, N), benchmark);
     // report(i, "Amplified Loaded Dice Roller", "vd6", source_name, measure(aldr_source{fetch, vd6}, vd6, N), benchmark);
-    report(i, "Amplified Loaded Dice Roller", "wd6", source_name, measure(aldr_source{fetch, wd6}, wd6, N), benchmark);
+    report(i, "ALDR", "wd6", source_name, measure(aldr_source{fetch, wd6}, wd6, N), benchmark);
     report(i, "Huber-Vargas", "vd6", source_name, measure(huber_vargas, vd6, N), benchmark);
     report(i, "Lemire", "vd6", source_name, measure(lemire, vd6, N), benchmark);
 
-    report(i, "ES32", "Const Bernoulli{1/99}", source_name, measure(es32, cb1_99, N), benchmark);
-    report(i, "ES32", "Runtime Bernoulli{1/99}", source_name, measure(es32, rb1_99, N), benchmark);
-    report(i, "ES32", "Weighted{1/99}", source_name, measure(es32, w1_99, N), benchmark);
-    report(i, "ES32", "Weighted{12345}", source_name, measure(es32, w12345, N), benchmark);
-    report(i, "FLDR", "B{1/99}", source_name, measure(fldr_source{fetch, w1_99}, w1_99, N), benchmark);
-    report(i, "ALDR", "B{1/99}", source_name, measure(aldr_source{fetch, w1_99}, w1_99, N), benchmark);
-    report(i, "FLDR", "W{12345}", source_name, measure(fldr_source{fetch, w12345}, w12345, N), benchmark);
-    report(i, "ALDR", "W12345", source_name, measure(aldr_source{fetch, w12345}, w12345, N), benchmark);
+    report(i, "ES32", "Const Bernoulli{1/99}", source_name, measure(es32, cb1_99, N), benchmark_b1_99);
+    report(i, "ES32", "Runtime Bernoulli{1/99}", source_name, measure(es32, rb1_99, N), benchmark_b1_99);
+    report(i, "ES32", "Weighted{1/99}", source_name, measure(es32, w1_99, N), benchmark_b1_99);
+    report(i, "FLDR", "B{1/99}", source_name, measure(fldr_source{fetch, w1_99}, w1_99, N), benchmark_b1_99);
+    report(i, "ALDR", "B{1/99}", source_name, measure(aldr_source{fetch, w1_99}, w1_99, N), benchmark_b1_99);
+
+    report(i, "ES32", "Weighted{12345}", source_name, measure(es32, w12345, N), benchmark_w12345);
+    report(i, "FLDR", "W{12345}", source_name, measure(fldr_source{fetch, w12345}, w12345, N), benchmark_w12345);
+    report(i, "ALDR", "W12345", source_name, measure(aldr_source{fetch, w12345}, w12345, N), benchmark_w12345);
 }
 
 int main(int argc, const char **argv)
