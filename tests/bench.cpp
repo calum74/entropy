@@ -1,7 +1,7 @@
-#include "fwd.hpp"
+#include "aldr.hpp"
 #include "entropy_store.hpp"
 #include "fldr.hpp"
-#include "aldr.hpp"
+#include "fwd.hpp"
 #include "testing.hpp"
 
 #include <chrono>
@@ -35,48 +35,51 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     auto fdr = entropy_store::fast_dice_roller{fetch};
     auto huber_vargas = entropy_store::huber_vargas{fetch};
     auto von_neumann = entropy_store::von_neumann{fetch};
-    auto lemire = entropy_store::lemire{source};
+    auto lemire = entropy_store::lemire{source}; // !! Add alias wrapper
 
     // Distributions
-    const entropy_store::const_uniform<1, 6> cd6;
-    const entropy_store::uniform_distribution d6(1, 6);
-    const entropy_store::uniform_distribution vd6(1, 6 + (errno >> 6)); // Disable some compiler optimizations
-    const entropy_store::weighted_distribution w1_99{1, 99};
-    const entropy_store::const_bernoulli<1,100> cb1_99;
-    const entropy_store::bernoulli_distribution rb1_99(1, 100 + (errno>>6));
-    const entropy_store::weighted_distribution w12345{1, 2, 3, 4, 5};
-    const entropy_store::weighted_distribution wd6{1,1,1,1,1,1};
+    const entropy_store::const_uniform<1, 6> fast_d6;
+    const entropy_store::uniform_distribution d6(1, 6 + (errno >> 6)); // Disable some compiler optimizations
+    const entropy_store::weighted_distribution weighted_bernoulli{1, 99};
+    const entropy_store::const_bernoulli<1, 100> fast_bernoulli;
+    const entropy_store::bernoulli_distribution bernoulli(1, 100 + (errno >> 6));
+    const entropy_store::weighted_distribution weighted{1, 2, 3, 4, 5};
+    const entropy_store::weighted_distribution weighted_d6{1, 1, 1, 1, 1, 1}; // FLDR cannot handle weight 0
 
-    measure(es32, vd6, N);
-    auto benchmark = measure(es32, vd6, N);
-    measure(es32, rb1_99, N);
-    auto benchmark_b1_99 = measure(es32, rb1_99, N);
-    measure(es32, w12345, N);
-    auto benchmark_w12345 = measure(es32, w12345, N);
+    measure(es32, d6, N);
+    auto benchmark_d6 = measure(es32, d6, N);
+    measure(es32, bernoulli, N);
+    auto benchmark_bernoulli = measure(es32, bernoulli, N);
+    measure(es32, weighted, N);
+    auto benchmark_weighted = measure(es32, weighted, N);
 
-    report(i, "ES32", "d6", source_name, measure(es32, d6, N), benchmark);
-    report(i, "ES32", "cd6", source_name, measure(es32, cd6, N), benchmark);
-    report(i, "ES32", "vd6", source_name, measure(es32, vd6, N), benchmark);
-    report(i, "ES64", "d6", source_name, measure(es64, d6, N), benchmark);
-    report(i, "ES64", "cd6", source_name, measure(es64, cd6, N), benchmark);
-    report(i, "ES64", "vd6", source_name, measure(es64, vd6, N), benchmark);
-    report(i, "Von Neumann", "vd6", source_name, measure(von_neumann, vd6, N), benchmark);
-    report(i, "Fast Dice Roller", "vd6", source_name, measure(fdr, vd6, N), benchmark);
-    report(i, "FLDR", "vd6", source_name, measure(fldr_source{fetch, wd6}, wd6, N), benchmark);
-    // report(i, "Amplified Loaded Dice Roller", "vd6", source_name, measure(aldr_source{fetch, vd6}, vd6, N), benchmark);
-    report(i, "ALDR", "wd6", source_name, measure(aldr_source{fetch, wd6}, wd6, N), benchmark);
-    report(i, "Huber-Vargas", "vd6", source_name, measure(huber_vargas, vd6, N), benchmark);
-    report(i, "Lemire", "vd6", source_name, measure(lemire, vd6, N), benchmark);
+    report(i, "ES32", "d6", source_name, measure(es32, d6, N), benchmark_d6);
+    report(i, "ES32 optimized", "cd6", source_name, measure(es32, fast_d6, N), benchmark_d6);
+    report(i, "ES64", "d6", source_name, measure(es64, d6, N), benchmark_d6);
+    report(i, "ES64 optimized", "d6", source_name, measure(es64, fast_d6, N), benchmark_d6);
+    report(i, "VN", "d6", source_name, measure(von_neumann, d6, N), benchmark_d6);
+    report(i, "Fast Dice Roller", "d6", source_name, measure(fdr, d6, N), benchmark_d6);
+    report(i, "FLDR", "d6", source_name, measure(fldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
+    report(i, "ALDR", "d6", source_name, measure(aldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
+    report(i, "Huber-Vargas", "d6", source_name, measure(huber_vargas, d6, N), benchmark_d6);
+    report(i, "Lemire", "d6", source_name, measure(lemire, d6, N), benchmark_d6);
 
-    report(i, "ES32", "Const Bernoulli{1/99}", source_name, measure(es32, cb1_99, N), benchmark_b1_99);
-    report(i, "ES32", "Runtime Bernoulli{1/99}", source_name, measure(es32, rb1_99, N), benchmark_b1_99);
-    report(i, "ES32", "Weighted{1/99}", source_name, measure(es32, w1_99, N), benchmark_b1_99);
-    report(i, "FLDR", "B{1/99}", source_name, measure(fldr_source{fetch, w1_99}, w1_99, N), benchmark_b1_99);
-    report(i, "ALDR", "B{1/99}", source_name, measure(aldr_source{fetch, w1_99}, w1_99, N), benchmark_b1_99);
+    report(i, "ES32", "Bernoulli", source_name, measure(es32, bernoulli, N), benchmark_bernoulli);
+    report(i, "ES32 optimized", "Bernoulli", source_name, measure(es32, fast_bernoulli, N), benchmark_bernoulli);
+    report(i, "FLDR", "Bernoulli", source_name, measure(fldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
+           benchmark_bernoulli);
+    report(i, "ALDR", "Bernoulli", source_name, measure(aldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
+           benchmark_bernoulli);
 
-    report(i, "ES32", "Weighted{12345}", source_name, measure(es32, w12345, N), benchmark_w12345);
-    report(i, "FLDR", "W{12345}", source_name, measure(fldr_source{fetch, w12345}, w12345, N), benchmark_w12345);
-    report(i, "ALDR", "W12345", source_name, measure(aldr_source{fetch, w12345}, w12345, N), benchmark_w12345);
+    report(i, "Lemire+alias", "Bernoulli", source_name, measure(entropy_store::alias_method{lemire}, bernoulli, N),
+           benchmark_bernoulli);
+
+    report(i, "ES32", "Weighted", source_name, measure(es32, weighted, N), benchmark_weighted);
+    report(i, "FLDR", "Weighted", source_name, measure(fldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
+    report(i, "ALDR", "Weighted", source_name, measure(aldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
+
+    report(i, "Lemire+alias", "Weighted", source_name, measure(entropy_store::alias_method{lemire}, weighted, N),
+           benchmark_weighted);
 }
 
 int main(int argc, const char **argv)
@@ -99,8 +102,8 @@ int main(int argc, const char **argv)
     for (int i = 0; i < 3; i++)
     {
         benchmark_rng(rd_uncached, i, N, "random_device");
-        benchmark_rng(rd_cached, i, N, "cached");
-        benchmark_rng(prng, i, N, "mt_19937");
+        // benchmark_rng(rd_cached, i, N, "cached");
+        benchmark_rng(prng, i, N, "mt19937");
         benchmark_rng(xoshiro128, i, N, "xoshiro128");
     }
 

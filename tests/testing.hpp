@@ -7,56 +7,6 @@
 
 namespace entropy_store
 {
-// Checks that multiple samplings of a uniform distribution
-// occur in the expected range. According to the central limit theorem
-// However, they are not independent.
-class debug_uniform
-{
-  public:
-    using value_type = std::uint64_t;
-    void record(value_type value, value_type size)
-    {
-        assert(value < size);
-        total_value += value;
-        total_size += size - 1;
-        total_count++;
-        sum_s_squared += size * size - 1;
-    }
-
-    double sd() const
-    {
-        return std::sqrt(sum_s_squared / 12.0);
-    }
-
-    double mean() const
-    {
-        return total_size / 2.0;
-    }
-
-    double get_relative_bias() const
-    {
-        return (total_value - mean()) / sd();
-    }
-
-    double get_percentage_bias() const
-    {
-        return 100.0 * (total_value - mean()) / total_value;
-    }
-
-    debug_uniform(const char *place) : place(place)
-    {
-    }
-
-    ~debug_uniform()
-    {
-        std::cout << place << ": uniform distribution bias = " << get_percentage_bias() << "%\n";
-    }
-
-  private:
-    const char *place;
-    std::uint64_t total_value = 0, total_size = 0, total_count = 0;
-    double sum_s_squared = 0;
-};
 
 template <entropy_generator Source> class stored_source
 {
@@ -302,6 +252,12 @@ template <entropy_generator Source> class lemire
                dist.min();
     }
 
+    template <std::integral T, T M, T N> auto operator()(const const_uniform_distribution<T, M, N> &dist)
+    {
+        return nearlydivisionless(dist.size(), [&]() { return (uint64_t(m_source()) << 32) | m_source(); }) +
+               dist.min();
+    }
+
     const auto &source() const
     {
         return m_source;
@@ -507,6 +463,49 @@ template<typename S>
 inline int bits_fetched(const c_code_source<S>&s)
 {
     return bits_fetched(s.source());
+}
+
+template<typename Source>
+struct alias_method
+{
+    alias_method(Source s) : m_source(s) {}
+
+    auto operator()(const auto & dist)
+    {
+        return m_source(dist);
+    }
+
+    auto operator()(const weighted_distribution&dist)
+    {
+        return dist.outputs()[m_source(uniform_distribution(0ul,dist.outputs().size()-1))];
+    }
+
+    int operator()(const bernoulli_distribution &dist)
+    {
+        return m_source(uniform_distribution<size_t>(0ull,dist.denominator()-1)) < dist.numerator();
+    }
+
+    template<std::integral T, T M, T N>
+    auto operator()(const_bernoulli_distribution<T,M,N> &dist)
+    {
+        return m_source(const_uniform<0, N-1>{}) < M;
+    }
+
+    Source m_source;
+
+    const auto & source() const { return m_source.source(); }
+};
+
+template<typename Source>
+auto internal_entropy (const alias_method<Source> & source)
+{
+    return internal_entropy(source.source());
+}
+
+template<typename Source>
+auto bits_fetched (const alias_method<Source> & source)
+{
+    return bits_fetched(source.source());
 }
 
 

@@ -86,5 +86,11 @@ int main(int argc, char **argv)
     std::cout << "ALDR: ";
     count_totals(aldr_source{bits, weighted_distribution{1, 2, 3, 4, 5}}, N, 0.69);
 
+    std::cout << "Lemire alias: ";
+    count_totals(bound_entropy_generator{alias_method{lemire{xoshiro128_rd}}, bernoulli_distribution(1,100)}, N, 0);
+
+    std::cout << "Lemire alias: ";
+    count_totals(bound_entropy_generator{alias_method{lemire{xoshiro128_rd}}, weighted_distribution{1,2,3,4,5}}, N, 0);
+
     std::cout << "\nAll tests passed!\n";
 }
