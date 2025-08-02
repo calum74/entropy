@@ -3,6 +3,9 @@
 #include "fldr.hpp"
 #include "fwd.hpp"
 #include "testing.hpp"
+#include "fast_dice_roller.hpp"
+#include "von_neumann.hpp"
+#include "lemire.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -95,7 +98,7 @@ int main(int argc, const char **argv)
     // 32-bit sources
     entropy_store::random_device_generator rd_uncached;
     entropy_store::wrapped_source rd_cached{rd_uncached, 100000};
-    entropy_store::prng_source prng;
+    entropy_store::mt19937_source mt19937;
     entropy_store::xoshiro128 xoshiro128{rd_uncached};
 
     std::cout << "Iteration, Generator, Distribution, Source, Time per output, Relative time\n";
@@ -103,7 +106,7 @@ int main(int argc, const char **argv)
     {
         benchmark_rng(rd_uncached, i, N, "random_device");
         // benchmark_rng(rd_cached, i, N, "cached");
-        benchmark_rng(prng, i, N, "mt19937");
+        benchmark_rng(mt19937, i, N, "mt19937");
         benchmark_rng(xoshiro128, i, N, "xoshiro128");
     }
 

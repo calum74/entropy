@@ -2,6 +2,10 @@
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
 #include "fldr.hpp"
+#include "von_neumann.hpp"
+#include "fast_dice_roller.hpp"
+#include "lemire.hpp"
+
 #include "fwd.hpp"
 #include "testing.hpp"
 

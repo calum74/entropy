@@ -15,3 +15,5 @@ paper.bbl-SAVE-ERROR
 entropy.cpp
 .vscode/settings.json
 .cache
+paper/paper.bcf-SAVE-ERROR
+.gitignore

@@ -1,9 +1,8 @@
 # Next steps
 
-- [ ] Provide and test the stand-alone C implementation
-- [ ] Measure performance of ALDR and FLDR
-- [x] Measure entropy efficiency of Lemire on the graph
+Code tidy!
 
+Think about more efficient division. For example
 
 - Remove more junk from entropy_store
     - bits()
@@ -13,52 +12,15 @@
 - Maybe abstract a random variable
 - Separate out the validation code and assertions?
 
-- Testing: Performance graph
-(a) reading directly from random device
-(b) reading from mt19937
-
-(c) reading from an array
 
 - [ ] Talk about cryptographically secure
 
-- [ ] Cite Xoshiro https://vigna.di.unimi.it/papers.php#BlVSLPNG
+- [x] Cite Xoshiro https://vigna.di.unimi.it/papers.php#BlVSLPNG
 - [ ] Cite Fill&Huber "The randomness recycler", and "Huber" "Perfect simulation"
 
-# Evaluation
-
-Table 1 shows the speed of Entropy Store generating a uniform integer U(6), compared with some other algorithms, for different entropy sources. These numbers were obtained on an Intel i5-1240P using GCC, but comparable values were obtained on ARM64 using clang. The exact numbers are hardware and compiler dependent, and are only a guide.
-
-ES32 is the entropy store with a 32-bit entropy buffer, and the `const` variant allows the compiler to rewrite division operations into a multiply and a shift \cite{granlund94}, which can result in significant performance improvements. The ES64 variant uses a 64-bit entropy store, as well a compiler-optimized "const" version.
-
-When reading directly from a random device (typically using a CPU instruction), the bottleneck is the rate of entropy input, so the performance is determined by the entropy efficiency, so the ES algorithms are the best. When using pseudo-random sources, Lemire's algorithm is the best of the algorithms tested. We can also observe that using a 64-bit entropy buffer is not beneficial, mainly due to the extra CPU cycles performing a 64-bit divmod..
-
-                     Entropy source
-    Algorithm        Random device      MT19937     Xoshiro-128++  
-    ES32 const       1                  0.48        0.47
-    ES32             1                  1           1
-    ES64 const       1.0                0.56        0.54
-    ES64             1.0                1.3         1.3
-    Von Neumann      1.5                0.61        0.8 
-    Fast Dice Roller 1.4                0.68        0.85
-    Huber-Vargas     1.4                0.72        1.0
-    Lemire           24                 0.34        0.26
-
-    Table 1: Comparing Entropy Store with other uniform random generators (relative to ES32, lower is better)
-
-Conclusions:
-- When using a slow source like mt13397, ES is actually better
-
-Contribution: Practical benefit when entropy is limiting factor
 
 Previous work: Huber: Randomness recycler, talk about the randomness recycler protocol
 
-# The Bug
-
-I think the answer is that when you read an "unlikely" input, it creates a much larger uniform distribution, which is used for much longer. This biases the output towards unlikely inputs, which means that "reading" entropy from biassed sources is not correct.
-
-However, only certain distributions (such as Bernoulli output) expose this error.
-
-Basically, it means we can't read from arbitrary distributions as we were doing, and we need to delete the code.
 
 # Thoughts
 
