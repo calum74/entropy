@@ -63,7 +63,7 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to improve the entropy efficiency. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency as established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is a performance bottleneck.    
+    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to improve the entropy efficiency. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency as established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
 
 \section{Introduction}
@@ -652,7 +652,7 @@ Table~\ref{tab:speed} compares the speed of ES against various best in class ran
 
 When reading entropy from a hardware random generator, rate of entropy input is the dominating factor and the ES is the fastest by a significant margin. When using a very fast pseudo-random source like Xorisho-128 \cite{blackman21}, we see that Lemire's algorithm \cite{lemire2019fast} dominates, as this is designed for speed and not entropy-efficiency.
 
-Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which could be a bit slower than purely arithmetic methods. ES is likely to be slower due to its 2 integer divmod operations, but fortunately compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}.
+Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which could be a bit slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but fortunately compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was fastest for Bernoulli outputs in all cases because there is actually one less division operation needed.
 
 Overall, we can conclude that ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was not beneficial.
 
@@ -682,14 +682,14 @@ ES32                  & $Bernoulli\{\frac{1}{100}\}$ & 1 & 1 \\
 ES32 optimized        & $Bernoulli\{\frac{1}{100}\}$ & 0.9 & 0.54 \\
 FLDR                  & $Bernoulli\{\frac{1}{100}\}$ & 28.3 & 3.8 \\
 ALDR                  & $Bernoulli\{\frac{1}{100}\}$ & 22.4 & 2.94 \\
-Lemire (alias method) & $Bernoulli\{\frac{1}{100}\}$ &  &  \\
+Lemire (alias method) & $Bernoulli\{\frac{1}{100}\}$ & 700 & 1.07 \\
 
 \hline
 
 ES32                  & $Weighted\{1,2,3,4,5\}$ & 1 & 1 \\
 FLDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.38 \\
 ALDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.13 \\
-Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ &  &  \\
+Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ & 29.8 & 0.18 \\
 
 \hline
 
@@ -700,19 +700,11 @@ Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ &  &  \\
 
 
 
-\section{Conclusion and further work}
+\section{Conclusion}
 
-We have introduced a new class of algorithm to convert entropy via a uniform entropy store efficiently, and by caching unused entropy between outputs we can achieve arbitrarily low entropy losses.
+We have introduced a new class of algorithm to generate random integers via a uniform entropy store, and shown that by caching unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
 
-We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be avoided by using an entropy store. 
-
-The ES algorithms are simple and practical enough to be of use in low entropy regimes where the availability of entropy is a bottleneck. The difference with classical algorithms is particularly marked on Bernoulli outputs.
-
-A drawback with the method is the need for 2 32-bit divmod operations per output. It would be very interesting to see if ES methods could found that avoid integer division entirely.
-
-The ES algorithms rely on extracting entropy from uniform variables, but we have not established a theoretical limit or whether the presented algorithms are optimal.
-
-Whilst \cite{saad2020fldr} compare the performance of multiple algorithms, such an comparison has yet to be done on the batched versions of these algorithms.
+A big benefit of ES is that no setup step is needed, and that the same ES can be shared between different outputs. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
 
 
