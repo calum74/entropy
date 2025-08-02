@@ -66,4 +66,4 @@ inline double internal_entropy(const xoshiro128 &s)
     return 0;
 }
 
-}
+} // namespace entropy_store
