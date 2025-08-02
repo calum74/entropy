@@ -42,8 +42,8 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     const entropy_store::uniform_distribution d6(1, 6);
     const entropy_store::uniform_distribution vd6(1, 6 + (errno >> 6)); // Disable some compiler optimizations
     const entropy_store::weighted_distribution w1_99{1, 99};
-    const entropy_store::const_bernoulli<1,99> cb1_99;
-    const entropy_store::bernoulli_distribution rb1_99(1, 99 + (errno>>6));
+    const entropy_store::const_bernoulli<1,100> cb1_99;
+    const entropy_store::bernoulli_distribution rb1_99(1, 100 + (errno>>6));
     const entropy_store::weighted_distribution w12345{1, 2, 3, 4, 5};
     const entropy_store::weighted_distribution wd6{1,1,1,1,1,1};
 

@@ -117,7 +117,7 @@ Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, based on creat
 
 The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform integer generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
 
-Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are very inefficient from an entropy perspective, by using fewer CPU division operations. Lemire's argument is that often the entropy comes from a pseudorandom source that can be quickly generated.
+Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are very inefficient from an entropy perspective, by using fewer CPU division operations. Lemire's use case is for entropy that comes from a pseudorandom source that can be quickly generated.
 
 Various methods have been explored for generating arbitrary intervals.
 The Knuth-Yao algorithm can be used to generate arbitrary distributions from binary entropy, but the tree may need to be truncated unless the distribution is dyadic.
@@ -608,7 +608,7 @@ The inverse of $f_{distribute}$ is given by
 
 \section {Evaluation}
 
-We can evaluate a random number generator based on its speed, memory usage, setup time, entropy efficiency and quality of output distribution. \cite{saad2025}
+We can evaluate a random number generator based on its speed, memory footprint, setup time, entropy efficiency and quality of output distribution. \cite{saad2025}
 
 For entropy efficiency, we can compare entropy-store (ES) against entropy-optimal algorithms Knuth-Yao (KY) and the Interval Algorithm (IA).
 
@@ -648,38 +648,53 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-We can also evaluate ES algorithms in terms of memory, speed, setup costs and flexibility. ES can be written to use 2 integer divmod operations (see \ref{app:source-code}), 
+Table~\ref{tab:speed} compares the speed of ES against various best in class random number generators. These numbers are heavily compiler and CPU dependent, so should only be considered a guide.
 
-which are likely to prove a bottleneck compared to say Lemire's algorithm \cite{lemire2019fast}, or table-based algorithms like FLDR \cite{saad2020fldr,saad2025}. Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(n \log n)$, but for practical purposes it is $O(1)$ in time and space.
+When reading entropy from a hardware random generator, rate of entropy input is the dominating factor and the ES is the fastest by a significant margin. When using a very fast pseudo-random source like Xorisho-128 \cite{blackman21}, we see that Lemire's algorithm \cite{lemire2019fast} dominates, as this is designed for speed and not entropy-efficiency.
 
-ES is able to generate perfect distributions and does not have (albeit minimal) truncation errors found in IA. The entropy store can generate  outputs in any sequence, unlike batching schemes which require the same output.
+Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which could be a bit slower than purely arithmetic methods. ES is likely to be slower due to its 2 integer divmod operations, but fortunately compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}.
 
-Table \ref{tab:speed} compares the time to generate one uniform output from different entropy sources on an Intel i5-1240P CPU built using GCC, but comparable values were obtained on ARM64 using clang. The exact numbers are hardware and compiler dependent, and are only a guide.
+Overall, we can conclude that ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was not beneficial.
 
-ES32 is the entropy store with a 32-bit entropy buffer, and the `const` variant allows the compiler to rewrite division operations into a multiply and a shift \cite{granlund94}, which can result in significant performance improvements. The ES64 variant uses a 64-bit entropy store, as well a compiler-optimized "const" version.
+Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
 
-When reading directly from a random device (typically using a CPU instruction), the bottleneck is the rate of entropy input, so the performance is determined by the entropy efficiency, so the ES algorithms are the best. When using pseudo-random sources, Lemire's algorithm is the best of the algorithms tested. We can also observe that using a 64-bit entropy buffer is not beneficial, mainly due to the extra CPU cycles performing a 64-bit divmod.
-
-\cite{Abel19a} compares the instruction latency on Intel CPUs, showing for example that on an Alder Lake-P CPU a 64-bit IDIV instruction takes 14-18 cycles compared with 10-15 cycles for 32-bit instructions.
-
+Other benefits of ES are its small memory footprint and its flexibility. ES can generate outputs in any sequence, unlike batching schemes.
 
 \begin{table}[h!]
 \centering
 \begin{tabular}{|c|c|c|c|}
 \hline
-Algorithm & Random device & MT19937 & Xoshiro-128++ \\
+Algorithm & Distribution & Hardware & Xoshiro-128++ \\
 \hline
-ES32 & 1 & 1 & 1 \\
-ES32 const & 1.0 & 0.48 & 0.47 \\
-ES64 & 1.0 & 1.3 & 1.3 \\
-ES64 const & 1.0 & 0.56 & 0.54 \\
-Von Neumann \cite{neumann51} & 1.5 & 0.61 & 0.8 \\
-Fast Dice Roller \cite{lumbroso2013optimal} & 1.4 & 0.68 & 0.85 \\
-Huber-Vergas \cite{huber2024optimalrollingfairdice} & 1.4 & 0.72 & 1.0 \\
-Lemire \cite{lemire2019fast} & 24 & 0.34 & 0.26 \\
+ES32                  & $Uniform\{6\}$ & 1 & 1 \\
+ES32 optimized        & $Uniform\{6\}$ & 1 & 0.47 \\
+ES64                  & $Uniform\{6\}$ & 1 & 1.24 \\
+ES64 optimized        & $Uniform\{6\}$ & 1 & 0.55 \\
+Von Neumann \cite{neumann51}     & $Uniform\{6\}$ & 1.55 & 0.77 \\
+Fast Dice Roller \cite{lumbroso2013optimal} & $Uniform\{6\}$ & 1.42 & 0.83 \\
+Huber-Vergas \cite{huber2024optimalrollingfairdice} & $Uniform\{6\}$ & 1.42 & 1.0 \\
+FLDR \cite{saad2020fldr} & $Uniform\{6\}$ & 1.42 & 1.46 \\
+ALDR \cite{saad2025} & $Uniform\{6\}$ & 1.42 & 1.5 \\
+Lemire \cite{lemire2019fast} & $Uniform\{6\}$ & 24.8 & 0.26 \\
 \hline
+
+ES32                  & $Bernoulli\{\frac{1}{100}\}$ & 1 & 1 \\
+ES32 optimized        & $Bernoulli\{\frac{1}{100}\}$ & 0.9 & 0.54 \\
+FLDR                  & $Bernoulli\{\frac{1}{100}\}$ & 28.3 & 3.8 \\
+ALDR                  & $Bernoulli\{\frac{1}{100}\}$ & 22.4 & 2.94 \\
+Lemire (alias method) & $Bernoulli\{\frac{1}{100}\}$ &  &  \\
+
+\hline
+
+ES32                  & $Weighted\{1,2,3,4,5\}$ & 1 & 1 \\
+FLDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.38 \\
+ALDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.13 \\
+Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ &  &  \\
+
+\hline
+
 \end{tabular}
-\caption{Relative times generating uniform integers (lower is better).}
+\caption{Relative times generating integers from different binary entropy sources (lower is better).}
     \label{tab:speed}
 \end{table}
 
