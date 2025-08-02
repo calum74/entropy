@@ -3,18 +3,19 @@
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
 #include "fetch.hpp"
-#include "fwd.hpp"
 
 extern "C"
 {
 #include "fldr.h"
 }
 
+namespace entropy_store
+{
 template<typename Source> 
 class fldr_source
 {
   public:
-    using distribution_type = entropy_store::weighted_distribution;
+    using distribution_type = weighted_distribution;
     using value_type = int;
     using source_type = fetch_source<Source>;
 
@@ -49,8 +50,6 @@ class fldr_source
     source_type m_source;
 };
 
-namespace entropy_store
-{
 template<typename S> 
     inline double internal_entropy(const fldr_source<S> &)
 {

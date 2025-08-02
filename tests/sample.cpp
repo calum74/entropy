@@ -11,7 +11,7 @@ int main()
 
     // Define some distributions we can generate
     // The const_distributions are compile-time constant and can lead to more efficient code
-    // (for example by optimising integer divisions)
+    // (for example by optimizing integer divisions)
     entropy_store::const_uniform<1,6> d6;
     entropy_store::const_bernoulli<1,2> fair_coin;
     entropy_store::const_bernoulli<4,5> biassed_coin;

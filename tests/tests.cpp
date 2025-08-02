@@ -1,12 +1,14 @@
 #include "aldr.hpp"
+#include "c_code.hpp"
 #include "entropy_metrics.hpp"
 #include "entropy_store.hpp"
 #include "fldr.hpp"
+#include "huber_vargas.hpp"
 #include "von_neumann.hpp"
 #include "fast_dice_roller.hpp"
 #include "lemire.hpp"
+#include "xoshiro128.hpp"
 
-#include "fwd.hpp"
 #include "testing.hpp"
 
 using namespace entropy_store;

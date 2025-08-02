@@ -1,11 +1,13 @@
 #include "aldr.hpp"
 #include "entropy_store.hpp"
 #include "fldr.hpp"
-#include "fwd.hpp"
+#include "huber_vargas.hpp"
+#include "mt19937.hpp"
 #include "testing.hpp"
 #include "fast_dice_roller.hpp"
 #include "von_neumann.hpp"
 #include "lemire.hpp"
+#include "xoshiro128.hpp"
 
 #include <chrono>
 #include <cstdlib>
@@ -38,7 +40,7 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     auto fdr = entropy_store::fast_dice_roller{fetch};
     auto huber_vargas = entropy_store::huber_vargas{fetch};
     auto von_neumann = entropy_store::von_neumann{fetch};
-    auto lemire = entropy_store::lemire{source}; // !! Add alias wrapper
+    auto lemire = entropy_store::alias_method{entropy_store::lemire{source}};
 
     // Distributions
     const entropy_store::const_uniform<1, 6> fast_d6;
@@ -62,26 +64,26 @@ void benchmark_rng(auto source, int i, std::size_t N, const char *source_name)
     report(i, "ES64 optimized", "d6", source_name, measure(es64, fast_d6, N), benchmark_d6);
     report(i, "VN", "d6", source_name, measure(von_neumann, d6, N), benchmark_d6);
     report(i, "Fast Dice Roller", "d6", source_name, measure(fdr, d6, N), benchmark_d6);
-    report(i, "FLDR", "d6", source_name, measure(fldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
-    report(i, "ALDR", "d6", source_name, measure(aldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
+    report(i, "FLDR", "d6", source_name, measure(entropy_store::fldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
+    report(i, "ALDR", "d6", source_name, measure(entropy_store::aldr_source{fetch, weighted_d6}, weighted_d6, N), benchmark_d6);
     report(i, "Huber-Vargas", "d6", source_name, measure(huber_vargas, d6, N), benchmark_d6);
     report(i, "Lemire", "d6", source_name, measure(lemire, d6, N), benchmark_d6);
 
     report(i, "ES32", "Bernoulli", source_name, measure(es32, bernoulli, N), benchmark_bernoulli);
     report(i, "ES32 optimized", "Bernoulli", source_name, measure(es32, fast_bernoulli, N), benchmark_bernoulli);
-    report(i, "FLDR", "Bernoulli", source_name, measure(fldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
+    report(i, "FLDR", "Bernoulli", source_name, measure(entropy_store::fldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
            benchmark_bernoulli);
-    report(i, "ALDR", "Bernoulli", source_name, measure(aldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
+    report(i, "ALDR", "Bernoulli", source_name, measure(entropy_store::aldr_source{fetch, weighted_bernoulli}, weighted_bernoulli, N),
            benchmark_bernoulli);
 
-    report(i, "Lemire+alias", "Bernoulli", source_name, measure(entropy_store::alias_method{lemire}, bernoulli, N),
+    report(i, "Lemire+alias", "Bernoulli", source_name, measure(lemire, bernoulli, N),
            benchmark_bernoulli);
 
     report(i, "ES32", "Weighted", source_name, measure(es32, weighted, N), benchmark_weighted);
-    report(i, "FLDR", "Weighted", source_name, measure(fldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
-    report(i, "ALDR", "Weighted", source_name, measure(aldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
+    report(i, "FLDR", "Weighted", source_name, measure(entropy_store::fldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
+    report(i, "ALDR", "Weighted", source_name, measure(entropy_store::aldr_source{fetch, weighted}, weighted, N), benchmark_weighted);
 
-    report(i, "Lemire+alias", "Weighted", source_name, measure(entropy_store::alias_method{lemire}, weighted, N),
+    report(i, "Lemire+alias", "Weighted", source_name, measure(lemire, weighted, N),
            benchmark_weighted);
 }
 

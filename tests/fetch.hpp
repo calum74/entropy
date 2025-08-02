@@ -5,25 +5,27 @@
 
 // For algorithms that have a fixed "fetch" or "flip" backend
 
+namespace entropy_store
+{
 class fetch_base
 {
-public:
+  public:
     virtual int fetch() = 0;
-
 };
 
 void install_fetch(std::shared_ptr<fetch_base> p);
 
-template<typename Source>
-class fetch_source
+template <typename Source> class fetch_source
 {
   public:
-    using distribution_type = entropy_store::binary_distribution;
+    using distribution_type = binary_distribution;
 
     class fetch_impl : public fetch_base
     {
-    public:
-        fetch_impl(Source s) : m_source(std::move(s)) {}
+      public:
+        fetch_impl(Source s) : m_source(std::move(s))
+        {
+        }
         Source m_source;
         int fetch() override
         {
@@ -55,16 +57,12 @@ class fetch_source
     }
 };
 
-namespace entropy_store
-{
-    template<typename Source>
-double internal_entropy(const fetch_source<Source> &source)
+template <typename Source> double internal_entropy(const fetch_source<Source> &source)
 {
     return internal_entropy(source.source());
 }
 
-    template<typename Source>
-double bits_fetched(const fetch_source<Source> &source)
+template <typename Source> double bits_fetched(const fetch_source<Source> &source)
 {
     return bits_fetched(source.source());
 }

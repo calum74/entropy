@@ -49,4 +49,4 @@ template <typename Source> auto bits_fetched(const fast_dice_roller<Source> &g)
     return bits_fetched(g.source());
 }
 
-}
+} // namespace entropy_store

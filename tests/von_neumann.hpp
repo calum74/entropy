@@ -36,16 +36,14 @@ template <binary_entropy_generator Source> class von_neumann
     Source m_source;
 };
 
-
 template <typename Source> auto internal_entropy(const von_neumann<Source> &source)
 {
     return internal_entropy(source.source());
 }
-
 
 template <typename Source> auto bits_fetched(const von_neumann<Source> &g)
 {
     return bits_fetched(g.source());
 }
 
-}
+} // namespace entropy_store
