@@ -1,241 +1,172 @@
 Iteration, Generator, Distribution, Source, Time per output, Relative time
-0, ES32, d6, random_device, 1.45751e-07s, 0.999196
-0, ES32, cd6, random_device, 1.45746e-07s, 0.999163
-0, ES32, vd6, random_device, 1.45751e-07s, 0.999195
-0, ES64, d6, random_device, 1.45823e-07s, 0.999685
-0, ES64, cd6, random_device, 1.45816e-07s, 0.999642
-0, ES64, vd6, random_device, 1.45759e-07s, 0.99925
-0, Von Neumann, vd6, random_device, 2.25614e-07s, 1.54669
-0, Fast Dice Roller, vd6, random_device, 2.06798e-07s, 1.4177
-0, FLDR, vd6, random_device, 2.06698e-07s, 1.41702
-0, ALDR, wd6, random_device, 2.07129e-07s, 1.41997
-0, Huber-Vargas, vd6, random_device, 2.06975e-07s, 1.41891
-0, Lemire, vd6, random_device, 3.60964e-06s, 24.7459
-0, ES32, Const Bernoulli{1/99}, random_device, 4.62752e-09s, 0.920569
-0, ES32, Runtime Bernoulli{1/99}, random_device, 5.32953e-09s, 1.06022
-0, ES32, Weighted{1/99}, random_device, 9.95046e-09s, 1.97948
-0, FLDR, B{1/99}, random_device, 1.43163e-07s, 28.48
-0, ALDR, B{1/99}, random_device, 1.13336e-07s, 22.5463
-0, ES32, Weighted{12345}, random_device, 1.21221e-07s, 1.00018
-0, FLDR, W{12345}, random_device, 1.6542e-07s, 1.36486
-0, ALDR, W12345, random_device, 1.65513e-07s, 1.36563
-0, ES32, d6, cached, 8.0464e-09s, 1.0314
-0, ES32, cd6, cached, 3.50421e-09s, 0.449177
-0, ES32, vd6, cached, 7.8147e-09s, 1.0017
-0, ES64, d6, cached, 9.53498e-09s, 1.22221
-0, ES64, cd6, cached, 3.96674e-09s, 0.508464
-0, ES64, vd6, cached, 9.43263e-09s, 1.20909
-0, Von Neumann, vd6, cached, 7.04462e-09s, 0.902993
-0, Fast Dice Roller, vd6, cached, 6.95707e-09s, 0.891771
-0, FLDR, vd6, cached, 1.04199e-08s, 1.33565
-0, ALDR, wd6, cached, 1.09138e-08s, 1.39895
-0, Huber-Vargas, vd6, cached, 8.63281e-09s, 1.10657
-0, Lemire, vd6, cached, 8.25922e-10s, 0.105868
-0, ES32, Const Bernoulli{1/99}, cached, 2.41746e-09s, 0.545629
-0, ES32, Runtime Bernoulli{1/99}, cached, 4.46525e-09s, 1.00782
-0, ES32, Weighted{1/99}, cached, 9.38969e-09s, 2.11929
-0, FLDR, B{1/99}, cached, 1.63973e-08s, 3.70093
-0, ALDR, B{1/99}, cached, 1.19327e-08s, 2.69326
-0, ES32, Weighted{12345}, cached, 1.1555e-08s, 0.947467
-0, FLDR, W{12345}, cached, 1.35808e-08s, 1.11357
-0, ALDR, W12345, cached, 1.23919e-08s, 1.01608
-0, ES32, d6, mt_19937, 7.66957e-09s, 0.984254
-0, ES32, cd6, mt_19937, 3.75723e-09s, 0.482175
-0, ES32, vd6, mt_19937, 7.56401e-09s, 0.970707
-0, ES64, d6, mt_19937, 9.98292e-09s, 1.28113
-0, ES64, cd6, mt_19937, 4.24654e-09s, 0.544968
-0, ES64, vd6, mt_19937, 9.84414e-09s, 1.26332
-0, Von Neumann, vd6, mt_19937, 4.2125e-09s, 0.540601
-0, Fast Dice Roller, vd6, mt_19937, 5.53503e-09s, 0.710323
-0, FLDR, vd6, mt_19937, 8.34015e-09s, 1.07031
-0, ALDR, wd6, mt_19937, 8.44154e-09s, 1.08332
-0, Huber-Vargas, vd6, mt_19937, 5.56223e-09s, 0.713814
-0, Lemire, vd6, mt_19937, 2.79343e-09s, 0.358487
-0, ES32, Const Bernoulli{1/99}, mt_19937, 2.27392e-09s, 0.527416
-0, ES32, Runtime Bernoulli{1/99}, mt_19937, 4.6058e-09s, 1.06827
-0, ES32, Weighted{1/99}, mt_19937, 9.64337e-09s, 2.23669
-0, FLDR, B{1/99}, mt_19937, 1.74345e-08s, 4.04377
-0, ALDR, B{1/99}, mt_19937, 6.13748e-09s, 1.42353
-0, ES32, Weighted{12345}, mt_19937, 1.24163e-08s, 1.04904
-0, FLDR, W{12345}, mt_19937, 2.04192e-08s, 1.72521
-0, ALDR, W12345, mt_19937, 8.20018e-09s, 0.692829
-0, ES32, d6, xoshiro128, 7.25288e-09s, 0.990526
-0, ES32, cd6, xoshiro128, 3.41724e-09s, 0.466692
-0, ES32, vd6, xoshiro128, 7.32832e-09s, 1.00083
-0, ES64, d6, xoshiro128, 9.05628e-09s, 1.23682
-0, ES64, cd6, xoshiro128, 4.09585e-09s, 0.55937
-0, ES64, vd6, xoshiro128, 9.0113e-09s, 1.23067
-0, Von Neumann, vd6, xoshiro128, 5.42984e-09s, 0.741553
-0, Fast Dice Roller, vd6, xoshiro128, 5.91297e-09s, 0.807534
-0, FLDR, vd6, xoshiro128, 1.07237e-08s, 1.46453
-0, ALDR, wd6, xoshiro128, 1.096e-08s, 1.4968
-0, Huber-Vargas, vd6, xoshiro128, 7.29148e-09s, 0.995797
-0, Lemire, vd6, xoshiro128, 1.92502e-09s, 0.262901
-0, ES32, Const Bernoulli{1/99}, xoshiro128, 2.18133e-09s, 0.527108
-0, ES32, Runtime Bernoulli{1/99}, xoshiro128, 4.16427e-09s, 1.00628
-0, ES32, Weighted{1/99}, xoshiro128, 9.30422e-09s, 2.24832
-0, FLDR, B{1/99}, xoshiro128, 1.57641e-08s, 3.80933
-0, ALDR, B{1/99}, xoshiro128, 1.21282e-08s, 2.93073
-0, ES32, Weighted{12345}, xoshiro128, 1.17142e-08s, 1.0199
-0, FLDR, W{12345}, xoshiro128, 1.58938e-08s, 1.38379
-0, ALDR, W12345, xoshiro128, 1.53161e-08s, 1.3335
-1, ES32, d6, random_device, 1.45824e-07s, 1.00051
-1, ES32, cd6, random_device, 1.45756e-07s, 1.00004
-1, ES32, vd6, random_device, 1.4576e-07s, 1.00007
-1, ES64, d6, random_device, 1.45874e-07s, 1.00085
-1, ES64, cd6, random_device, 1.4579e-07s, 1.00027
-1, ES64, vd6, random_device, 1.46122e-07s, 1.00255
-1, Von Neumann, vd6, random_device, 2.25571e-07s, 1.54765
-1, Fast Dice Roller, vd6, random_device, 2.06881e-07s, 1.41942
-1, FLDR, vd6, random_device, 2.06964e-07s, 1.41999
-1, ALDR, wd6, random_device, 2.06754e-07s, 1.41855
-1, Huber-Vargas, vd6, random_device, 2.06727e-07s, 1.41836
-1, Lemire, vd6, random_device, 3.60929e-06s, 24.7635
-1, ES32, Const Bernoulli{1/99}, random_device, 4.67001e-09s, 0.899204
-1, ES32, Runtime Bernoulli{1/99}, random_device, 5.51019e-09s, 1.06098
-1, ES32, Weighted{1/99}, random_device, 9.62492e-09s, 1.85327
-1, FLDR, B{1/99}, random_device, 1.43088e-07s, 27.5514
-1, ALDR, B{1/99}, random_device, 1.13551e-07s, 21.8641
-1, ES32, Weighted{12345}, random_device, 1.212e-07s, 1.00003
-1, FLDR, W{12345}, random_device, 1.65392e-07s, 1.36466
-1, ALDR, W12345, random_device, 1.65491e-07s, 1.36548
-1, ES32, d6, cached, 7.74698e-09s, 0.983614
-1, ES32, cd6, cached, 3.30634e-09s, 0.419797
-1, ES32, vd6, cached, 7.58975e-09s, 0.96365
-1, ES64, d6, cached, 9.22926e-09s, 1.17181
-1, ES64, cd6, cached, 3.89317e-09s, 0.494305
-1, ES64, vd6, cached, 9.12618e-09s, 1.15873
-1, Von Neumann, vd6, cached, 6.70994e-09s, 0.851943
-1, Fast Dice Roller, vd6, cached, 6.30614e-09s, 0.800674
-1, FLDR, vd6, cached, 1.03067e-08s, 1.30862
-1, ALDR, wd6, cached, 1.00832e-08s, 1.28024
-1, Huber-Vargas, vd6, cached, 7.49221e-09s, 0.951266
-1, Lemire, vd6, cached, 8.15409e-10s, 0.10353
-1, ES32, Const Bernoulli{1/99}, cached, 2.18184e-09s, 0.512237
-1, ES32, Runtime Bernoulli{1/99}, cached, 4.17157e-09s, 0.97937
-1, ES32, Weighted{1/99}, cached, 9.27434e-09s, 2.17736
-1, FLDR, B{1/99}, cached, 1.54498e-08s, 3.6272
-1, ALDR, B{1/99}, cached, 1.21236e-08s, 2.84629
-1, ES32, Weighted{12345}, cached, 1.16908e-08s, 1.00791
-1, FLDR, W{12345}, cached, 1.32564e-08s, 1.14289
-1, ALDR, W12345, cached, 1.23428e-08s, 1.06412
-1, ES32, d6, mt_19937, 7.31077e-09s, 1.00482
-1, ES32, cd6, mt_19937, 3.63376e-09s, 0.49944
-1, ES32, vd6, mt_19937, 7.30497e-09s, 1.00403
-1, ES64, d6, mt_19937, 9.50856e-09s, 1.3069
-1, ES64, cd6, mt_19937, 4.22277e-09s, 0.580396
-1, ES64, vd6, mt_19937, 9.52823e-09s, 1.3096
-1, Von Neumann, vd6, mt_19937, 4.19617e-09s, 0.57674
-1, Fast Dice Roller, vd6, mt_19937, 5.69298e-09s, 0.782469
-1, FLDR, vd6, mt_19937, 8.27722e-09s, 1.13766
-1, ALDR, wd6, mt_19937, 7.99853e-09s, 1.09935
-1, Huber-Vargas, vd6, mt_19937, 5.33532e-09s, 0.73331
-1, Lemire, vd6, mt_19937, 2.68009e-09s, 0.368364
-1, ES32, Const Bernoulli{1/99}, mt_19937, 2.2978e-09s, 0.5548
-1, ES32, Runtime Bernoulli{1/99}, mt_19937, 4.39815e-09s, 1.06192
-1, ES32, Weighted{1/99}, mt_19937, 9.75302e-09s, 2.35485
-1, FLDR, B{1/99}, mt_19937, 1.84091e-08s, 4.44484
-1, ALDR, B{1/99}, mt_19937, 6.43087e-09s, 1.55272
-1, ES32, Weighted{12345}, mt_19937, 1.27382e-08s, 1.12137
-1, FLDR, W{12345}, mt_19937, 2.26169e-08s, 1.99101
-1, ALDR, W12345, mt_19937, 7.96422e-09s, 0.701108
-1, ES32, d6, xoshiro128, 7.39535e-09s, 1.01016
-1, ES32, cd6, xoshiro128, 3.43696e-09s, 0.469466
-1, ES32, vd6, xoshiro128, 7.37071e-09s, 1.00679
-1, ES64, d6, xoshiro128, 9.03862e-09s, 1.23461
-1, ES64, cd6, xoshiro128, 4.0285e-09s, 0.550265
-1, ES64, vd6, xoshiro128, 9.45769e-09s, 1.29186
-1, Von Neumann, vd6, xoshiro128, 5.62437e-09s, 0.768252
-1, Fast Dice Roller, vd6, xoshiro128, 6.33669e-09s, 0.865549
-1, FLDR, vd6, xoshiro128, 1.13752e-08s, 1.55377
-1, ALDR, wd6, xoshiro128, 1.1877e-08s, 1.62232
-1, Huber-Vargas, vd6, xoshiro128, 7.82429e-09s, 1.06875
-1, Lemire, vd6, xoshiro128, 2.35634e-09s, 0.32186
-1, ES32, Const Bernoulli{1/99}, xoshiro128, 2.73242e-09s, 0.651686
-1, ES32, Runtime Bernoulli{1/99}, xoshiro128, 5.03469e-09s, 1.20078
-1, ES32, Weighted{1/99}, xoshiro128, 1.01423e-08s, 2.41896
-1, FLDR, B{1/99}, xoshiro128, 1.83146e-08s, 4.36807
-1, ALDR, B{1/99}, xoshiro128, 1.26783e-08s, 3.02379
-1, ES32, Weighted{12345}, xoshiro128, 1.16306e-08s, 1.01565
-1, FLDR, W{12345}, xoshiro128, 1.41932e-08s, 1.23943
-1, ALDR, W12345, xoshiro128, 1.28895e-08s, 1.12559
-2, ES32, d6, random_device, 1.45756e-07s, 0.999962
-2, ES32, cd6, random_device, 1.45747e-07s, 0.9999
-2, ES32, vd6, random_device, 1.46046e-07s, 1.00195
-2, ES64, d6, random_device, 1.45773e-07s, 1.00008
-2, ES64, cd6, random_device, 1.45761e-07s, 0.999998
-2, ES64, vd6, random_device, 1.45754e-07s, 0.999947
-2, Von Neumann, vd6, random_device, 2.25799e-07s, 1.54909
-2, Fast Dice Roller, vd6, random_device, 2.06734e-07s, 1.4183
-2, FLDR, vd6, random_device, 2.06979e-07s, 1.41998
-2, ALDR, wd6, random_device, 2.0675e-07s, 1.41841
-2, Huber-Vargas, vd6, random_device, 2.06866e-07s, 1.41921
-2, Lemire, vd6, random_device, 3.61023e-06s, 24.768
-2, ES32, Const Bernoulli{1/99}, random_device, 4.56698e-09s, 0.903773
-2, ES32, Runtime Bernoulli{1/99}, random_device, 5.18404e-09s, 1.02588
-2, ES32, Weighted{1/99}, random_device, 9.94679e-09s, 1.9684
-2, FLDR, B{1/99}, random_device, 1.43204e-07s, 28.3389
-2, ALDR, B{1/99}, random_device, 1.13351e-07s, 22.4314
-2, ES32, Weighted{12345}, random_device, 1.21203e-07s, 1.00006
-2, FLDR, W{12345}, random_device, 1.65394e-07s, 1.36468
-2, ALDR, W12345, random_device, 1.65353e-07s, 1.36435
-2, ES32, d6, cached, 7.60478e-09s, 0.853032
-2, ES32, cd6, cached, 3.42905e-09s, 0.384639
-2, ES32, vd6, cached, 7.7466e-09s, 0.868941
-2, ES64, d6, cached, 9.37987e-09s, 1.05215
-2, ES64, cd6, cached, 4.0233e-09s, 0.451296
-2, ES64, vd6, cached, 9.38527e-09s, 1.05275
-2, Von Neumann, vd6, cached, 6.92182e-09s, 0.776425
-2, Fast Dice Roller, vd6, cached, 6.39652e-09s, 0.717501
-2, FLDR, vd6, cached, 1.04143e-08s, 1.16818
-2, ALDR, wd6, cached, 1.04383e-08s, 1.17087
-2, Huber-Vargas, vd6, cached, 8.13474e-09s, 0.912478
-2, Lemire, vd6, cached, 8.13608e-10s, 0.0912629
-2, ES32, Const Bernoulli{1/99}, cached, 2.23462e-09s, 0.531935
-2, ES32, Runtime Bernoulli{1/99}, cached, 4.26864e-09s, 1.01612
-2, ES32, Weighted{1/99}, cached, 8.76111e-09s, 2.08552
-2, FLDR, B{1/99}, cached, 1.74427e-08s, 4.1521
-2, ALDR, B{1/99}, cached, 1.27104e-08s, 3.02561
-2, ES32, Weighted{12345}, cached, 1.25375e-08s, 1.05543
-2, FLDR, W{12345}, cached, 1.5773e-08s, 1.32781
-2, ALDR, W12345, cached, 1.47487e-08s, 1.24157
-2, ES32, d6, mt_19937, 7.38089e-09s, 0.996402
-2, ES32, cd6, mt_19937, 3.69525e-09s, 0.49885
-2, ES32, vd6, mt_19937, 7.32084e-09s, 0.988296
-2, ES64, d6, mt_19937, 9.47957e-09s, 1.27972
-2, ES64, cd6, mt_19937, 4.51555e-09s, 0.609588
-2, ES64, vd6, mt_19937, 9.36715e-09s, 1.26454
-2, Von Neumann, vd6, mt_19937, 4.5451e-09s, 0.613578
-2, Fast Dice Roller, vd6, mt_19937, 5.29379e-09s, 0.71465
-2, FLDR, vd6, mt_19937, 8.11947e-09s, 1.09611
-2, ALDR, wd6, mt_19937, 8.17316e-09s, 1.10336
-2, Huber-Vargas, vd6, mt_19937, 5.30112e-09s, 0.715639
-2, Lemire, vd6, mt_19937, 2.68598e-09s, 0.362601
-2, ES32, Const Bernoulli{1/99}, mt_19937, 2.27684e-09s, 0.543907
-2, ES32, Runtime Bernoulli{1/99}, mt_19937, 4.17027e-09s, 0.996221
-2, ES32, Weighted{1/99}, mt_19937, 9.48555e-09s, 2.26597
-2, FLDR, B{1/99}, mt_19937, 1.63481e-08s, 3.90535
-2, ALDR, B{1/99}, mt_19937, 6.41605e-09s, 1.53271
-2, ES32, Weighted{12345}, mt_19937, 1.15036e-08s, 0.990179
-2, FLDR, W{12345}, mt_19937, 2.07739e-08s, 1.78812
-2, ALDR, W12345, mt_19937, 7.98628e-09s, 0.687423
-2, ES32, d6, xoshiro128, 7.27102e-09s, 1.00679
-2, ES32, cd6, xoshiro128, 3.38014e-09s, 0.468034
-2, ES32, vd6, xoshiro128, 7.20002e-09s, 0.996957
-2, ES64, d6, xoshiro128, 8.95984e-09s, 1.24063
-2, ES64, cd6, xoshiro128, 3.98772e-09s, 0.552163
-2, ES64, vd6, xoshiro128, 9.01144e-09s, 1.24778
-2, Von Neumann, vd6, xoshiro128, 5.53529e-09s, 0.766448
-2, Fast Dice Roller, vd6, xoshiro128, 5.99721e-09s, 0.830409
-2, FLDR, vd6, xoshiro128, 1.08175e-08s, 1.49786
-2, ALDR, wd6, xoshiro128, 1.09042e-08s, 1.50986
-2, Huber-Vargas, vd6, xoshiro128, 7.34108e-09s, 1.01649
-2, Lemire, vd6, xoshiro128, 1.89694e-09s, 0.262662
-2, ES32, Const Bernoulli{1/99}, xoshiro128, 2.22334e-09s, 0.536013
-2, ES32, Runtime Bernoulli{1/99}, xoshiro128, 4.2303e-09s, 1.01986
-2, ES32, Weighted{1/99}, xoshiro128, 8.73272e-09s, 2.10532
-2, FLDR, B{1/99}, xoshiro128, 1.65112e-08s, 3.98058
-2, ALDR, B{1/99}, xoshiro128, 1.21805e-08s, 2.93653
-2, ES32, Weighted{12345}, xoshiro128, 1.16438e-08s, 1.01859
-2, FLDR, W{12345}, xoshiro128, 1.35725e-08s, 1.18731
-2, ALDR, W12345, xoshiro128, 1.29915e-08s, 1.13649
+0, ES32, d6, random_device, 1.4582e-07s, 1.00047
+0, ES32 optimized, cd6, random_device, 1.4575e-07s, 0.999993
+0, ES64, d6, random_device, 1.45764e-07s, 1.00009
+0, ES64 optimized, d6, random_device, 1.45748e-07s, 0.99998
+0, VN, d6, random_device, 2.25437e-07s, 1.54673
+0, Fast Dice Roller, d6, random_device, 2.06762e-07s, 1.4186
+0, FLDR, d6, random_device, 2.06787e-07s, 1.41877
+0, ALDR, d6, random_device, 2.06764e-07s, 1.41861
+0, Huber-Vargas, d6, random_device, 2.06765e-07s, 1.41862
+0, Lemire, d6, random_device, 3.61035e-06s, 24.7707
+0, ES32, Bernoulli, random_device, 5.20299e-09s, 1.00976
+0, ES32 optimized, Bernoulli, random_device, 4.56622e-09s, 0.886179
+0, FLDR, Bernoulli, random_device, 1.43233e-07s, 27.7977
+0, ALDR, Bernoulli, random_device, 1.13308e-07s, 21.9901
+0, Lemire+alias, Bernoulli, random_device, 3.60961e-06s, 700.528
+0, ES32, Weighted, random_device, 1.21221e-07s, 1.00005
+0, FLDR, Weighted, random_device, 1.65658e-07s, 1.36665
+0, ALDR, Weighted, random_device, 1.65481e-07s, 1.36518
+0, Lemire+alias, Weighted, random_device, 3.60971e-06s, 29.7794
+0, ES32, d6, mt19937, 7.64941e-09s, 1.05426
+0, ES32 optimized, cd6, mt19937, 3.92611e-09s, 0.541107
+0, ES64, d6, mt19937, 9.47329e-09s, 1.30563
+0, ES64 optimized, d6, mt19937, 4.25301e-09s, 0.586161
+0, VN, d6, mt19937, 4.4263e-09s, 0.610044
+0, Fast Dice Roller, d6, mt19937, 5.11422e-09s, 0.704855
+0, FLDR, d6, mt19937, 9.17798e-09s, 1.26493
+0, ALDR, d6, mt19937, 8.2116e-09s, 1.13174
+0, Huber-Vargas, d6, mt19937, 5.45576e-09s, 0.751927
+0, Lemire, d6, mt19937, 2.65437e-09s, 0.365832
+0, ES32, Bernoulli, mt19937, 4.21974e-09s, 0.996637
+0, ES32 optimized, Bernoulli, mt19937, 2.22502e-09s, 0.525517
+0, FLDR, Bernoulli, mt19937, 1.62496e-08s, 3.8379
+0, ALDR, Bernoulli, mt19937, 5.81368e-09s, 1.3731
+0, Lemire+alias, Bernoulli, mt19937, 2.69538e-09s, 0.636607
+0, ES32, Weighted, mt19937, 1.15674e-08s, 0.997579
+0, FLDR, Weighted, mt19937, 2.04845e-08s, 1.7666
+0, ALDR, Weighted, mt19937, 8.09336e-09s, 0.697977
+0, Lemire+alias, Weighted, mt19937, 2.62861e-09s, 0.226693
+0, ES32, d6, xoshiro128, 7.32824e-09s, 1.0002
+0, ES32 optimized, cd6, xoshiro128, 3.29201e-09s, 0.44931
+0, ES64, d6, xoshiro128, 9.34697e-09s, 1.27572
+0, ES64 optimized, d6, xoshiro128, 3.83904e-09s, 0.523972
+0, VN, d6, xoshiro128, 5.46478e-09s, 0.745861
+0, Fast Dice Roller, d6, xoshiro128, 6.23297e-09s, 0.850708
+0, FLDR, d6, xoshiro128, 1.13532e-08s, 1.54955
+0, ALDR, d6, xoshiro128, 1.05718e-08s, 1.44289
+0, Huber-Vargas, d6, xoshiro128, 7.7624e-09s, 1.05945
+0, Lemire, d6, xoshiro128, 1.98355e-09s, 0.270726
+0, ES32, Bernoulli, xoshiro128, 4.25769e-09s, 1.0126
+0, ES32 optimized, Bernoulli, xoshiro128, 2.54516e-09s, 0.605313
+0, FLDR, Bernoulli, xoshiro128, 1.6899e-08s, 4.01907
+0, ALDR, Bernoulli, xoshiro128, 1.42309e-08s, 3.38453
+0, Lemire+alias, Bernoulli, xoshiro128, 4.92249e-09s, 1.17071
+0, ES32, Weighted, xoshiro128, 1.2973e-08s, 1.12198
+0, FLDR, Weighted, xoshiro128, 1.46702e-08s, 1.26876
+0, ALDR, Weighted, xoshiro128, 1.32784e-08s, 1.1484
+0, Lemire+alias, Weighted, xoshiro128, 2.03396e-09s, 0.175908
+1, ES32, d6, random_device, 1.45788e-07s, 0.99993
+1, ES32 optimized, cd6, random_device, 1.45767e-07s, 0.999784
+1, ES64, d6, random_device, 1.45792e-07s, 0.999956
+1, ES64 optimized, d6, random_device, 1.45745e-07s, 0.999638
+1, VN, d6, random_device, 2.25698e-07s, 1.54802
+1, Fast Dice Roller, d6, random_device, 2.07019e-07s, 1.4199
+1, FLDR, d6, random_device, 2.06836e-07s, 1.41864
+1, ALDR, d6, random_device, 2.06936e-07s, 1.41933
+1, Huber-Vargas, d6, random_device, 2.06718e-07s, 1.41784
+1, Lemire, d6, random_device, 3.60926e-06s, 24.7552
+1, ES32, Bernoulli, random_device, 5.26444e-09s, 0.987463
+1, ES32 optimized, Bernoulli, random_device, 4.53247e-09s, 0.850166
+1, FLDR, Bernoulli, random_device, 1.43316e-07s, 26.8821
+1, ALDR, Bernoulli, random_device, 1.13605e-07s, 21.3091
+1, Lemire+alias, Bernoulli, random_device, 3.60979e-06s, 677.096
+1, ES32, Weighted, random_device, 1.21148e-07s, 0.998434
+1, FLDR, Weighted, random_device, 1.65353e-07s, 1.36275
+1, ALDR, Weighted, random_device, 1.65339e-07s, 1.36263
+1, Lemire+alias, Weighted, random_device, 3.60999e-06s, 29.7515
+1, ES32, d6, mt19937, 7.35952e-09s, 0.952306
+1, ES32 optimized, cd6, mt19937, 3.71209e-09s, 0.480336
+1, ES64, d6, mt19937, 9.81096e-09s, 1.26952
+1, ES64 optimized, d6, mt19937, 4.30338e-09s, 0.556848
+1, VN, d6, mt19937, 4.50553e-09s, 0.583005
+1, Fast Dice Roller, d6, mt19937, 5.02543e-09s, 0.650278
+1, FLDR, d6, mt19937, 9.01907e-09s, 1.16705
+1, ALDR, d6, mt19937, 8.64317e-09s, 1.11841
+1, Huber-Vargas, d6, mt19937, 5.654e-09s, 0.731614
+1, Lemire, d6, mt19937, 2.72416e-09s, 0.3525
+1, ES32, Bernoulli, mt19937, 4.3038e-09s, 1.01583
+1, ES32 optimized, Bernoulli, mt19937, 2.22247e-09s, 0.524572
+1, FLDR, Bernoulli, mt19937, 1.65357e-08s, 3.90294
+1, ALDR, Bernoulli, mt19937, 5.91401e-09s, 1.39589
+1, Lemire+alias, Bernoulli, mt19937, 2.68856e-09s, 0.634584
+1, ES32, Weighted, mt19937, 1.1593e-08s, 0.938319
+1, FLDR, Weighted, mt19937, 2.02439e-08s, 1.63851
+1, ALDR, Weighted, mt19937, 8.04344e-09s, 0.651023
+1, Lemire+alias, Weighted, mt19937, 2.63228e-09s, 0.213053
+1, ES32, d6, xoshiro128, 7.31504e-09s, 0.990136
+1, ES32 optimized, cd6, xoshiro128, 3.32257e-09s, 0.44973
+1, ES64, d6, xoshiro128, 9.44212e-09s, 1.27805
+1, ES64 optimized, d6, xoshiro128, 3.84324e-09s, 0.520206
+1, VN, d6, xoshiro128, 5.70659e-09s, 0.772422
+1, Fast Dice Roller, d6, xoshiro128, 6.22716e-09s, 0.842884
+1, FLDR, d6, xoshiro128, 1.18734e-08s, 1.60713
+1, ALDR, d6, xoshiro128, 1.06781e-08s, 1.44535
+1, Huber-Vargas, d6, xoshiro128, 7.77347e-09s, 1.05219
+1, Lemire, d6, xoshiro128, 2.0115e-09s, 0.272268
+1, ES32, Bernoulli, xoshiro128, 4.20627e-09s, 1.01473
+1, ES32 optimized, Bernoulli, xoshiro128, 2.28656e-09s, 0.551618
+1, FLDR, Bernoulli, xoshiro128, 1.6571e-08s, 3.99763
+1, ALDR, Bernoulli, xoshiro128, 1.25583e-08s, 3.02961
+1, Lemire+alias, Bernoulli, xoshiro128, 4.43144e-09s, 1.06906
+1, ES32, Weighted, xoshiro128, 1.27555e-08s, 1.11145
+1, FLDR, Weighted, xoshiro128, 1.43265e-08s, 1.24834
+1, ALDR, Weighted, xoshiro128, 1.29075e-08s, 1.12469
+1, Lemire+alias, Weighted, xoshiro128, 2.04061e-09s, 0.177807
+2, ES32, d6, random_device, 1.45972e-07s, 1.00081
+2, ES32 optimized, cd6, random_device, 1.45773e-07s, 0.999442
+2, ES64, d6, random_device, 1.45815e-07s, 0.999731
+2, ES64 optimized, d6, random_device, 1.45792e-07s, 0.999571
+2, VN, d6, random_device, 2.25906e-07s, 1.54884
+2, Fast Dice Roller, d6, random_device, 2.06788e-07s, 1.41777
+2, FLDR, d6, random_device, 2.068e-07s, 1.41785
+2, ALDR, d6, random_device, 2.06963e-07s, 1.41896
+2, Huber-Vargas, d6, random_device, 2.06809e-07s, 1.41791
+2, Lemire, d6, random_device, 3.60985e-06s, 24.7496
+2, ES32, Bernoulli, random_device, 5.1305e-09s, 1.0098
+2, ES32 optimized, Bernoulli, random_device, 4.56329e-09s, 0.898159
+2, FLDR, Bernoulli, random_device, 1.4312e-07s, 28.1692
+2, ALDR, Bernoulli, random_device, 1.13443e-07s, 22.3281
+2, Lemire+alias, Bernoulli, random_device, 3.61019e-06s, 710.567
+2, ES32, Weighted, random_device, 1.21156e-07s, 0.999161
+2, FLDR, Weighted, random_device, 1.65321e-07s, 1.36338
+2, ALDR, Weighted, random_device, 1.65414e-07s, 1.36415
+2, Lemire+alias, Weighted, random_device, 3.60951e-06s, 29.7672
+2, ES32, d6, mt19937, 7.67831e-09s, 1.01615
+2, ES32 optimized, cd6, mt19937, 3.91977e-09s, 0.518746
+2, ES64, d6, mt19937, 9.70922e-09s, 1.28493
+2, ES64 optimized, d6, mt19937, 4.28966e-09s, 0.567698
+2, VN, d6, mt19937, 4.51764e-09s, 0.597869
+2, Fast Dice Roller, d6, mt19937, 5.17751e-09s, 0.685197
+2, FLDR, d6, mt19937, 9.64574e-09s, 1.27653
+2, ALDR, d6, mt19937, 9.12578e-09s, 1.20771
+2, Huber-Vargas, d6, mt19937, 6.06389e-09s, 0.802501
+2, Lemire, d6, mt19937, 2.83901e-09s, 0.375717
+2, ES32, Bernoulli, mt19937, 4.42566e-09s, 1.03873
+2, ES32 optimized, Bernoulli, mt19937, 2.29226e-09s, 0.538009
+2, FLDR, Bernoulli, mt19937, 1.67616e-08s, 3.93405
+2, ALDR, Bernoulli, mt19937, 6.05936e-09s, 1.42217
+2, Lemire+alias, Bernoulli, mt19937, 2.82437e-09s, 0.662898
+2, ES32, Weighted, mt19937, 1.17793e-08s, 0.974491
+2, FLDR, Weighted, mt19937, 2.08669e-08s, 1.7263
+2, ALDR, Weighted, mt19937, 8.28886e-09s, 0.685733
+2, Lemire+alias, Weighted, mt19937, 2.73847e-09s, 0.226552
+2, ES32, d6, xoshiro128, 7.59084e-09s, 1.00512
+2, ES32 optimized, cd6, xoshiro128, 3.42107e-09s, 0.452991
+2, ES64, d6, xoshiro128, 9.90167e-09s, 1.3111
+2, ES64 optimized, d6, xoshiro128, 3.85813e-09s, 0.510863
+2, VN, d6, xoshiro128, 5.64002e-09s, 0.746806
+2, Fast Dice Roller, d6, xoshiro128, 6.49296e-09s, 0.859745
+2, FLDR, d6, xoshiro128, 1.19858e-08s, 1.58706
+2, ALDR, d6, xoshiro128, 1.05106e-08s, 1.39173
+2, Huber-Vargas, d6, xoshiro128, 7.92347e-09s, 1.04916
+2, Lemire, d6, xoshiro128, 1.95149e-09s, 0.2584
+2, ES32, Bernoulli, xoshiro128, 4.21368e-09s, 0.985308
+2, ES32 optimized, Bernoulli, xoshiro128, 2.30435e-09s, 0.538838
+2, FLDR, Bernoulli, xoshiro128, 1.64262e-08s, 3.84103
+2, ALDR, Bernoulli, xoshiro128, 1.28168e-08s, 2.99701
+2, Lemire+alias, Bernoulli, xoshiro128, 4.54556e-09s, 1.06291
+2, ES32, Weighted, xoshiro128, 1.24976e-08s, 1.06443
+2, FLDR, Weighted, xoshiro128, 1.49902e-08s, 1.27672
+2, ALDR, Weighted, xoshiro128, 1.30218e-08s, 1.10907
+2, Lemire+alias, Weighted, xoshiro128, 2.06442e-09s, 0.175827
