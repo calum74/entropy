@@ -98,7 +98,7 @@ Input & Output & Entropy & Time & Space \\
 \hline
 Unbiassed & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & $O(mn)$ \\
 coin & Exact & (amortised) & Per output: $O(m \log m)$  &  \\
- & Markov &  &   & \\
+dice & Markov &  &   & \\
 \hline
 \end{tabular}
 \caption{Entropy store algorithm overview.}
@@ -140,20 +140,20 @@ Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em ran
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic operations (Algorithm \ref{alg:combine-uniform}-\ref{alg:sample}), then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}) using an entropy store.
+In this section we'll start with some basic building blocks (Algorithm \ref{alg:combine-uniform}-\ref{alg:generate-multiple}), and then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}).
 
-We'll then build on Algorithm \ref{alg:generate-uniform} to create a generator for an arbitrary weighted distribution (Algorithm \ref{alg:generate-weighted}), extract entropy from a weighted distribution (Algorithm \ref{alg:combine-weighted}), from which we can build a general entropy converter. All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli} andy weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ is distributed with a uniform distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ has a uniform integer distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent.
 
-We'll say "uniform integer" to mean a uniformly distributed variable or variate.
+We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to extract entropy from a uniformly distributed variable (variate), and to add entropy to a uniform variable in an entropy-preserving way.
+At the basis of the ES is the ability to extract entropy from a uniform variable, and to add entropy to a uniform variable in an entropy-preserving way.
 
-We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a linear variable, (c) a weighted variable and a linear variable. These transformations are bijective, meaning they must preserve entropy, and can be used in both directions.  For example, we can use $f_{sample}$ to split a uniform variable into a Bernoulli and a uniform variable , and $f^{-1}_{sample}$ to combine a Bernoulli variable with a uniform variable to obtain a uniform variable containing their combined entropy. Similar ideas can be found for example in \cite{gentle2003random} Ch. 4. 
+We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they must preserve entropy, and can be used in both directions. Similar ideas can be found for example in \cite{gentle2003random} Ch. 4 XXX, and we are simply writing these as algorithms.
 
 The function $f_{combine}$, in Definition \ref{def:combine}, divides the range $[0,nm)$ into $n$ subranges of $[0,m)$ as follows:
 
@@ -210,10 +210,10 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
     $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X \indep Y$.
 \end{proof}
 
-Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine-uniform} will be used when \em returning \em entropy to the entropy store, and Algorithm \ref{alg:divide} can be used to extract entropy from the entropy store.
+Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide-uniform} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine-uniform} will be used when \em returning \em entropy to the entropy store, and Algorithm \ref{alg:divide-uniform} can be used to extract entropy from the entropy store.
 
 \begin{algorithm}
-\caption{Converting two uniform integers into one uniform integer}
+\caption{Combining two uniform integers into one uniform integer}
 \label{alg:combine-uniform}
 \begin{algorithmic}[1]
     \Require $n$, $m$, $U_n$, $U_m$ are integers
@@ -270,7 +270,7 @@ When $Z$ is uniformly distributed, then its outputs will be Bernoulli distribute
 
 proofs here...
 
-Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:upsample} implements $F^{-1}_{sample}$. Algorithm \ref{alg:downsample} can be used to resize a uniform distribution or to generate a Bernoulli variable. Algorithm \ref{alg:upsample} ....
+Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:upsample} implements $F^{-1}_{sample}$. Algorithm \ref{alg:downsample} can be used to resize a uniform distribution or to generate a Bernoulli variable.
 
 
 \begin{algorithm}
@@ -299,60 +299,55 @@ Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:up
 \end{algorithmic}
 \end{algorithm}
 
-% Maybe don't have this one???
-
-\begin{algorithm}
-\caption{Converting a uniform and Bernoulli variable into a uniform variable}
-\label{alg:expand}
-\begin{algorithmic}[1]
-    \Require $U_{x}, B$ and $m$ are integers 
-    \Require $B \sim Bernoulli\{\frac{m}{n}\}$
-    \Require $U_{x} \sim Uniform\{x\}$
-    \Require $x = Bm + (1-B)(n-m)$
-    \Require $U_x \indep B$
-    \Ensure $U_{n} \sim Uniform\{n\}$
-\Procedure{expand}{$U_x, B, m$}
-    \State $U_n \gets (1-B)*m + U_x$
-    \State \Return $U_n$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
 
 Algorithm \ref{alg:downsample} is the basis for von Neumann's rejection sampling algorithm, and Lumbrusco's fast dice roller algorithm. However these algorithms throw away some of the outputs, resulting in entropy loss.
 
 \subsection{Generating uniform integers}
 
-Algorithm \ref{alg:generate-uniform} reads binary entropy from a $fetch()$ function, and outputs a uniform integer in the range $[0,n)$. The algorithm makes use of an \em entropy store \em $U_s$ which is carried over in between function calls. Initially the entropy store is empty (containing $0$ entropy) with $U_s = 0$ and $s=1$.
+Generate a uniform integer $U\{n\}$ is done in three steps. First we ensure that the entropy store $U\{s\}$ is of a sufficient size $s\ge N$, which is done by fetching a bit of entropy and combining it into the entropy store using Algorithm \ref{alg:combine-uniform}. Then we resize $U\{s\}$ to a multiple of $n$, which is done by calculating $s \mod n$ and using Algorithm \ref{alg:downsample} to yield a uniform variable $U\{s-s \mod n\}$ or $U\{s \mod n\}$. If we get $U\{s-s \mod n\}$ (which is overwhelmingly likely) then this is a multiple of $n$, so use Algorithm \ref{alg:divide-uniform} to divide this into $U\{n\}$ (our result) and the remaining entropy store. If the \em sample \em step fails, then our entropy store is $U\{s \mod n\}$ (we don't throw it away), and we repeat the algorithm.
 
-The overall strategy of Algorithm \ref{alg:generate-uniform} is to use $sample$ (Algorithm \ref{alg:sample}) to ensure that $s$ is a multiple of $n$, then use the $divide$ algorithm (Algorithm \ref{alg:divide}) to divide $U_s$ into $U_n$. $U_n$ is returned as the result, and $U_s$ which is stored for the next invocation. The calculation is structured so that when $s$ is large, the entropy lost by $sample$ is very small.
+Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $U\{kn\}$. Algorithm \ref{alg:generate-uniform} builds on this and implements the final step. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
 
-The $sample$ on line 6 resizes $s$ to a multiple of $n$. It is overwhelmingly likely that $b$ is false because $n$ is much smaller than $s$, so we can then proceed to line 8 where we divide $U_s$ into $U_n$ and the new $U_s$. On line 9, return $U_n$ as the result and $U_s$ and $s$ as the input to the next invocation.
-
-An C implemetation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{adx:source}.
+\begin{algorithm}
+\caption{Converting a uniform variable to a round multiple}
+\label{alg:generate-multiple}
+\begin{algorithmic}[1]
+\Require $S, s$ and $n$ are integers
+\Require $n \le N$
+\Require $\textsc{fetch}() \sim Bernoulli\{\frac{1}{2}\}$
+\Require $S \sim Uniform\{s\}$
+\Ensure $S \sim Uniform\{kn\}$
+\Procedure{generate\_multiple}{$S, s, n$} 
+  \While {True}
+    \While {$s < N$}
+        \State $S, s \gets \textsc{combine\_uniform}(S, s, \textsc{fetch}(), 2)$
+    \EndWhile
+    \State $k \gets s \div n$
+    \State $r \gets s \mod r$
+    \State $S, s, B \gets \textsc{sample\_uniform}(S, s, s-r)$ 
+    \If{$B$}
+        \State \Return $S, s, k$
+    \EndIf
+  \EndWhile
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
 
 \begin{algorithm}
 \caption{Generating uniformly distributed integers}
 \label{alg:generate-uniform}
 \begin{algorithmic}[1]
-\Require $U_s, s$ and $n$ are integers
+\Require $S, s$ and $n$ are integers
 \Require $n \le N$
 \Require $fetch() \sim Bernoulli\{\frac{1}{2}\}$
-\Require $U_s \sim Uniform\{s\}$
-\Ensure $U_n \sim Uniform\{n\}$
-\Ensure $U_s \sim Uniform\{s\}$
-\Ensure $U_s \indep U_n$
-\Procedure{generate\_uniform}{$U_s, s, n$} 
-  \While {True}
-    \While {$s < N$}
-        \State $U_s, s \gets combine(U_s, s, fetch(), 2)$
-    \EndWhile
-    \State $U_s, s, b \gets sample(U_s, s, s \mod n)$ 
-    \If{$ \neg b$}
-        \State $U_s, s, U_n \gets divide(U_s, s, n)$
-        \State \Return $U_s, s, U_n$
-    \EndIf
-  \EndWhile
+\Require $S \sim Uniform\{s\}$
+\Ensure $N \sim Uniform\{n\}$
+\Ensure $S \sim Uniform\{s\}$
+\Ensure $S \indep U_n$
+\Procedure{generate\_uniform}{$S, s, n$} 
+  \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
+  \State $S, s, N \gets \textsc{divide}(S, s, n)$
+  \State \Return $S, s, N$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -364,7 +359,7 @@ $U_s$ is uniformly distributed over $[0,s)$.
 \end{lemma}
 
 \begin{proof}
-The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:sample}, $U_n$ and $U_s$ are uniformly distributed.
+The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine-uniform}, \ref{alg:divide-uniform} and \ref{alg:downsample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:sample}, $U_n$ and $U_s$ are uniformly distributed.
 \end{proof}
 
 Algorithm \ref{alg:generate-uniform} terminates with probability 1.
@@ -477,16 +472,15 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 \caption{Generating Bernoulli variables}
 \label{alg:generate-bernoulli}
 \begin{algorithmic}[1]
-\Require $U_s, s, m, n$ are integers
-\Require $U_s \sim Uniform\{s\}$
+\Require $S, s, m, n$ are integers
+\Require $S \sim Uniform\{s\}$
 \Require $0 \le m \le n\le N$
 \Ensure $B \sim Bernoulli\{\frac{m}{n}\}$
-\Ensure $U_s \sim Uniform\{s\}$
-\Ensure $U_s \indep B$
-\Procedure{generate\_bernoulli}{$U_s, s, m, n$} 
-  \State $U_s, s, U_n \gets generate\_uniform(U_s, s, n)$
-  \State $U_x, x, B \gets sample(U_n, n, m)$
-  \State $U_s, s \gets combine\_uniform(U_s, s, U_x, x)$
+\Ensure $S \sim Uniform\{s\}$
+\Ensure $S \indep B$
+\Procedure{generate\_bernoulli}{$S, s, m, n$} 
+  \State $S, s, k \gets \textsc{generate\_multiple}(U_s, s, n)$
+  \State $S, s, B \gets \textsc{sample}(U_s, s, k * m)$
   \State \Return $U_s, s, B$
 \EndProcedure
 \end{algorithmic}
@@ -552,40 +546,23 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 \end{proof}
 
 \begin{algorithm}
-\caption{Constructing lookup tables for a weighted random variable}
-\label{alg:generate-lookup-tables}
-\begin{algorithmic}[1]
-\Require $weights$ is a list of integers $\ge0$
-\Procedure{make\_distribution}{$weights$} 
-  \State $outputs \gets []$
-  \State $offsets \gets []$
-  \For {$w_i \in weights$}
-    \State $offsets \gets offsets + [|outputs|]$
-    \State $outputs \gets outputs + [i] * w_i$
-  \EndFor
-  \State \Return $outputs, offsets$
-\EndProcedure
-\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
 \caption{Generating a weighted random variable}
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
-\Require $U_s$, and $s$ are integers
-\Require $weights$ is an array of integers $w_i \ge 0$
-\Require $offset$ generated by $make\_distribution$ 
-\Require $outputs$ generated by $make\_distribution$
-\Require $U_s \sim Uniform\{s\}$
-\Ensure $U_s \sim Uniform\{s\}$
+\Require $S$ and $s$ are integers
+\Require An array of $n$ integer weights $w_i \ge 0$
+\Require An array of $n$ integer offsets $o_0 = 0$, $o_{i+1} = o_i + w_i$
+\Require An array of $\sum_i w_i$ integer outputs $p_j = i$ for $o_i \le j < o_{i+1}$
+\Require $S \sim Uniform\{s\}$
+\Ensure $S \sim Uniform\{s\}$
 \Ensure $W \sim Weighted\{w\}$
-\Ensure $U_s \indep W$
-\Procedure{generate\_weighted}{$U_s, s, weights, outputs, offsets$} 
-    \State $U_s, s, U_n \gets generate\_uniform(U_s, s, |outputs|)$
-    \State $W \gets outputs[U_n]$
-    \State $U_s, s = combine\_uniform(U_n - offsets[W], weights[W], U_s, s)$
-    \State \Return $U_s, s, W$
+\Ensure $S \indep W$
+\Procedure{generate\_weighted}{$S, s, n, w, p, o$} 
+    \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
+    \State $W \gets p_{(S \div k)}$
+    \State $s \gets k * w_W$
+    \State $S \gets S - o_W$ 
+    \State \Return $S, s, W$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}

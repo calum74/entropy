@@ -17,3 +17,9 @@ entropy.cpp
 .cache
 paper/paper.bcf-SAVE-ERROR
 paper/paper.synctex(busy)
+paper/paper.dvi
+paper/paper.tex.bbl
+paper/paper.tex.blg
+paper/q.log
+paper/references.bib.bbl
+paper/references.bib.blg
