@@ -1,5 +1,11 @@
 # Next steps
 
+Paper
+- Check on use of uniform integer vs uniform variable
+- The constant $N$ refers to both the store size and a random variable
+    -> Solution is to rename one of the $N$
+
+
 Code tidy!
 
 Think about more efficient division. For example

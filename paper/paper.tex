@@ -144,7 +144,7 @@ In this section we'll start with some basic building blocks (Algorithm \ref{alg:
 
 We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli} andy weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ has a uniform integer distribution, or $X \sim Uniform\{n\}$ for short, because all distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ has a uniform integer distribution of "size" $n$, or $X \sim Uniform\{n\}$ for short, because all uniform distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts are implemented as array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
@@ -216,16 +216,16 @@ Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and A
 \caption{Combining two uniform integers into one uniform integer}
 \label{alg:combine-uniform}
 \begin{algorithmic}[1]
-    \Require $n$, $m$, $U_n$, $U_m$ are integers
-    \Require $U_n \sim Uniform\{n\}$
-    \Require $U_m \sim Uniform\{m\}$
-    \Require $U_n \indep U_m$
-    \Ensure $nm$ is $n * m$
-    \Ensure $U_{nm} \sim Uniform\{nm\}$
-\Procedure{combine\_uniform}{$U_n, n, U_m, m$} 
-  \State $U_{nm} \gets U_n * m + U_m$
-  \State $nm \gets n * m$
-  \State \Return $U_{nm}, nm$
+    \Require $N, M, n$ and $m$ are integers
+    \Require $N \sim Uniform\{n\}$
+    \Require $M \sim Uniform\{m\}$
+    \Require $N \indep M$
+    \Ensure $s$ is $n * m$
+    \Ensure $S \sim Uniform\{s\}$
+\Procedure{combine\_uniform}{$N, n, M, m$} 
+  \State $S \gets N * m + M$
+  \State $s \gets n * m$
+  \State \Return $S, s$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -234,18 +234,18 @@ Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and A
 \caption{Converting a uniform integer into two uniform integers by division}
 \label{alg:divide-uniform}
 \begin{algorithmic}[1]
-    \Require $nm, n$ and $U_{nm}$ are integers
-    \Require $nm$ is divisible by $n$
-    \Require $U_{nm} \sim Uniform\{nm\}$
-    \Ensure $n * m = nm$
-    \Ensure $U_{n} \sim Uniform\{n\}$
-    \Ensure $U_{m} \sim Uniform\{m\}$
-    \Ensure $U_n \indep U_m$
-\Procedure{divide\_uniform}{$U_{nm}, nm, m$} 
-  \State $U_n \gets U_{nm} \operatorname{div} m$
-  \State $U_m \gets U_{nm} \mod m$
-  \State $n \gets nm / n$
-  \State \Return $U_n, n, U_m$
+    \Require $S, s$ and $n$ are integers
+    \Require $s \mod n = 0$, i.e. $s$ is divisible by $n$
+    \Require $S \sim Uniform\{s\}$
+    \Ensure $n * m = s$
+    \Ensure $N \sim Uniform\{n\}$
+    \Ensure $M \sim Uniform\{m\}$
+    \Ensure $N \indep M$
+\Procedure{divide\_uniform}{$S, s, m$} 
+  \State $N \gets S \div m$
+  \State $M \gets S \mod m$
+  \State $n \gets s \div n$
+  \State \Return $N, n, M$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -274,53 +274,54 @@ Algorithm \ref{alg:downsample} implements $f_{sample}$ and Algorithm \ref{alg:up
 
 
 \begin{algorithm}
-\caption{Converting a uniform into a Bernoulli and a uniform variable}
+\caption{Converting a uniform integer into a Bernoulli and a uniform integer}
 \label{alg:downsample}
 \begin{algorithmic}[1]
-    \Require $U_n, n$ and $m$ are integers 
+    \Require $N, n$ and $m$ are integers 
     \Require $0 \le m \le n$
-    \Require $U_n \sim Uniform \{n\}$
+    \Require $N \sim Uniform \{n\}$
     \Ensure $B \sim Bernoulli\{\frac{m}{n}\}$
-    \Ensure $U_x \sim Uniform\{x\}$
-    \Ensure $x = Bm + (1-B)(n-m)$
-    \Ensure $U_x \indep B$
-\Procedure{sample}{$U_n, n, m$} 
-  \If{$U_n < m$}
+    \Ensure $X \sim Uniform\{x\}$
+    \Ensure $x = Bm + (1-B)(n-m)$\footnotemark
+    \Ensure $X \indep B$
+\Procedure{sample\_uniform}{$N, n, m$} 
+  \If{$N < m$}
     \State $B \gets 1$  
     \State $x \gets m$
-    \State $U_x \gets U_n$
+    \State $X \gets N$
   \Else
     \State $B \gets 0$  
     \State $x \gets n-m$
-    \State $U_x \gets U_n-m$
+    \State $X \gets N-m$
   \EndIf
-  \State \Return $U_x, x, B$
+  \State \Return $X, x, B$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
+\footnote{I.e. $m$ if $B=1$ else $n-m$}
 
-
-Algorithm \ref{alg:downsample} is the basis for von Neumann's rejection sampling algorithm, and Lumbrusco's fast dice roller algorithm. However these algorithms throw away some of the outputs, resulting in entropy loss.
+Algorithm \ref{alg:downsample} is the formal basis for von Neumann's rejection sampling algorithm, and Lumbrusco's fast dice roller algorithm. The entropy loss of Lumbrusco is due to the decision in Algorithm \ref{alg:downsample} line 2, so how can we reorganise the calculation to minimise this loss?
 
 \subsection{Generating uniform integers}
 
 Generate a uniform integer $U\{n\}$ is done in three steps. First we ensure that the entropy store $U\{s\}$ is of a sufficient size $s\ge N$, which is done by fetching a bit of entropy and combining it into the entropy store using Algorithm \ref{alg:combine-uniform}. Then we resize $U\{s\}$ to a multiple of $n$, which is done by calculating $s \mod n$ and using Algorithm \ref{alg:downsample} to yield a uniform variable $U\{s-s \mod n\}$ or $U\{s \mod n\}$. If we get $U\{s-s \mod n\}$ (which is overwhelmingly likely) then this is a multiple of $n$, so use Algorithm \ref{alg:divide-uniform} to divide this into $U\{n\}$ (our result) and the remaining entropy store. If the \em sample \em step fails, then our entropy store is $U\{s \mod n\}$ (we don't throw it away), and we repeat the algorithm.
 
-Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $U\{kn\}$. Algorithm \ref{alg:generate-uniform} builds on this and implements the final step. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
+Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $U\{kn\}$. Algorithm \ref{alg:generate-uniform} builds on this and implements the final step. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}, where we are able to reduce the number of divisions to 2.
 
 \begin{algorithm}
-\caption{Converting a uniform variable to a round multiple}
+\caption{Converting a uniform integer to a round multiple}
 \label{alg:generate-multiple}
 \begin{algorithmic}[1]
-\Require $S, s$ and $n$ are integers
+\Require $S, N, s, n$ and $b$ are integers
 \Require $n \le N$
-\Require $\textsc{fetch}() \sim Bernoulli\{\frac{1}{2}\}$
+\Require $b \ge 2$
+\Require $\textsc{fetch}() \sim Uniform\{b\}$
 \Require $S \sim Uniform\{s\}$
 \Ensure $S \sim Uniform\{kn\}$
 \Procedure{generate\_multiple}{$S, s, n$} 
   \While {True}
     \While {$s < N$}
-        \State $S, s \gets \textsc{combine\_uniform}(S, s, \textsc{fetch}(), 2)$
+        \State $S, s \gets \textsc{combine\_uniform}(S, s, \textsc{fetch}(), b)$
     \EndWhile
     \State $k \gets s \div n$
     \State $r \gets s \mod r$
@@ -334,19 +335,17 @@ Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $
 \end{algorithm}
 
 \begin{algorithm}
-\caption{Generating uniformly distributed integers}
+\caption{Generating a uniform integer of a given size}
 \label{alg:generate-uniform}
 \begin{algorithmic}[1]
 \Require $S, s$ and $n$ are integers
-\Require $n \le N$
-\Require $fetch() \sim Bernoulli\{\frac{1}{2}\}$
 \Require $S \sim Uniform\{s\}$
 \Ensure $N \sim Uniform\{n\}$
 \Ensure $S \sim Uniform\{s\}$
-\Ensure $S \indep U_n$
+\Ensure $S \indep N$
 \Procedure{generate\_uniform}{$S, s, n$} 
   \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
-  \State $S, s, N \gets \textsc{divide}(S, s, n)$
+  \State $S, s, N \gets \textsc{divide\_uniform}(S, s, n)$
   \State \Return $S, s, N$
 \EndProcedure
 \end{algorithmic}
@@ -465,11 +464,10 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 
 
 
-\subsection{Generating Bernoulli distributions}
-
+\subsection{Generating Bernoulli variables}
 
 \begin{algorithm}
-\caption{Generating Bernoulli variables}
+\caption{Generating a Bernoulli variable}
 \label{alg:generate-bernoulli}
 \begin{algorithmic}[1]
 \Require $S, s, m, n$ are integers
@@ -481,13 +479,13 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 \Procedure{generate\_bernoulli}{$S, s, m, n$} 
   \State $S, s, k \gets \textsc{generate\_multiple}(U_s, s, n)$
   \State $S, s, B \gets \textsc{sample}(U_s, s, k * m)$
-  \State \Return $U_s, s, B$
+  \State \Return $S, s, B$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
 
-\subsection{Generating weighted integer distributions}
+\subsection{Generating weighted integer variables}
 
 Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, normalised to a discrete distribution with probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 
@@ -546,13 +544,13 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 \end{proof}
 
 \begin{algorithm}
-\caption{Generating a weighted random variable}
+\caption{Generating a weighted variable}
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
 \Require $S$ and $s$ are integers
-\Require An array of $n$ integer weights $w_i \ge 0$
-\Require An array of $n$ integer offsets $o_0 = 0$, $o_{i+1} = o_i + w_i$
-\Require An array of $\sum_i w_i$ integer outputs $p_j = i$ for $o_i \le j < o_{i+1}$
+\Require An array $w$ of $n$ integer weights $w_i \ge 0$
+\Require An array $o$ of $n$ integer offsets $o_0 = 0$, $o_{i+1} = o_i + w_i$
+\Require An array $p$ of $\sum_i w_i$ integer outputs $p_j = i$ for $o_i \le j < o_{i+1}$
 \Require $S \sim Uniform\{s\}$
 \Ensure $S \sim Uniform\{s\}$
 \Ensure $W \sim Weighted\{w\}$
@@ -614,7 +612,7 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.8\textwidth]{bernoulli_efficiency.png}
-\caption{Entropy efficiency generating Bernoulli distributions.}
+\caption{Entropy efficiency generating Bernoulli variables.}
 \label{fig:bernoulli-efficiency}
 \end{figure}
 
