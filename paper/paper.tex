@@ -304,7 +304,7 @@ Algorithm \ref{alg:downsample} is the formal basis for von Neumann's rejection s
 
 \subsection{Generating uniform integers}
 
-Generate a uniform integer $U\{n\}$ is done in three steps. First we ensure that the entropy store $U\{s\}$ is of a sufficient size $s\ge N$, which is done by fetching a bit of entropy and combining it into the entropy store using Algorithm \ref{alg:combine-uniform}. Then we resize $U\{s\}$ to a multiple of $n$, which is done by calculating $s \mod n$ and using Algorithm \ref{alg:downsample} to yield a uniform variable $U\{s-s \mod n\}$ or $U\{s \mod n\}$. If we get $U\{s-s \mod n\}$ (which is overwhelmingly likely) then this is a multiple of $n$, so use Algorithm \ref{alg:divide-uniform} to divide this into $U\{n\}$ (our result) and the remaining entropy store. If the \em sample \em step fails, then our entropy store is $U\{s \mod n\}$ (we don't throw it away), and we repeat the algorithm.
+Generate a uniform integer $U\{n\}$ is done in three steps. First we ensure that the entropy store $U\{s\}$ is of a sufficient size $s\ge s_{min}$, which is done by fetching a bit of entropy and combining it into the entropy store using Algorithm \ref{alg:combine-uniform}. Then we resize $U\{s\}$ to a multiple of $n$, which is done by calculating $s \mod n$ and using Algorithm \ref{alg:downsample} to yield a uniform variable $U\{s-s \mod n\}$ or $U\{s \mod n\}$. If we get $U\{s-s \mod n\}$ (which is overwhelmingly likely) then this is a multiple of $n$, so use Algorithm \ref{alg:divide-uniform} to divide this into $U\{n\}$ (our result) and the remaining entropy store. If the \em sample \em step fails, then our entropy store is $U\{s \mod n\}$ (we don't throw it away), and we repeat the algorithm.
 
 Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $U\{kn\}$. Algorithm \ref{alg:generate-uniform} builds on this and implements the final step. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}, where we are able to reduce the number of divisions to 2.
 
@@ -312,7 +312,7 @@ Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $
 \caption{Converting a uniform integer to a round multiple}
 \label{alg:generate-multiple}
 \begin{algorithmic}[1]
-\Require $S, N, s, n$ and $b$ are integers
+\Require $S, s, s_{min}, n$ and $b$ are integers
 \Require $n \le N$
 \Require $b \ge 2$
 \Require $\textsc{fetch}() \sim Uniform\{b\}$
@@ -320,7 +320,7 @@ Algorithm \ref{alg:generate-multiple} implements the first two steps, to yield $
 \Ensure $S \sim Uniform\{kn\}$
 \Procedure{generate\_multiple}{$S, s, n$} 
   \While {True}
-    \While {$s < N$}
+    \While {$s < s_{min}$}
         \State $S, s \gets \textsc{combine\_uniform}(S, s, \textsc{fetch}(), b)$
     \EndWhile
     \State $k \gets s \div n$
@@ -383,12 +383,12 @@ Since the derivative of $g>0$ it means that $g$ is monotonic.
 \end{proof}
 
 \begin{definition}
-    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, where $p=\frac{n-1}{N}$.
+    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, where $p=\frac{n-1}{s_{min}}$.
 \end{definition}
 
 \begin{theorem}
     \label{thm:loss}
-If $p = \frac{n-1}{N} < 0.5$, then
+If $p = \frac{n-1}{s_{mins}} < 0.5$, then
 
 \begin{equation}
 0 \le \epsilon(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
@@ -397,7 +397,7 @@ If $p = \frac{n-1}{N} < 0.5$, then
 \end{theorem}
 
 \begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge N$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{N}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
+For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge s_{min}$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{s_{min}}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
 
 \begin{equation}
 H(b_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
@@ -409,13 +409,13 @@ Therefore,
 0 \le H(b_i) \le -p\log_2p - (1-p)\log_2(1-p) 
 \end{equation}
 
-by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $N$ is given by
+by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is given by
 
 \begin{align}
-& N = 1 + p_iN \le 1 + pN \\
-\implies & N-pN \le 1 \\
-\implies & N(1-p) \le 1 \\
-\implies & N \le \frac{1}{1-p}
+& m = 1 + p_im \le 1 + pm \\
+\implies & m-pm \le 1 \\
+\implies & m(1-p) \le 1 \\
+\implies & m \le \frac{1}{1-p}
 \end{align}
 
 The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration.
@@ -434,7 +434,7 @@ The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded by
 
 \begin{equation}
-\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})} \le \eta \le 1
+\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})} \le \eta \le 1
 \label{eq:generate-uniform-efficiency}
 \end{equation}
 \end{corollary}
@@ -443,23 +443,23 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded
 \begin{align}
     \eta & = \frac{H_{out}}{H_{in}} \\
          & = \frac{H_{out}}{H_{out}+\epsilon} \\
-         & = \frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})}
+         & = \frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})}
 \end{align}
 Therefore 
 \begin{equation}
-\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{N})} \le \eta \le 1
+\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})} \le \eta \le 1
 \end{equation}
 from Theorem \ref{thm:loss}.
 \end{proof}
 
-To illustrate Equation \ref{eq:generate-uniform-efficiency}, if $N=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
+To illustrate Equation \ref{eq:generate-uniform-efficiency}, if $s_{min}=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
 
 \begin{corollary}
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
 \end{corollary}
 
 \begin{proof}
-$\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $N \rightarrow \infty$.
+$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
 \end{proof}
 
 
@@ -472,7 +472,7 @@ $\epsilon(\frac{n-1}{N}) \rightarrow 0$ as $N \rightarrow \infty$, using L'H\^op
 \begin{algorithmic}[1]
 \Require $S, s, m, n$ are integers
 \Require $S \sim Uniform\{s\}$
-\Require $0 \le m \le n\le N$
+\Require $0 \le m \le n\le s_{min}$
 \Ensure $B \sim Bernoulli\{\frac{m}{n}\}$
 \Ensure $S \sim Uniform\{s\}$
 \Ensure $S \indep B$
@@ -547,7 +547,7 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 \caption{Generating a weighted variable}
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
-\Require $S$ and $s$ are integers
+\Require $S, s$ and $n$ are integers
 \Require An array $w$ of $n$ integer weights $w_i \ge 0$
 \Require An array $o$ of $n$ integer offsets $o_0 = 0$, $o_{i+1} = o_i + w_i$
 \Require An array $p$ of $\sum_i w_i$ integer outputs $p_j = i$ for $o_i \le j < o_{i+1}$
@@ -607,7 +607,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot increase its output rate as the entropy of the output distribution decreases below 1.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
 
 \begin{figure}[ht]
 \centering
@@ -632,8 +632,6 @@ Speed is best understood in terms of CPU pipeline architecture. Branching, memor
 Overall, we can conclude that ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was not beneficial.
 
 Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
-
-Other benefits of ES are its small memory footprint and its flexibility. ES can generate outputs in any sequence, unlike batching schemes.
 
 \begin{table}[h!]
 \centering
@@ -677,9 +675,9 @@ Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ & 29.8 & 0.18 \\
 
 \section{Conclusion}
 
-We have introduced a new class of algorithm to generate random integers via a uniform entropy store, and shown that by caching unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
+We have introduced a new class of algorithm to generate random integers via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
 
-A big benefit of ES is that no setup step is needed, and that the same ES can be shared between different outputs. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
+A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
 
 
@@ -692,7 +690,7 @@ A big benefit of ES is that no setup step is needed, and that the same ES can be
 Source code for $generate\_uniform$, written in C.
 
 \begin{verbatim}
-    const uint32_t N = 1<<31;
+    const uint32_t s_min = 1<<31;
     uint32_t s_value = 0, s_range = 1;
 
     uint32_t generate_uniform32(uint32_t n)
@@ -700,7 +698,7 @@ Source code for $generate\_uniform$, written in C.
         for(;;)
         {
             // Preload entropy one bit at a time into s
-            while(s_range < N)
+            while(s_range < s_min)
             {
                 s_value <<= 1;
                 s_value |= fetch();
