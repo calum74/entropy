@@ -4,6 +4,26 @@ Paper
 - Check on use of uniform integer vs uniform variable
 - The constant $N$ refers to both the store size and a random variable
     -> Solution is to rename one of the $N$
+- Get rid of the alias algorihthm as it's nonsense.
+
+
+Knuth – The Art of Computer Programming, Vol. 2: Seminumerical Algorithms
+
+Donald E. Knuth’s Volume 2, Seminumerical Algorithms, is one of the classic references on random number generation and transformations. It extensively covers how to generate and manipulate uniform random deviates—particularly, it explores how to extract multiple independent random variables from a single uniform stream (e.g., random bits or integers) through methods like subdivision, modular arithmetic, and rejection sampling 
+library.sciencemadness.org
+.
+
+Specifically, Chapter 3 focuses on random number generation and includes sections on transforming uniform distributions—covering essentially the kind of mapping you've constructed (e.g., your formulas for 
+𝑋
+X and 
+𝑌
+Y). Hence, if you're looking to cite a textbook that presents this construction in a formal and foundational context:
+
+Knuth, D. E. (1997). The Art of Computer Programming, Volume 2: Seminumerical Algorithms (3rd ed.). Reading, MA: Addison-Wesley.—See Chapter 3, particularly around section 3.4–3.5 
+library.sciencemadness.org
+.
+
+That would serve as a robust, academically respected citation.
 
 
 Code tidy!

@@ -41,6 +41,11 @@ calum.grant@oxam.com}
 \newtheorem{theorem}{Theorem}
 
 \newcommand{\indep}{\perp\!\!\!\perp}
+\newcommand{\unif}[1]{\mathrm{Uniform}\{#1\}}
+\newcommand{\bern}[1]{\mathrm{Bernoulli}\{#1\}}
+\newcommand{\entropy}[1]{\mathrm{H}(#1)}
+\newcommand{\prob}[1]{\mathbb{P}(#1)}
+\newcommand{\expected}[1]{\mathbb{E}(#1)}
 
 \lstset{
   language=C,        % choose the language
@@ -142,33 +147,29 @@ Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em ran
 
 In this section we'll start with some basic building blocks (Algorithm \ref{alg:combine-uniform}-\ref{alg:generate-multiple}), and then use these to create an efficient generator for uniform integers (Algorithm \ref{alg:generate-uniform}).
 
-We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli} andy weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
+We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli}) and weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $H(X)$ for the Shannon entropy of this variable. Write $X \sim Uniform\{0..n-1\}$ to mean that $X$ has a uniform integer distribution of "size" $n$, or $X \sim Uniform\{n\}$ for short, because all uniform distributions will be 0-based. $H(Uniform\{n\}) = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts are implemented as array access.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a uniform integer distribution of "size" $n$, or $X \sim \unif{n}$ for short, because all uniform distributions will be 0-based. $\entropy{\unif{n}} = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts are implemented as array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to extract entropy from a uniform variable, and to add entropy to a uniform variable in an entropy-preserving way.
+At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they preserve entropy, and can be used in both directions. Similar ideas can be found for example in \cite{gentle2003random} Ch. 4 (XXX check this), and we are simply writing these as algorithms. The contribution is how we combine these mappings for entropy conversion.
 
-We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they must preserve entropy, and can be used in both directions. Similar ideas can be found for example in \cite{gentle2003random} Ch. 4 XXX, and we are simply writing these as algorithms.
+The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f^{-1}_{combine}$ in Lemma \ref{lem:divide}. $f_{combine}$ and $f^{-1}_{combine}$ divide the interval of size $nm$ into $n$ intervals of size $m$ as follows:
 
-The function $f_{combine}$, in Definition \ref{def:combine}, divides the range $[0,nm)$ into $n$ subranges of $[0,m)$ as follows:
 
 \[
 \overbrace{
-    \underbrace{
         \underbrace{a_0 ... a_{m-1}}_{m}
         \underbrace{a_m ... a_{2m-1}}_{m}
         ...
         \underbrace{a_{n(m-1)}...a_{nm-1}}_{m} 
-        }_{n}}
+        }
         ^{nm}
 \]
-
-A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one number in the range $[0,nm)$. $f_{combine}$ sets up a 1-1 correspondence, a bijection, between a uniform distribution $Uniform\{nm\}$ and a pair of independent uniform distributions $Uniform\{n\}$ and $Uniform\{m\}$.
 
 \begin{definition}
     $f_{combine}: [0,n)\times [0,m) \rightarrow [0,nm)$ is defined as $f_{combine}(X,Y) = mX+Y$.
@@ -176,24 +177,21 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
 \end{definition}
 
 \begin{lemma}
-    The inverse of $f_{combine}$, $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
+    $f_{combine}$ is a bijection with inverse $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
+    \label{lem:divide}
 \end{lemma}
 
 \begin{proof}
-    $f_{combine}(f^{-1}_{combine}(Z)) = f_{combine}(\lfloor \frac{Z}{m}\rfloor, Z \text{ mod } m) = m(\lfloor \frac{Z}{m}m \rfloor) + (Z \mod m) = Z$. $f^{-1}_{combine}(f_{combine}(X,Y)) = f^{-1}_{combine}(mX+Y) = (\lfloor\frac{mX+Y}{m}\rfloor, (mX+Y)\mod m) = (X,Y)$.
+    $f_{combine}(f^{-1}_{combine}(Z)) = f_{combine}(\lfloor \frac{Z}{m}\rfloor, Z \text{ mod } m) = m(\lfloor \frac{Z}{m}m \rfloor) + (Z \mod m) = Z$. $f^{-1}_{combine}(f_{combine}(X,Y)) = f^{-1}_{combine}(mX+Y) = (\lfloor\frac{mX+Y}{m}\rfloor, (mX+Y)\mod m) = (X,Y)$. Therefore $f_{combine}$ is a bijection.
 \end{proof}
 
-\begin{corollary}
-    $f_{combine}$ is a bijection.
-\end{corollary}
-
 \begin{lemma}
-    If $X \sim Uniform\{n\}$ and $Y \sim Uniform\{m\}$ and $X \indep Y$, then 
-    $f_{combine}(X,Y) \sim Uniform \{nm\}$.
+    If $X \sim \unif{n}$ and $Y \sim \unif{m}$ and $X \indep Y$, then 
+    $f_{combine}(X,Y) \sim \unif{nm}$.
 \end{lemma}
 
 \begin{proof}
-    Let $Z = mX+Y$, so $Z \in [0,nm)$. $\mathbb{P}(X=x,Y=y) = \mathbb{P}(X=x)\mathbb{P}(Y=y) = \frac{1}{n}\frac{1}{m} = \frac{1}{nm}$. Since $f_{combine}$ is a bijection then it means that all $z$ values occur with $\mathbb{P}(Z=z) = \frac{1}{nm}$, so $Z \sim Uniform\{nm\}$.
+    Let $Z = mX+Y$, so $Z \in [0,nm)$. $\prob{X=x,Y=y} = \prob{X=x}\mathbb{P}(Y=y) = \frac{1}{n}\frac{1}{m} = \frac{1}{nm}$. Since $f_{combine}$ is a bijection then it means that all $z$ values occur with $\mathbb{P}(Z=z) = \frac{1}{nm}$, so $Z \sim Uniform\{nm\}$.
     
 \end{proof}
 
@@ -210,7 +208,7 @@ A pair of numbers $(x,y) \in [0,n)\times[0,m)$ uniquely identifies with one numb
     $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X \indep Y$.
 \end{proof}
 
-Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide-uniform} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine-uniform} will be used when \em returning \em entropy to the entropy store, and Algorithm \ref{alg:divide-uniform} can be used to extract entropy from the entropy store.
+Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide-uniform} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine-uniform} will be used when \em adding \em entropy to the entropy store, and Algorithm \ref{alg:divide-uniform} can be used to \em extract \em entropy from the entropy store.
 
 \begin{algorithm}
 \caption{Combining two uniform integers into one uniform integer}
@@ -235,7 +233,7 @@ Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and A
 \label{alg:divide-uniform}
 \begin{algorithmic}[1]
     \Require $S, s$ and $n$ are integers
-    \Require $s \mod n = 0$, i.e. $s$ is divisible by $n$
+    \Require $s \mod m = 0$, i.e. $s$ is divisible by $m$
     \Require $S \sim Uniform\{s\}$
     \Ensure $n * m = s$
     \Ensure $N \sim Uniform\{n\}$
@@ -244,7 +242,7 @@ Algorithm \ref{alg:combine-uniform} is an implementation of $f_{combine}$, and A
 \Procedure{divide\_uniform}{$S, s, m$} 
   \State $N \gets S \div m$
   \State $M \gets S \mod m$
-  \State $n \gets s \div n$
+  \State $n \gets s \div m$
   \State \Return $N, n, M$
 \EndProcedure
 \end{algorithmic}
@@ -557,9 +555,9 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
 \Ensure $S \indep W$
 \Procedure{generate\_weighted}{$S, s, n, w, p, o$} 
     \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
-    \State $W \gets p_{(S \div k)}$
-    \State $s \gets k * w_W$
-    \State $S \gets S - o_W$ 
+    \State $W \gets p_{[S \div k]}$
+    \State $s \gets k * w_{[W]}$
+    \State $S \gets S - o_{[W]}$ 
     \State \Return $S, s, W$
 \EndProcedure
 \end{algorithmic}
