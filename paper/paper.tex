@@ -73,7 +73,7 @@ calum.grant@oxam.com}
 
 \section{Introduction}
 
-In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulations.
+In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulation.
 
 The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$
 \cite{shannon1948mathematical}.  
@@ -158,19 +158,19 @@ We'll say "uniform variable" to mean a uniformly distributed integer variable or
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they preserve entropy, and can be used in both directions. Similar ideas can be found for example in \cite{gentle2003random} Ch. 4 (XXX check this), and we are simply writing these as algorithms. The contribution is how we combine these mappings for entropy conversion.
+At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they preserve entropy, and can be used in both directions. The contribution is how we combine these transformations for entropy conversion.
 
 The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f^{-1}_{combine}$ in given in Lemma \ref{lem:divide}. $f_{combine}$ and $f^{-1}_{combine}$ divide an interval of size $nm$ into $n$ intervals of size $m$ as follows:
 
-
 \[
-\overbrace{
-        \underbrace{a_0 ... a_{m-1}}_{m}
-        \underbrace{a_m ... a_{2m-1}}_{m}
+\overbrace{    
+    \underbrace{
+        \underbrace{z_0 ... z_{m-1}}_{Y \sim \unif{m}}
+        \underbrace{z_m ... z_{2m-1}}_{Y \sim \unif{m}}
         ...
-        \underbrace{a_{n(m-1)}...a_{nm-1}}_{m} 
-        }
-        ^{nm}
+        \underbrace{z_{n(m-1)}...z_{nm-1}}_{Y \sim \unif{m}}    
+    }}_{X \sim \unif{n}}
+^{Z \sim \unif{nm}}
 \]
 
 \begin{definition}
@@ -249,14 +249,14 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
 \end{algorithm}
 
 
-The function $f_{sample}$, in Definition \ref{def:sample}, divides the range $[0,n)$ into two parts:
+The function $f_{sample}$, in Definition \ref{def:sample}, divides the range $[0,n)$ into the parts $[0,m)$ and $[m, n)$ as follows:
 
 \[
 \overbrace{
     \underbrace{
-        \underbrace{a_0 \text{   } ... \text{   } a_{m-1}}_{m}
-        \underbrace{a_m \text{   } ... \text{   } a_{n-1}}_{n-m}}
-    }_{\bern{\frac{m}{n}}}^{n}
+        \underbrace{z_0 \text{   } ... \text{   } z_{m-1}}_{Y_0 \sim \unif{m}}
+        \underbrace{z_m \text{   } ... \text{   } z_{n-1}}_{Y_1 \sim \unif{n-m}}}
+    }_{X \sim \bern{\frac{m}{n}}}^{Z \sim \unif{n}}
 \]
 
 \begin{definition}
@@ -315,16 +315,14 @@ Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in v
 
 \subsection{Generating uniform variables using an entropy store}
 
-The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $S \sim \unif{s'n}$ where $n$ is the number you need to generate, and $s'$ is an integer. Then we use $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{s'n}$ into $\unif{s'}$ and $\unif{n}$, as shown in Algorithm \ref{alg:generate-uniform}. $\unif{n}$ is our result, and $S' \sim \unif{s'}$ is the new entropy store.
+The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{kn}$ where $n$ is the number you need to generate, and $k$ is an integer. Creating $\unif{kn}$ from an arbitrary entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{kn}$ (and the other time, $\unif{s \mod n}$).
 
-Creating $\unif{s'n}$ from an arbitrary entropy store $\unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{s'n}$ (and the other time, $\unif{s \mod n}$).
+Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{kn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
-Algorithm \ref{alg:generate-multiple} is used to generate a uniform variable $\sim \unif{kn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because it is overwhelmingly likely that $B$ is true, and so the lost entropy contained in $B$ is very small.
-
-A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
+Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to create a uniform variable $\sim \unif{kn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{kn}$ into $\unif{k}$ and $\unif{n}$. $\unif{n}$ is our result, and $\unif{k}$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
 
 \begin{algorithm}
-\caption{Generating a uniform round multiple}
+\caption{Generating a uniform multiple}
 \label{alg:generate-multiple}
 \begin{algorithmic}[1]
 \Require $S, s, s_{min}, n$ and $b$ are integers
@@ -380,7 +378,7 @@ Algorithm \ref{alg:generate-multiple} terminates with probability 1.
 \begin{lemma}
     \label{lem:shannon-inequality}
 
-For $p,q \in \mathbb{R}$, where $0 \le p\le q \le 0.5$, 
+For $p,q \in \mathbb{R}$, where $0 \le p\le q \le \frac{1}{2}$, 
 
 \begin{equation}
 -p\log_2 p - (1-p)\log_2(1-p) \le -q\log_2 q - (1-q)\log_2(1-q)
@@ -391,9 +389,9 @@ For $p,q \in \mathbb{R}$, where $0 \le p\le q \le 0.5$,
     Let
     \begin{align}
         g(p) & = -p\log_2 p - (1-p)\log_2(1-p) \\
-        \implies g'(p) & = \log_2\frac{1-p}{p} = \log_2(\frac{1}{p}-1) \ge \log_21 = 0 
+        \implies g'(p) & = \log_2\frac{1-p}{p} = \log_2(\frac{1}{p}-1) \ge \log_2(\frac{1}{\frac{1}{2}}-1) = \log_21 = 0 
     \end{align}
-Since the derivative of $g>0$ it means that $g$ is monotonic.
+Since the derivative of $g\ge 0$ it means that $g$ is monotonic.
 \end{proof}
 
 \begin{definition}
@@ -411,16 +409,16 @@ If $p = \frac{n-1}{s_{min}} < 0.5$, then
 \end{theorem}
 
 \begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge s_{min}$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{s_{min}}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $b_i \sim Bernoulli\{p_i\}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
+For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge s_{min}$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{s_{min}}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $B_i \sim \bern{p_i}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
 
 \begin{equation}
-H(b_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
+H(B_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
 \end{equation}
 
 Therefore, 
 
 \begin{equation}
-0 \le H(b_i) \le -p\log_2p - (1-p)\log_2(1-p) 
+0 \le H(B_i) \le -p\log_2p - (1-p)\log_2(1-p) 
 \end{equation}
 
 by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is given by
@@ -432,17 +430,17 @@ by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is 
 \implies & m \le \frac{1}{1-p}
 \end{align}
 
-The total entropy lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration.
+The total entropy $\epsilon$ lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration.
 
 \begin{align}
-0 \le m\entropy{b_i} \le & \frac{1}{1-p}(-p\log_2p - (1-p)\log_2(1-p) ) \\
-= & -\frac{p}{1-p}\log_2p - \log_2(1-p)
+0 \le \epsilon
+    = & m\entropy{B_i} \\
+    \le & \frac{1}{1-p}(-p\log_2p - (1-p)\log_2(1-p) ) \\
+    = & -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 
-We can also end up in the situation where $(s \mod n) = 0$ already, in which the \em sample \em step always succeeds with no entropy loss, so $\epsilon=0$.
+We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{sample}$ always succeeds with no entropy loss, so $\epsilon=0$.
 \end{proof}
-
-The actual entropy loss incurred by Algorithm \ref{alg:generate-uniform} depends on whatever values are found in $U_s$ and $s$, so we can only give an upper bound.
 
 \begin{corollary}
 The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded by
@@ -510,15 +508,15 @@ We would expect this process to lose entropy because in general the output distr
 \[
 \overbrace{
     \underbrace{
-        \underbrace{a_0 ... a_{w_0-1}}_{w_0}
-          \underbrace{a_{w_0} ... a_{w_0+w_1-1}}_{w_1}
+        \underbrace{z_0 ... z_{w_0-1}}_{Y_0 \sim \unif{w_0}}
+          \underbrace{z_{w_0} ... z_{w_0+w_1-1}}_{Y_1 \sim \unif{w_1}}
           ...
           \underbrace{
-             a_{n-w_{k-1}} ... 
-             a_{n-1}
-         }_{w_{k-1}}
-    }_{Weighted\{w_0, ..., w_{k-1}\}}
-}^{n}
+             z_{n-w_{k-1}} ... 
+             z_{n-1}
+         }_{Y_{k-1} \sim \unif{w_{k-1}}}
+    }_{X \sim Weighted\{w_0, ..., w_{k-1}\}}
+}^{Z \sim \unif{n}}
 \]
 
 The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
@@ -701,7 +699,7 @@ A big benefit of ES is that no setup step is needed for uniform and Bernoulli ou
 
 \section {Source code} \label{app:source-code}
 
-Source code for $generate\_uniform$, written in C.
+Source code for $\textsc{generate\_uniform}$, written in C.
 
 \begin{verbatim}
     const uint32_t s_min = 1<<31;
