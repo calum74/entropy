@@ -84,7 +84,7 @@ Whilst this problem has been studied extensively, there are theoretical limits o
 
 To mitigate these entropy losses, it is possible to generate random integers in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
 
 The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is given in Theorem \ref{thm:loss}. 
 
@@ -120,25 +120,23 @@ Entropy conversion is a well studied subject going back to at least 1951 when Vo
 
 Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, based on creating a binary decision tree based on the arithmetic coding of each output, and proved that no other binary decision tree could on average give fewer decisions.
 
-The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
+The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al. \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
 
 Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are very inefficient from an entropy perspective, by using fewer CPU division operations. Lemire's use case is for entropy that comes from a pseudorandom source that can be quickly generated.
 
 Various methods have been explored for generating arbitrary intervals.
 The Knuth-Yao algorithm can be used to generate arbitrary distributions from binary entropy, but the tree may need to be truncated unless the distribution is dyadic.
 
-XXX My description of the alias method is nonsense and should be revised. XXX
-
-The alias method devised by Walker \cite{walker1977efficient} and improved by Vose \cite{vose91} maps a uniform variable to an arbitrary distribution, and is therefore less entropy efficient because the output distribution generally contains less entropy than the uniform input distribution.
+The alias method devised by Walker \cite{walker1977efficient} and improved by Vose \cite{vose91} maps a uniform variable to an output, and then uses a second Bernoulli variable to look up an aliased output. This is $O(n)$ in setup time, and $O(1)$ in generation time, but is not optimal in terms of entropy efficiency.
 
 Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
 Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm.
 
-Saad et al \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithms to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
+Saad \emph{et}al. \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithm to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
 
 \em Entropy extraction \em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
-Universal hashing can be used to turn unknown distributions into fair bits. Vembu et al \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
+Universal hashing can be used to turn unknown distributions into fair bits. Vembu \emph{et} al. \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
 A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary output precision or data structure sizes.
 
@@ -151,7 +149,7 @@ In this section we'll start with some basic building blocks (Algorithm \ref{alg:
 
 We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli}) and weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a uniform variable distribution of "size" $n$, or $X \sim \unif{n}$ for short, because all uniform distributions will be 0-based. $\entropy{\unif{n}} = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts are implemented as array access.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a discrete uniform variable distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $[]$ are array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
@@ -214,16 +212,16 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
 \caption{Combining two uniform variables into one uniform variable}
 \label{alg:combine}
 \begin{algorithmic}[1]
-    \Require $N, M, n$ and $m$ are integers
-    \Require $N \sim \unif{n}$
-    \Require $M \sim \unif{m}$
-    \Require $N \indep M$
-    \Ensure $s$ is $n * m$
-    \Ensure $S \sim \unif{s}$
-\Procedure{combine}{$N, n, M, m$} 
-  \State $S \gets N * m + M$
-  \State $s \gets n * m$
-  \State \Return $S, s$
+    \Require $X, Y, n$ and $m$ are integers
+    \Require $X \sim \unif{n}$
+    \Require $Y \sim \unif{m}$
+    \Require $X \indep Y$
+    \Ensure $z$ is $x * y$
+    \Ensure $Z \sim \unif{z}$
+\Procedure{combine}{$X, n, Y, m$} 
+  \State $Z \gets X * m + Y$
+  \State $z \gets n * m$
+  \State \Return $Z, z$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -232,18 +230,18 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
 \caption{Converting a uniform variable into two uniform variables by division}
 \label{alg:divide}
 \begin{algorithmic}[1]
-    \Require $S, s$ and $n$ are integers
-    \Require $s \mod m = 0$, i.e. $s$ is divisible by $m$
-    \Require $S \sim \unif{s}$
-    \Ensure $n * m = s$
-    \Ensure $N \sim \unif{n}$
-    \Ensure $M \sim \unif{m}$
-    \Ensure $N \indep M$
-\Procedure{divide}{$S, s, m$} 
-  \State $N \gets S \div m$
-  \State $M \gets S \mod m$
-  \State $n \gets s \div m$
-  \State \Return $N, n, M$
+    \Require $Z, z$ and $n$ are integers
+    \Require $z \mod m = 0$, i.e. $z$ is divisible by $m$
+    \Require $Z \sim \unif{z}$
+    \Ensure $n * m = z$
+    \Ensure $X \sim \unif{n}$
+    \Ensure $Y \sim \unif{m}$
+    \Ensure $X \indep Y$
+\Procedure{divide}{$Z, z, m$} 
+  \State $X \gets Z \div m$
+  \State $Y \gets Z \mod m$
+  \State $n \gets z \div m$
+  \State \Return $X, n, Y$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -279,24 +277,24 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
 \caption{Converting a uniform variable into a Bernoulli and a uniform variable}
 \label{alg:sample}
 \begin{algorithmic}[1]
-    \Require $N, n$ and $m$ are integers 
+    \Require $Z, n$ and $m$ are integers 
     \Require $0 \le m \le n$
-    \Require $N \sim \unif{n}$
-    \Ensure $B \sim \bern{\frac{m}{n}}$
-    \Ensure $X \sim \unif{x}$
-    \Ensure $x = Bm + (1-B)(n-m)$
-    \Ensure $X \indep B$
-\Procedure{sample}{$N, n, m$} 
-  \If{$N < m$}
-    \State $B \gets 1$  
-    \State $x \gets m$
-    \State $X \gets N$
+    \Require $Z \sim \unif{n}$
+    \Ensure $X \sim \bern{\frac{m}{n}}$
+    \Ensure $Y \sim \unif{x}$
+    \Ensure $y = Xm + (1-X)(n-m)$
+    \Ensure $X \indep Y$
+\Procedure{sample}{$Z, n, m$} 
+  \If{$Z < m$}
+    \State $X \gets 1$  
+    \State $y \gets m$
+    \State $Y \gets Z$
   \Else
-    \State $B \gets 0$  
-    \State $x \gets n-m$
-    \State $X \gets N-m$
+    \State $X \gets 0$  
+    \State $y \gets n-m$
+    \State $Y \gets Z-m$
   \EndIf
-  \State \Return $X, x, B$
+  \State \Return $X, Y, y$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -309,17 +307,21 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
     ...
 \end{proof}
 
+\begin{corollary}
+    Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample} preserve entropy.
+\end{corollary}
+
 Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in von Neumann's rejection sampling algorithm and Lumbrusco's FDR algorithm. The reason why rejection sampling and FDR lose entropy is because they discard one or both outputs from the $\textsc{sample}()$ algorithm.
 
 
 
 \subsection{Generating uniform variables using an entropy store}
 
-The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{kn}$ where $n$ is the number you need to generate, and $k$ is an integer. Creating $\unif{kn}$ from an arbitrary entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{kn}$ (and the other time, $\unif{s \mod n}$).
+The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{kn}$ where $n$ is the number you need to generate, and $k$ is an integer. Extracting $\unif{kn}$ from an entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{kn}$ (and the other time, $\unif{s \mod n}$).
 
-Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{kn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
+Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{kn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
-Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to create a uniform variable $\sim \unif{kn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{kn}$ into $\unif{k}$ and $\unif{n}$. $\unif{n}$ is our result, and $\unif{k}$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
+Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to create a uniform variable $\sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{rn}$ into $\unif{r}$ and $\unif{n}$. $\unif{n}$ is our result, and $\unif{r}$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
 
 \begin{algorithm}
 \caption{Generating a uniform multiple}
@@ -338,7 +340,7 @@ Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to crea
     \EndWhile
     \State $k \gets s \div n$
     \State $r \gets s \mod n$
-    \State $S, s, B \gets \textsc{sample}(S, s, s-r)$ 
+    \State $B, S, s \gets \textsc{sample}(S, s, s-r)$ 
     \If{$B$}
         \State \Return $S, s, k$
     \EndIf
@@ -357,7 +359,7 @@ Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to crea
 \Ensure $S \sim \unif{s}$
 \Ensure $S \indep N$
 \Procedure{generate\_uniform}{$S, s, n$} 
-  \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
+  \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
   \State $S, s, N \gets \textsc{divide}(S, s, n)$
   \State \Return $S, s, N$
 \EndProcedure
@@ -370,7 +372,7 @@ $N \sim \unif{n}$ and $S \sim \unif{s}$.
 \end{lemma}
 
 \begin{proof}
-The values $U_n$, $n$, $U_s$ and $s$ have been generated by Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample}. By Lemmas \ref{lem:combine}, \ref{lem:divide} and \ref{lem:sample}, $U_n$ and $U_s$ are uniformly distributed.
+    ...
 \end{proof}
 
 Algorithm \ref{alg:generate-multiple} terminates with probability 1.
@@ -395,7 +397,7 @@ Since the derivative of $g\ge 0$ it means that $g$ is monotonic.
 \end{proof}
 
 \begin{definition}
-    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-uniform}, where $p=\frac{n-1}{s_{min}}$.
+    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-multiple}, where $p=\frac{n-1}{s_{min}}$.
 \end{definition}
 
 \begin{theorem}
@@ -440,6 +442,14 @@ The total entropy $\epsilon$ lost by the algorithm is given by the number of ite
 \end{align}
 
 We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{sample}$ always succeeds with no entropy loss, so $\epsilon=0$.
+\end{proof}
+
+\begin{corollary}
+    The entropy loss of Algorithm \ref{alg:generate-uniform} is $\epsilon$.
+\end{corollary}
+
+\begin{proof}
+    ...
 \end{proof}
 
 \begin{corollary}
@@ -489,8 +499,8 @@ $\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, u
 \Ensure $S \sim \unif{s}$
 \Ensure $S \indep B$
 \Procedure{generate\_bernoulli}{$S, s, m, n$} 
-  \State $S, s, k \gets \textsc{generate\_multiple}(U_s, s, n)$
-  \State $S, s, B \gets \textsc{sample}(U_s, s, k * m)$
+  \State $S, s, r \gets \textsc{generate\_multiple}(U_s, s, n)$
+  \State $B, S, s \gets \textsc{sample}(U_s, s, r * m)$
   \State \Return $S, s, B$
 \EndProcedure
 \end{algorithmic}
@@ -499,11 +509,11 @@ $\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, u
 
 \subsection{Generating weighted integer variables}
 
-Algorithm \ref{alg:generate-distribution} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, normalised to a discrete distribution with probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$ where $n=\sum_i w_i$ is the total weight.
+Algorithm \ref{alg:generate-weighted} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, normalised to a discrete distribution with probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$ where $n=\sum_i w_i$ is the total weight.
 
-The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. This uses a simple lookup table of size $n$, constructed using Algorithm \ref{alg:generate-lookup-tables}. If $n$ is very large we could implement the mapping as a binary search on $offset$ instead. To generate an output, call $generate\_uniform$ to generate a integer in the range $[0,n)$, and use the number in the $output$ lookup table as the result. 
+The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. An implementation of this could be an array of size $n$ (constuction time $O(n)$, lookup time $O(1)$), or a binary search on an array of size $k$ (construction time $O(k)$, lookup time $O(\log k)$).
 
-We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new idea is that we can recover all of the entropy from this process. By splitting up $[0,n)$ into chunks of size $w_i$, each value in $[0,n)$ is contained in a uniform distribution $\unif{w_i}$.
+We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new step is to notice that by splitting the interval $[0,n)$ into $k$ sub-intervals, we can also generate a uniform variable of size $w_i$ as follows:
 
 \[
 \overbrace{
@@ -515,29 +525,37 @@ We would expect this process to lose entropy because in general the output distr
              z_{n-w_{k-1}} ... 
              z_{n-1}
          }_{Y_{k-1} \sim \unif{w_{k-1}}}
-    }_{X \sim Weighted\{w_0, ..., w_{k-1}\}}
+    }_{X \sim \textsc{Weighted}\{w_0, ..., w_{k-1}\}}
 }^{Z \sim \unif{n}}
 \]
 
-The chunk contains $\log_2w_i$ entropy. We can use $combine$ to return this entropy back to the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
-
-
+The interval contains $\log_2w_i$ entropy, which we can recycle into the entropy store. Lemma \ref{lem:distribution-conservation} shows us that when we account for this extra entropy then no entropy is lost.
 
 \begin{definition}
-    Let $f_{distribute}: X \rightarrow Y, Z$ be the function that maps random variable $X \sim \unif{n}$ to independent random variables $Y$ and $Z \sim \unif{w_i}$.
+    \label{def:o}
+    For $k$ integer weights $w_i \ge 0$, let the offset $o_0$ = 0, $o_{i+1} = o_i + w_i$.
+\end{definition}
+
+\begin{definition}
+    \label{def:p}
+    For $k$ integer weights $w_i \ge 0$, let the output $p_j = i$ for $o_i \le j < o_{i+1}.$
+\end{definition}
+
+\begin{definition}
+    Let $f_{weighted}: Z \rightarrow X, Y$ be the function that maps random variable $Z \sim \unif{n}$ to independent random variables $X \sim \text{Weighted}\{w\}$ and $Y \sim \unif{w_i}$.
 
     \begin{align}
-    Y &= max(j : \sum_{i<j}w_i<X) \\
-    Z &= X - \sum_{i<Y}w_i
+    X &= p_Z \\
+    Y &= X - o_X
     \end{align}
 
 \end{definition}
 
-Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sample}$ XX we didn't define $f_{sample}$.
+Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
 
 \begin{lemma}
     \label{lem:distribution-conservation}
-    $f_{distribute}$ does not lose entropy
+    $f_{weighted}$ does not lose entropy.
 \end{lemma}
 
 \begin{proof}
@@ -555,38 +573,39 @@ Note that $f_{distribute}$ is a generalisation of XX $f_{combine}$ and $f_{sampl
     \end{align}
 \end{proof}
 
+Algorithm \ref{alg:generate-weighted} 
+
+TODO: The variable k is confusing here. Maybe use $r$.
+
 \begin{algorithm}
 \caption{Generating a weighted variable}
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
 \Require $S, s$ and $n$ are integers
-\Require An array $w$ of $n$ integer weights $w_i \ge 0$
-\Require An array $o$ of $n$ integer offsets $o_0 = 0$, $o_{i+1} = o_i + w_i$
-\Require An array $p$ of $\sum_i w_i$ integer outputs $p_j = i$ for $o_i \le j < o_{i+1}$
+\Require An array $w$ of $k$ integer weights $w_i \ge 0$
+\Require An array $o$ of $k$ integer offsets  (see Definition \ref{def:o})
+\Require An array $p$ integer outputs (see Definition \ref{def:p})
 \Require $S \sim \unif{s}$
 \Ensure $S \sim \unif{s}$
-\Ensure $W \sim Weighted\{w\}$
+\Ensure $W \sim \textsc{Weighted}\{w\}$
 \Ensure $S \indep W$
 \Procedure{generate\_weighted}{$S, s, n, w, p, o$} 
-    \State $S, s, k \gets \textsc{generate\_multiple}(S, s, n)$
-    \State $W \gets p_{[S \div k]}$
-    \State $s \gets k * w_{[W]}$
-    \State $S \gets S - o_{[W]}$ 
+    \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
+    \State $W \gets p_{[S \div r]}$
+    \State $s \gets r * w_{[W]}$
+    \State $S \gets S - r * o_{[W]}$
     \State \Return $S, s, W$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
-\begin{lemma}
-The inverse of $f_{distribute}$ is given by
+XX Check all the algorithms again, make sure they use the right letters XX
 
-    \begin{equation}
-    f^{-1}_{distribute}(Y,Z) = \sum_{i<Y}w_i + Z
-    \end{equation}
+\begin{lemma}
+    Proof of correctness of $f_{weighted}$.
 \end{lemma}
 
 \begin{proof}
-    Show that $f^{-1}f= I$
 
 \end{proof}
 
@@ -651,30 +670,28 @@ Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, f
 \hline
 Algorithm & Output & Hardware & Xoshiro-128++ \\
 \hline
-ES32                  & $Uniform\{6\}$ & 1 & 1 \\
-ES32 optimized        & $Uniform\{6\}$ & 1 & 0.47 \\
-ES64                  & $Uniform\{6\}$ & 1 & 1.24 \\
-ES64 optimized        & $Uniform\{6\}$ & 1 & 0.55 \\
-Von Neumann \cite{neumann51}     & $Uniform\{6\}$ & 1.55 & 0.77 \\
-Fast Dice Roller \cite{lumbroso2013optimal} & $Uniform\{6\}$ & 1.42 & 0.83 \\
-Huber-Vergas \cite{huber2024optimalrollingfairdice} & $Uniform\{6\}$ & 1.42 & 1.0 \\
-FLDR \cite{saad2020fldr} & $Uniform\{6\}$ & 1.42 & 1.46 \\
-ALDR \cite{saad2025} & $Uniform\{6\}$ & 1.42 & 1.5 \\
-Lemire \cite{lemire2019fast} & $Uniform\{6\}$ & 24.8 & 0.26 \\
+ES32                  & $\unif{6}$ & 1 & 1 \\
+ES32 optimized        & $\unif{6}$ & 1 & 0.47 \\
+ES64                  & $\unif{6}$ & 1 & 1.24 \\
+ES64 optimized        & $\unif{6}$ & 1 & 0.55 \\
+Von Neumann \cite{neumann51}     & $\unif{6}$ & 1.55 & 0.77 \\
+Fast Dice Roller \cite{lumbroso2013optimal} & $\unif{6}$ & 1.42 & 0.83 \\
+Huber-Vergas \cite{huber2024optimalrollingfairdice} & $\unif{6}$ & 1.42 & 1.0 \\
+FLDR \cite{saad2020fldr} & $\unif{6}$ & 1.42 & 1.46 \\
+ALDR \cite{saad2025} & $\unif{6}$ & 1.42 & 1.5 \\
+Lemire \cite{lemire2019fast} & $\unif{6}$ & 24.8 & 0.26 \\
 \hline
 
-ES32                  & $Bernoulli\{\frac{1}{100}\}$ & 1 & 1 \\
-ES32 optimized        & $Bernoulli\{\frac{1}{100}\}$ & 0.9 & 0.54 \\
-FLDR                  & $Bernoulli\{\frac{1}{100}\}$ & 28.3 & 3.8 \\
-ALDR                  & $Bernoulli\{\frac{1}{100}\}$ & 22.4 & 2.94 \\
-Lemire (alias method) & $Bernoulli\{\frac{1}{100}\}$ & 700 & 1.07 \\
+ES32                  & $\bern{\frac{1}{100}}$ & 1 & 1 \\
+ES32 optimized        & $\bern{\frac{1}{100}}$ & 0.9 & 0.54 \\
+FLDR                  & $\bern{\frac{1}{100}}$ & 28.3 & 3.8 \\
+ALDR                  & $\bern{\frac{1}{100}}$ & 22.4 & 2.94 \\
 
 \hline
 
-ES32                  & $Weighted\{1,2,3,4,5\}$ & 1 & 1 \\
-FLDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.38 \\
-ALDR                  & $Weighted\{1,2,3,4,5\}$ & 1.36 & 1.13 \\
-Lemire (alias method) & $Weighted\{1,2,3,4,5\}$ & 29.8 & 0.18 \\
+ES32                  & $\mathrm{Weighted}\{1,2,3,4,5\}$ & 1 & 1 \\
+FLDR                  & $\mathrm{Weighted}\{1,2,3,4,5\}$ & 1.36 & 1.38 \\
+ALDR                  & $\mathrm{Weighted}\{1,2,3,4,5\}$ & 1.36 & 1.13 \\
 
 \hline
 
