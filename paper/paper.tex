@@ -149,7 +149,7 @@ In this section we'll start with some basic building blocks (Algorithm \ref{alg:
 
 We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli}) and weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a discrete uniform variable distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $[]$ are array access.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a discrete uniform variable distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. $\bern{p}$ is a Bernoulli distribution.  The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $[]$ are array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
@@ -397,15 +397,15 @@ Since the derivative of $g\ge 0$ it means that $g$ is monotonic.
 \end{proof}
 
 \begin{definition}
-    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-multiple}, where $p=\frac{n-1}{s_{min}}$.
+    Let $\epsilon = \epsilon(p)$ be the expected entropy loss function of Algorithm \ref{alg:generate-multiple}, where $p=\frac{n-1}{s_{min}}$. Let $\epsilon_{max}$ be the upper bound of $\epsilon$.
 \end{definition}
 
 \begin{theorem}
     \label{thm:loss}
-If $p = \frac{n-1}{s_{min}} < 0.5$, then
+If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then
 
 \begin{equation}
-0 \le \epsilon(p) \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
+0 \le \epsilon \le -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{equation}
 
 \end{theorem}
@@ -445,33 +445,35 @@ We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{
 \end{proof}
 
 \begin{corollary}
-    The entropy loss of Algorithm \ref{alg:generate-uniform} is $\epsilon$.
+    If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then the maximum entropy lost by Algorithm \ref{alg:generate-multiple} is
+\begin{align}
+    \epsilon_{max} = -\frac{p}{1-p}\log_2p - \log_2(1-p)
+\end{align}
+\end{corollary}
+
+\begin{corollary}
+    The maximum entropy loss of Algorithm \ref{alg:generate-uniform} is $\epsilon_{max}$.
 \end{corollary}
 
 \begin{proof}
-    ...
+    Algorithm \ref{alg:generate-uniform} loses up to $\epsilon_{max}$ entropy in its call to $\textsc{generate\_multiple}$ on line 2, and the $\textsc{divide}$ on line 3 does not lose entropy according to Lemma \ref{lem:divide-loss}.
 \end{proof}
 
 \begin{corollary}
-The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is bounded by
+    If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then the minimum efficiency $\eta_{min}$ of Algorithm \ref{alg:generate-multiple} is 
 
-\begin{equation}
-\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})} \le \eta \le 1
-\label{eq:generate-uniform-efficiency}
-\end{equation}
+\begin{align}
+    \label{eq:generate-uniform-efficiency}
+    \eta_{min} = \frac{\log_2n}{\log_2n + \epsilon_{max}}
+\end{align}
 \end{corollary}
 
 \begin{proof}
 \begin{align}
-    \eta & = \frac{H_{out}}{H_{in}} \\
-         & = \frac{H_{out}}{H_{out}+\epsilon} \\
-         & = \frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})}
+    \eta & = \frac{H_{out}}{H_{in}}
+          = \frac{H_{out}}{H_{out}+\epsilon} 
+          \ge \frac{\log_2n}{\log_2n + \epsilon_{max}}
 \end{align}
-Therefore 
-\begin{equation}
-\frac{\log_2n}{\log_2n + \epsilon(\frac{n-1}{s_{min}})} \le \eta \le 1
-\end{equation}
-from Theorem \ref{thm:loss}.
 \end{proof}
 
 To illustrate Equation \ref{eq:generate-uniform-efficiency}, if $s_{min}=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
@@ -481,7 +483,7 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitra
 \end{corollary}
 
 \begin{proof}
-$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule. Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
+$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on Theorem \ref{thm:loss}. Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
 \end{proof}
 
 
@@ -506,6 +508,10 @@ $\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, u
 \end{algorithmic}
 \end{algorithm}
 
+\begin{lemma}
+Proof of efficiency of Algorithm \ref{alg:generate-bernoulli}.
+\end{lemma}
+
 
 \subsection{Generating weighted integer variables}
 
@@ -513,7 +519,7 @@ Algorithm \ref{alg:generate-weighted} shows how we can generate an arbitrary  di
 
 The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. An implementation of this could be an array of size $n$ (constuction time $O(n)$, lookup time $O(1)$), or a binary search on an array of size $k$ (construction time $O(k)$, lookup time $O(\log k)$).
 
-We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The new step is to notice that by splitting the interval $[0,n)$ into $k$ sub-intervals, we can also generate a uniform variable of size $w_i$ as follows:
+We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The novel step is to notice that by splitting the interval $[0,n)$ into $k$ sub-intervals, we can also generate a uniform variable of size $w_i$ as follows:
 
 \[
 \overbrace{
@@ -525,7 +531,7 @@ We would expect this process to lose entropy because in general the output distr
              z_{n-w_{k-1}} ... 
              z_{n-1}
          }_{Y_{k-1} \sim \unif{w_{k-1}}}
-    }_{X \sim \textsc{Weighted}\{w_0, ..., w_{k-1}\}}
+    }_{X \sim \mathrm{Weighted}\{w_0, ..., w_{k-1}\}}
 }^{Z \sim \unif{n}}
 \]
 
@@ -533,23 +539,25 @@ The interval contains $\log_2w_i$ entropy, which we can recycle into the entropy
 
 \begin{definition}
     \label{def:o}
-    For $k$ integer weights $w_i \ge 0$, let the offset $o_0$ = 0, $o_{i+1} = o_i + w_i$.
+    For integer weights $w_i \ge 0$, $0 \le i < k$, let the offset $o_0$ = 0, $o_{i+1} = o_i + w_i$.
 \end{definition}
 
 \begin{definition}
-    \label{def:p}
-    For $k$ integer weights $w_i \ge 0$, let the output $p_j = i$ for $o_i \le j < o_{i+1}.$
+    \label{def:t}
+    For integer weights $w_i \ge 0$, $0 \le i < k$, let the output $t_j = i$ for $t_i \le j < t_{i+1}.$
 \end{definition}
 
 \begin{definition}
-    Let $f_{weighted}: Z \rightarrow X, Y$ be the function that maps random variable $Z \sim \unif{n}$ to independent random variables $X \sim \text{Weighted}\{w\}$ and $Y \sim \unif{w_i}$.
-
-    \begin{align}
-    X &= p_Z \\
-    Y &= X - o_X
-    \end{align}
-
+    Define $f_{weighted}: Z \mapsto (t_Z, Z-o_X)$.
 \end{definition}
+
+\begin{lemma}
+    If $Z \sim \unif{n}$ and $f_{weighted}: Z \rightarrow X, Y$, then $X \sim \mathrm{Weighted}\{w_0, ...\}$ and $Y \sim \unif{w_i}$.
+\end{lemma}
+
+\begin{proof}
+    ...
+\end{proof}
 
 Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
 
@@ -582,16 +590,16 @@ TODO: The variable k is confusing here. Maybe use $r$.
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
 \Require $S, s$ and $n$ are integers
-\Require An array $w$ of $k$ integer weights $w_i \ge 0$
-\Require An array $o$ of $k$ integer offsets  (see Definition \ref{def:o})
-\Require An array $p$ integer outputs (see Definition \ref{def:p})
+\Require An array $w$ of $k$ integer weights $w_i \ge 0$ totalling $n$.
+\Require An array $o$ of $k$ integer offsets (see Definition \ref{def:o})
+\Require An array $t$ of $n$ integer outputs (see Definition \ref{def:t})
 \Require $S \sim \unif{s}$
 \Ensure $S \sim \unif{s}$
-\Ensure $W \sim \textsc{Weighted}\{w\}$
+\Ensure $W \sim \mathrm{Weighted}\{w_0, ...\}$
 \Ensure $S \indep W$
 \Procedure{generate\_weighted}{$S, s, n, w, p, o$} 
     \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
-    \State $W \gets p_{[S \div r]}$
+    \State $W \gets t_{[S \div r]}$
     \State $s \gets r * w_{[W]}$
     \State $S \gets S - r * o_{[W]}$
     \State \Return $S, s, W$
@@ -609,8 +617,13 @@ XX Check all the algorithms again, make sure they use the right letters XX
 
 \end{proof}
 
+\begin{lemma}
+    The entropy loss of Algorithm \ref{alg:generate-weighted} is given by $\epsilon(\frac{n-1}{s_{min}})$.
+\end{lemma}
 
-
+\begin{proof}
+    By Lemma \ref{lem:distribution-conservation}, the only entropy-losing step in Algorithm \ref{alg:generate-weighted} is the call to $\textsc{generate\_multiple}$, which loses $\epsilon(\frac{n-1}{s_{min}})$ entropy.
+\end{proof}
 
 \section {Evaluation}
 
@@ -638,7 +651,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly at lower entropy. Notice the "hair" on the $\bern{\frac{n}{1024}}$ line due to the dyadic points being more efficient to generate with the IA. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
 
 \begin{figure}[ht]
 \centering
@@ -654,15 +667,15 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \label{fig:bernoulli-rate}
 \end{figure}
 
-Table~\ref{tab:speed} compares the speed of ES against various best in class random number generators. These numbers are heavily compiler and CPU dependent, so should only be considered a guide.
+Table~\ref{tab:speed} compares the speed of ES against various best in class random number generators. These numbers are heavily compiler and CPU dependent, so should not be taken too seriously.
 
 When reading entropy from a hardware random generator, rate of entropy input is the dominating factor and the ES is the fastest by a significant margin. When using a very fast pseudo-random source like Xorisho-128 \cite{blackman21}, we see that Lemire's algorithm \cite{lemire2019fast} dominates, as this is designed for speed and not entropy-efficiency.
 
-Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which could be a bit slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but fortunately compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was fastest for Bernoulli outputs in all cases because there is actually one less division operation needed.
+Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which can be slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was fastest for Bernoulli outputs in all cases because there is only one division operation needed per output.
 
-Overall, we can conclude that ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was not beneficial.
+Overall, ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was detrimental because the consumed entropy does not significantly change, but the operations are slower.
 
-Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, for an $m$ bit buffer the complexity of ES is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space.
+Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, so for an $m$ bit ES the complexity is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space per output.
 
 \begin{table}[h!]
 \centering
