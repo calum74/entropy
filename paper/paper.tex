@@ -68,23 +68,23 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to improve the entropy efficiency. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency as established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
+    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to cache entropy between invocations. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
 
 \section{Introduction}
 
-In this paper, we will study generating perfectly distributed integers from an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulation.
+In this paper, we will study generating perfectly distributed integers using an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulations.
 
-The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $H(X)$
+The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $\entropy{X}$
 \cite{shannon1948mathematical}.  
-A fundamental result is that you cannot get more entropy out than you put in, or $H(X) \ge H(f(X))$. \cite{cover1999elements} 
-We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{H(f(X))}{H(X)}$.
+A fundamental result is that you cannot get more entropy out than you put in, or $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
+We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{\entropy{f(X)}}{\entropy{X}}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy is simply lost. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
 
-To mitigate these entropy losses, it is possible to generate random integers in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
+To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make efficient decisions and recover almost all lost entropy.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make highly asymmetrical decisions that lose almost no entropy.
 
 The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is given in Theorem \ref{thm:loss}. 
 
@@ -294,7 +294,7 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
     \State $y \gets n-m$
     \State $Y \gets Z-m$
   \EndIf
-  \State \Return $X, Y, y$
+  \State \Return $Y, y, X$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
@@ -317,9 +317,9 @@ Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in v
 
 \subsection{Generating uniform variables using an entropy store}
 
-The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{kn}$ where $n$ is the number you need to generate, and $k$ is an integer. Extracting $\unif{kn}$ from an entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{kn}$ (and the other time, $\unif{s \mod n}$).
+The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is an integer. Extracting $\unif{rn}$ from an entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{rn}$ (and the other time, $\unif{s \mod n}$).
 
-Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{kn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
+Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
 Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to create a uniform variable $\sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{rn}$ into $\unif{r}$ and $\unif{n}$. $\unif{n}$ is our result, and $\unif{r}$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
 
@@ -332,17 +332,18 @@ Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to crea
 \Require $b \ge 2$
 \Require $\textsc{fetch}() \sim \unif{b}$
 \Require $S \sim \unif{s}$
-\Ensure $S \sim \unif{kn}$
+\Ensure $S \sim \unif{rn}$
+\Ensure $s = rn$
 \Procedure{generate\_multiple}{$S, s, n$} 
   \While {True}
     \While {$s < s_{min}$}
         \State $S, s \gets \textsc{combine}(S, s, \textsc{fetch}(), b)$
     \EndWhile
-    \State $k \gets s \div n$
-    \State $r \gets s \mod n$
-    \State $B, S, s \gets \textsc{sample}(S, s, s-r)$ 
+    \State $r \gets s \div n$
+    \State $m \gets s \mod n$
+    \State $S, s, B \gets \textsc{sample}(S, s, s-m)$ 
     \If{$B$}
-        \State \Return $S, s, k$
+        \State \Return $S, s, r$
     \EndIf
   \EndWhile
 \EndProcedure
@@ -490,6 +491,8 @@ $\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, u
 
 \subsection{Generating Bernoulli variables}
 
+Algorithm \ref{alg:generate-bernoulli} shows the generation of Bernoulli variables. Line 1 ensures that the store $S \sim \unif{rn}$ so we can apply $\textsc{sample}$ (Algorithm \ref{alg:sample}) to extract $\unif{rm}$ or $\unif{n-rm}$ from $S$. We return the Bernoulli output $B$ and recycle the uniform variable into the entropy store.
+
 \begin{algorithm}
 \caption{Generating a Bernoulli variable}
 \label{alg:generate-bernoulli}
@@ -501,17 +504,28 @@ $\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, u
 \Ensure $S \sim \unif{s}$
 \Ensure $S \indep B$
 \Procedure{generate\_bernoulli}{$S, s, m, n$} 
-  \State $S, s, r \gets \textsc{generate\_multiple}(U_s, s, n)$
-  \State $B, S, s \gets \textsc{sample}(U_s, s, r * m)$
+  \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
+  \State $S, s, B \gets \textsc{sample}(U_s, s, r * m)$
   \State \Return $S, s, B$
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
 \begin{lemma}
-Proof of efficiency of Algorithm \ref{alg:generate-bernoulli}.
+Algorithm \ref{alg:generate-bernoulli} returns $S \sim \unif{s}$ and $B \sim \bern{\frac{m}{n}}$. $B \indep S$.
 \end{lemma}
 
+\begin{proof}
+    ...
+\end{proof}
+
+\begin{lemma}
+The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $\epsilon(\frac{n-1}{s_{min}})$.
+\end{lemma}
+
+\begin{proof}
+    ...
+\end{proof}
 
 \subsection{Generating weighted integer variables}
 
@@ -519,7 +533,7 @@ Algorithm \ref{alg:generate-weighted} shows how we can generate an arbitrary  di
 
 The algorithm works by constructing a surjective mapping from the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. An implementation of this could be an array of size $n$ (constuction time $O(n)$, lookup time $O(1)$), or a binary search on an array of size $k$ (construction time $O(k)$, lookup time $O(\log k)$).
 
-We would expect this process to lose entropy because in general the output distribution contains less entropy than the input distribution. The novel step is to notice that by splitting the interval $[0,n)$ into $k$ sub-intervals, we can also generate a uniform variable of size $w_i$ as follows:
+We would expect this process to lose entropy because in general the output distribution $X$ contains less entropy than the input distribution $Z$. The new step is to notice that we can map each value of $Z$ to a weighted variable $X$ and a uniform variable $Y \sim \unif{w_i}$ as follows:
 
 \[
 \overbrace{
@@ -568,22 +582,21 @@ Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
 
 \begin{proof}
     \begin{align}
-    \mathbb{E}(H(X)) & = \log_2 n \\
-    \mathbb{E}(H(Y) + H(Z)) &=  \mathbb{E}(H(Y)) + \mathbb{E}(H(Z)) \\
-               & = - \sum_i p_i \log_2p_i + \sum_i p_iH(Y|X=i) \\
+    \mathbb{E}(\entropy{X,Y}) &=  \mathbb{E}(\entropy{X}) + \mathbb{E}(\entropy{Y}) \\
+               & = - \sum_i p_i \log_2p_i + \sum_i p_i\entropy{Y|X=i} \\
                & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
                & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
                & = - \sum_i \frac{w_i}{n}\log_2 w_i + \sum_i \frac{w_i}{n} \log_2 n + \sum_i \frac{w_i}{n}\log_2 w_i \\
                & = \sum_i \frac{w_i}{n} \log_2 n \\
                & = \frac{\log_2 n}{n} \sum_i w_i \\
                & = \frac{\log_2 n}{n} n \\
-               & = \log_2 n
+               & = \log_2 n \\
+               & = \mathbb{E}(\entropy{Z})
     \end{align}
+    Therefore the expected entropy of the input and outputs of $f_{weighted}$ is the same, and therefore $f_{weighted}$ does not lose entropy on average.
 \end{proof}
 
-Algorithm \ref{alg:generate-weighted} 
-
-TODO: The variable k is confusing here. Maybe use $r$.
+Algorithm \ref{alg:generate-weighted} generates a weighted random variable by first using $\textsc{generate\_multiple}$ to generating a uniform $\unif{rn}$, applying $f_{weighted}$ to convert this into a weighted variable $W$ and the new entropy store. Note that the entire distribution is scaled by $r$.
 
 \begin{algorithm}
 \caption{Generating a weighted variable}
@@ -606,16 +619,6 @@ TODO: The variable k is confusing here. Maybe use $r$.
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
-
-XX Check all the algorithms again, make sure they use the right letters XX
-
-\begin{lemma}
-    Proof of correctness of $f_{weighted}$.
-\end{lemma}
-
-\begin{proof}
-
-\end{proof}
 
 \begin{lemma}
     The entropy loss of Algorithm \ref{alg:generate-weighted} is given by $\epsilon(\frac{n-1}{s_{min}})$.
@@ -673,7 +676,7 @@ When reading entropy from a hardware random generator, rate of entropy input is 
 
 Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which can be slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was fastest for Bernoulli outputs in all cases because there is only one division operation needed per output.
 
-Overall, ES is most suited when generating truly random integers from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was detrimental because the consumed entropy does not significantly change, but the operations are slower.
+Overall, ES is most suited when generating truly random variables from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was detrimental because the consumed entropy does not significantly change, but the operations are slower.
 
 Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, so for an $m$ bit ES the complexity is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space per output.
 
@@ -717,7 +720,7 @@ ALDR                  & $\mathrm{Weighted}\{1,2,3,4,5\}$ & 1.36 & 1.13 \\
 
 \section{Conclusion}
 
-We have introduced a new class of algorithm to generate random integers via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
+We have introduced a new class of algorithm to generate random variables via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
 
 A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
