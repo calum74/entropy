@@ -110,9 +110,9 @@ dice & Markov &  &   & \\
     \label{tab:entropy-store}
 \end{table}
 
-No other algorithm has achieved this level of entropy efficiency.
+No other algorithm has achieved this level of entropy efficiency in practise.
 
-We show that this algorithm outperforms other random number generators when reading directly from a hardware entropy source, where the limiting factor is the rate of entropy input.
+We show that this algorithm is faster other random number generators when reading directly from a hardware entropy source, where the limiting factor is the rate of entropy input.
 
 \subsection{Related work}
 
@@ -586,7 +586,7 @@ The interval contains $\log_2w_i$ entropy, which we can recycle into the entropy
 
 \begin{definition}
     \label{def:t}
-    For integer weights $w_i \ge 0$, $0 \le i < k$, let the output $t_j = i$ for $t_i \le j < t_{i+1}.$
+    For integer weights $w_i \ge 0$, $0 \le i < k$, let the output $t_j = i$ for $o_i \le j < o_{i+1}.$
 \end{definition}
 
 \begin{definition}
@@ -598,7 +598,7 @@ The interval contains $\log_2w_i$ entropy, which we can recycle into the entropy
 \end{lemma}
 
 \begin{proof}
-    ...
+    $\prob{X=x} = \prob{X = t_z} = \frac{o_{x+1} - o_x}{n} = \frac{w_x}{n}$. Therefore $X \sim \mathrm{Weighted}\{w_0 ...\}$.  $\prob{Y=y} = \prob{Y = Z - o_X | X = x} = \prob{Y = Z - o_x | o_{x} \le Z < o_{x+1}} = \frac{1}{o_{x+1}-o_x} = \frac{1}{w_x}$. Therefore $Y \sim \unif{w_i}$ and $X \indep Y$.
 \end{proof}
 
 Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
