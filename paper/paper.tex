@@ -80,7 +80,7 @@ The general problem is one of \em entropy conversion \em, where entropy in one f
 A fundamental result is that you cannot get more entropy out than you put in, or $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
 We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{\entropy{f(X)}}{\entropy{X}}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in discrete units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
 
 To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
@@ -93,7 +93,7 @@ For example to roll a 6-sided die with a 32-bit entropy store (holding at least 
 
 \subsection {Contribution}
 
-We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $n$ is the size of the weighted distribution. For uniform or Bernoulli outputs, $n=O(1)$. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are usually constant.  A weighted distribution covers other discrete distribution types such as uniform, rational weights, dyadic and Bernoulli distributions.
+We present new algorithms, called \em entropy store algorithms \em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, and $k$ is the size of the weighted distribution. For uniform or Bernoulli outputs, $k=O(1)$. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $k$ are usually constant.  A weighted distribution covers other discrete distribution types such as uniform, rational weights, dyadic and Bernoulli distributions.
 
 \begin{table}[h!]
 \centering
@@ -101,7 +101,7 @@ We present new algorithms, called \em entropy store algorithms \em, that have lo
 \hline
 Input & Output & Entropy & Time & Space \\
 \hline
-Unbiassed & Weighted & $H(P)+\epsilon$ & Setup: $O(mn)$ & $O(mn)$ \\
+Unbiassed & Weighted & $\entropy{P}+\epsilon$ & Setup: $O(km)$ & $O(km)$ \\
 coin & Exact & (amortised) & Per output: $O(m \log m)$  &  \\
 dice & Markov &  &   & \\
 \hline
@@ -132,7 +132,7 @@ The alias method devised by Walker \cite{walker1977efficient} and improved by Vo
 Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
 Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm.
 
-Saad \emph{et}al. \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithm to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
+Saad \emph{et} al. \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithm to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
 
 \em Entropy extraction \em studies how to convert the entropy \em from \em a variety of different distributions. When the input distribution is unknown, Von Neumann \cite{neumann51} gives an algorithm to extract unbiased entropy from a biassed coin, which is again elegant but suboptimal in its entropy efficiency. Peres \cite{peres1992iterating} devised a way to recursively use the previously-discarded outputs to provide an algorithm with perfect amortised entropy efficiency, and the method was generalised by Pae \cite{pae15} to extract entropy from arbitrary but identically distributed unknown distributions ("weighted M-dice") with perfect amortised efficiency. Interestingly, it appears to be easier to extract entropy than to generate it.
 
@@ -140,7 +140,7 @@ Universal hashing can be used to turn unknown distributions into fair bits. Vemb
 
 A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary output precision or data structure sizes.
 
-Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em randomness recycler \em protocol which is a general purpose strategy to identify excess entropy in an algorithm and store it for the next state. This ideas has been used to generate entropy-optimal uniform \cite{lumbroso2013optimal, huber2024optimal} or weighted \cite{huber2024optimal} variables, but only within a single output, so does not improve on the efficiency established by Knuth-Yao and Han-Hoshi.
+Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em randomness recycler \em protocol which is a general purpose strategy to identify excess entropy in an algorithm and store it for the next state. This ideas has been used to generate entropy-optimal uniform \cite{lumbroso2013optimal, huber2024optimal} or weighted \cite{huber2024optimal} variables, but entropy is not recycled between invocations, so their method does not improve on the efficiency established by Knuth-Yao and Han-Hoshi.
 
 
 \section{Algorithms for entropy conversion}
@@ -149,14 +149,14 @@ In this section we'll start with some basic building blocks (Algorithm \ref{alg:
 
 We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli}) and weighted distributions (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a discrete uniform variable distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. $\bern{p}$ is a Bernoulli distribution.  The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{E}$ for expected value, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $[]$ are array access.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0..n-1}$ to mean that $X$ has a discrete uniform variable distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. $\bern{p}$ is a Bernoulli distribution with parameter $p$.  The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $[]$ are array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they preserve entropy, and can be used in both directions. The contribution is how we combine these transformations for entropy conversion.
+At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations are bijective, meaning they preserve entropy, and can be used in both directions. The contribution is how to arrange these transformations for efficient entropy conversion.
 
 The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f^{-1}_{combine}$ in given in Lemma \ref{lem:divide}. $f_{combine}$ and $f^{-1}_{combine}$ divide an interval of size $nm$ into $n$ intervals of size $m$ as follows:
 
@@ -206,7 +206,14 @@ The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combi
     $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X \indep Y$.
 \end{proof}
 
-Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$. Algorithm \ref{alg:combine} will be used to \em add \em entropy to the entropy store, and Algorithm \ref{alg:divide} can be used to \em extract \em entropy from the entropy store.
+\begin{corollary}
+    The functions $f_{combine}$ and $f^{-1}_{combine}$ do not lose entropy.
+\end{corollary}
+
+\begin{proof}If $f_{combine}(X,Y) = Z$, then $\entropy{X} + \entropy{Y} = \log_2{n} + \log_2{m} = \log_2(nm) = \entropy{Z}$.
+\end{proof}
+
+Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$.
 
 \begin{algorithm}
 \caption{Combining two uniform variables into one uniform variable}
@@ -246,8 +253,7 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
 \end{algorithmic}
 \end{algorithm}
 
-
-The function $f_{sample}$, in Definition \ref{def:sample}, divides the range $[0,n)$ into the parts $[0,m)$ and $[m, n)$ as follows:
+The function $f_{sample}$, in Definition \ref{def:sample}, divides the interval $[0,n)$ into the intervals $[0,m)$ and $[m, n)$ as follows:
 
 \[
 \overbrace{
@@ -258,20 +264,26 @@ The function $f_{sample}$, in Definition \ref{def:sample}, divides the range $[0
 \]
 
 \begin{definition}
-$f_{sample}: [0,n) \rightarrow \{0,1\} \times [0,\max(n,n-m))$ is defined as $f_{sample}(Z) = (Z<m, m(Z\ge m) + Z)$. (Assume that the operators $<$ and $\ge$ evaluate to $0$ or $1$.)
+$f_{sample}: [0,n) \rightarrow \{0,1\} \times [0,\max(n,n-m))$ is defined as $f_{sample}(Z) = (Z<m, Z - m(Z\ge m))$. Assume that the operators $<$ and $\ge$ evaluate to $0$ or $1$.
 \label{def:sample}
 \end{definition}
 
 \begin{lemma}
 If $Z \sim \unif{n}$ and $f_{sample}(Z) = (X,Y)$, then $X \sim \bern{\frac{m}{n}}$ and $Y \sim \unif{m(Z \ge m)+Z}$. $X \indep Y$.
+\label{lem:sample}
 \end{lemma}
 
 \begin{proof}
-    ...
+    $\prob{X=0} = \prob{Z < m} = \frac{m}{n}$, $\prob{X=1} = \prob{Z \ge m} = \frac{n-m}{n} = 1 - \frac{m}{n} = 1 - \prob{X=0}$, therefore $X \sim \bern{\frac{m}{n}}$.
+
+    If $X=0$, $\prob{Y=y} = \prob{Z=y | Z<m} = \frac{1}{m}$ therefore $Y \sim \unif{m}$.
+
+    If $X=1$, $\prob{Y=y} = \prob{Z = Y + m| Z\ge m} = \frac{1}{n-m}$ therefore $Y \sim \unif{n-m}$.
+
+    In both cases $X \indep Y$.
 \end{proof}
 
 Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} can be used to resize a uniform distribution or to generate a Bernoulli variable.
-
 
 \begin{algorithm}
 \caption{Converting a uniform variable into a Bernoulli and a uniform variable}
@@ -303,12 +315,27 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
     $f_{sample}$ preserves entropy.
 \end{lemma}
 
-\begin{proof}
-    ...
+\begin{proof}If $f_{sample}(Z) = (X,Y)$, then the entropy in $X \sim \bern{\frac{m}{n}}$ is given by the binary entropy function \cite{cover1999elements}:
+    \begin{align}
+    \entropy{X} = -\tfrac{m}{n}\log_2\tfrac{m}{n} - \tfrac{n-m}{n}\log_2\tfrac{n-m}{n}
+    \end{align}
+    The output entropy
+    \begin{align}
+    \entropy{f_{sample}(Z)}  &= \entropy{X,Y} \\
+                    &= \entropy{X} + \entropy{Y} \\
+                    &= \entropy{X} + \prob{X=0}\entropy{Y|X=0} + \prob{X=1}\entropy{Y|X=1} \\
+                    &= -\tfrac{m}{n}\log_2\tfrac{m}{n} - \tfrac{n-m}{n}\log_2\tfrac{n-m}{n} + \tfrac{m}{n}\log_2{m} + \tfrac{n-m}{n}\log_2(n-m) \\
+                    &= -\tfrac{m}{n}\log_2m + \tfrac{m}{n}\log_2n - \tfrac{n-m}{n}\log_2(n-m) + \notag \\
+                    &\quad\quad   \tfrac{n-m}{n}\log_2{n} + \tfrac{m}{n}\log_2{m} + \tfrac{n-m}{n}\log_2(n-m) \\
+                    &= \tfrac{m}{n}\log_2n + \tfrac{n-m}{n}\log_2n \\
+                    &= (\tfrac{m}{n} + \tfrac{n-m}{n})\log_2n \\
+                    &= \log_2n \\
+                    &= \entropy{Z}
+    \end{align}
 \end{proof}
 
 \begin{corollary}
-    Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample} preserve entropy.
+    Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample} preserve entropy, because they implement $f_{combine}$, $f^{-1}_{combine}$ and $f_{sample}$.
 \end{corollary}
 
 Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in von Neumann's rejection sampling algorithm and Lumbrusco's FDR algorithm. The reason why rejection sampling and FDR lose entropy is because they discard one or both outputs from the $\textsc{sample}()$ algorithm.
@@ -317,7 +344,7 @@ Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in v
 
 \subsection{Generating uniform variables using an entropy store}
 
-The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is an integer. Extracting $\unif{rn}$ from an entropy store $S \sim \unif{s}$ is much easier than it sounds, because you just call $\textsc{sample}(S, s, s - s \mod n)$, which most of the time will return a uniform variable $\unif{rn}$ (and the other time, $\unif{s \mod n}$).
+The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is some integer. Extracting $\unif{rn}$ from an entropy store $S \sim \unif{s}$ is much easier than it sounds, because $s - s \mod n$ is always a multiple of $n$, so $\textsc{sample}(S, s, s - s \mod n)$ yields a uniform variable $\sim \unif{rn}$ with probability $\frac{s - s\mod n}{s}$, and $\unif{s \mod n}$ with probability $\frac{s \mod n}{s}$.
 
 Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
@@ -448,6 +475,7 @@ We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{
 \begin{corollary}
     If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then the maximum entropy lost by Algorithm \ref{alg:generate-multiple} is
 \begin{align}
+    \label{eq:epsilon_max}
     \epsilon_{max} = -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 \end{corollary}
@@ -484,7 +512,7 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitra
 \end{corollary}
 
 \begin{proof}
-$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on Theorem \ref{thm:loss}. Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
+$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on (\ref{eq:epsilon_max}). Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
 \end{proof}
 
 
@@ -505,7 +533,7 @@ Algorithm \ref{alg:generate-bernoulli} shows the generation of Bernoulli variabl
 \Ensure $S \indep B$
 \Procedure{generate\_bernoulli}{$S, s, m, n$} 
   \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
-  \State $S, s, B \gets \textsc{sample}(U_s, s, r * m)$
+  \State $S, s, B \gets \textsc{sample}(S, s, r * m)$
   \State \Return $S, s, B$
 \EndProcedure
 \end{algorithmic}
@@ -516,7 +544,7 @@ Algorithm \ref{alg:generate-bernoulli} returns $S \sim \unif{s}$ and $B \sim \be
 \end{lemma}
 
 \begin{proof}
-    ...
+    $\textsc{generate\_multiple}$ creates $S \sim \unif{rn}$ on line 2, then $\textsc{sample}$ generates $B \sim \bern{\frac{rm}{rn}} = \bern{\frac{m}{n}}$, and $S \sim \unif{s}$. By Lemma \ref{lem:sample}, $B \indep S$.
 \end{proof}
 
 \begin{lemma}
@@ -524,7 +552,7 @@ The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $\epsilon
 \end{lemma}
 
 \begin{proof}
-    ...
+    The only entropy loss from Algorithm \ref{alg:generate-bernoulli} is the call to $\textsc{generate\_multiple}$ on line 2, which loses $\epsilon(\frac{n-1}{s_{min}})$ according to Theorem \ref{thm:loss}.
 \end{proof}
 
 \subsection{Generating weighted integer variables}
@@ -566,7 +594,7 @@ The interval contains $\log_2w_i$ entropy, which we can recycle into the entropy
 \end{definition}
 
 \begin{lemma}
-    If $Z \sim \unif{n}$ and $f_{weighted}: Z \rightarrow X, Y$, then $X \sim \mathrm{Weighted}\{w_0, ...\}$ and $Y \sim \unif{w_i}$.
+    If $Z \sim \unif{n}$ and $f_{weighted}: Z \rightarrow (X, Y)$, then $X \sim \mathrm{Weighted}\{w_0, ...\}$ and $Y \sim \unif{w_i}$.
 \end{lemma}
 
 \begin{proof}
@@ -582,7 +610,9 @@ Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
 
 \begin{proof}
     \begin{align}
-    \mathbb{E}(\entropy{X,Y}) &=  \mathbb{E}(\entropy{X}) + \mathbb{E}(\entropy{Y}) \\
+    \entropy{f_{weighted}(Z)}
+               &= \entropy{X,Y} \\
+               &=  \entropy{X} + \entropy{Y} \\
                & = - \sum_i p_i \log_2p_i + \sum_i p_i\entropy{Y|X=i} \\
                & = - \sum_i \frac{w_i}{n} \log_2 \frac{w_i}{n} + \sum_i \frac{w_i}{n}\log_2 w_i \\
                & = - \sum_i \frac{w_i}{n}(\log_2 w_i - \log_2 n) + \sum_i \frac{w_i}{n}\log_2 w_i \\
@@ -591,9 +621,9 @@ Note that $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$.
                & = \frac{\log_2 n}{n} \sum_i w_i \\
                & = \frac{\log_2 n}{n} n \\
                & = \log_2 n \\
-               & = \mathbb{E}(\entropy{Z})
+               & = \entropy{Z}
     \end{align}
-    Therefore the expected entropy of the input and outputs of $f_{weighted}$ is the same, and therefore $f_{weighted}$ does not lose entropy on average.
+    Therefore the expected entropy of the input and outputs of $f_{weighted}$ is the same, and therefore $f_{weighted}$ does not lose any entropy.
 \end{proof}
 
 Algorithm \ref{alg:generate-weighted} generates a weighted random variable by first using $\textsc{generate\_multiple}$ to generating a uniform $\unif{rn}$, applying $f_{weighted}$ to convert this into a weighted variable $W$ and the new entropy store. Note that the entire distribution is scaled by $r$.
@@ -636,7 +666,7 @@ For entropy efficiency, we can compare entropy-store (ES) against entropy-optima
 
 Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform variables, comparing ES with von Neumann and Knuth-Yao generators. Consistent with theory, the entropy loss of von Neumann and Knuth-Yao generators depend on the number generated, with Knuth-Yao losing up to 2 bits per output.
 
-This figure shows the entropy loss calculated using Equation \ref{eq:generate-uniform-efficiency} for a 32-bit and a 64-bit entropy buffer, with an increase in buffer size yielding a higher efficiency. We can also show sample real-world entropy losses confirming that Equation \ref{eq:generate-uniform-efficiency} is an upper bound.
+This figure shows the entropy loss calculated using Equation \ref{eq:generate-uniform-efficiency} for a 32-bit and a 64-bit entropy buffer, with an increase in buffer size yielding a higher efficiency. We can also show sample real-world entropy losses confirming that $\epsilon_{max}$ is an upper bound.
 
 \begin{figure}[ht]
 \centering
@@ -654,7 +684,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly at lower entropy. Notice the "hair" on the $\bern{\frac{n}{1024}}$ line due to the dyadic points being more efficient to generate with the IA. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly at lower entropy. Notice the "hair" on the $\bern{\frac{n}{1024}}$ line due to dyadic points being more efficient to generate with the IA. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
 
 \begin{figure}[ht]
 \centering
@@ -751,11 +781,11 @@ Source code for $\textsc{generate\_uniform}$, written in C.
             }
             // Sample entropy s to a multiple of n
             uint32_t r = s_range / n;
-            uint32_t c = s_range % n;
-            if(s_value >= c)
+            uint32_t m = s_range % n;
+            if(s_value >= m)
             {
                 // Sample successful
-                s_value -= c;
+                s_value -= m;
                 uint32_t a = s_value / n;
                 uint32_t b = s_value % n;
                 s_value = a;
@@ -765,7 +795,7 @@ Source code for $\textsc{generate\_uniform}$, written in C.
             else
             {
                 // Reject
-                s_range = c;
+                s_range = m;
             }
         }
     }

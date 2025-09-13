@@ -1,10 +1,17 @@
 # Next steps
 
 Paper
-- Check on use of uniform integer vs uniform variable
-- The constant $N$ refers to both the store size and a random variable
-    -> Solution is to rename one of the $N$
-- Get rid of the alias algorihthm as it's nonsense.
+Proofs:
+- [x] Lemma 4 (correctess of f_sample)
+- [x] Lemma 5 (entropy of f_sample) easy
+- [x] Lemma 6 (generate uniform) easy
+- [x] Lemma 8 correctness of gen_bernoulli via f_sample
+- [x] Lemma 9 entropy loss gen_bernoulli (easy)
+- [ ] Lemma 10 correctness of f_weighted (hard - extensio
+
+
+Ensure that the implementation aligns with the new variable namimg and arguments
+Re-check references, particularly the mathematics.
 
 
 Knuth – The Art of Computer Programming, Vol. 2: Seminumerical Algorithms
