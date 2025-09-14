@@ -97,12 +97,12 @@ We present new algorithms, called \em entropy store algorithms\em, that have low
 
 \begin{table}[h!]
 \centering
-\begin{tabular}{|c|c|c|c|c|}
+\begin{tabular}{|c|c|c|c|c|c|}
 \hline
-Input & Output & Entropy & Time & Space \\
+Input & Output & Entropy & Setup time & Per output time & Space \\
 \hline
-Unbiassed & Weighted & $\entropy{P}+\epsilon$ & Setup: $O(km)$ & $O(km)$ \\
-coin or dice & Exact & (amortised) & Per output: $O(m \log m)$  &  \\
+Unbiassed & Weighted & $\entropy{P}+\epsilon$ & $O(km)$ & $O(m \log m)$ & $O(km)$ \\
+coin or dice & Exact & (amortised) & & &  \\
 \hline
 \end{tabular}
 \caption{Entropy store algorithm characteristics.}
@@ -225,7 +225,7 @@ Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm
     \Ensure $z$ is $x * y$
     \Ensure $Z \sim \unif{z}$
 \Procedure{combine}{$X, n, Y, m$} 
-  \State $Z \gets X * m + Y$
+  \State $Z \gets m * X + Y$
   \State $z \gets n * m$
   \State \Return $Z, z$
 \EndProcedure
@@ -630,8 +630,8 @@ Algorithm \ref{alg:generate-weighted} generates a weighted variable by first cal
 \begin{algorithmic}[1]
 \Require $S, s$ and $n$ are integers
 \Require An array $w$ of $k$ integer weights $w_i \ge 0$ totalling $n$.
-\Require An array $o$ of $k$ integer offsets (see Definition \ref{def:o})
 \Require An array $t$ of $n$ integer outputs (see Definition \ref{def:t})
+\Require An array $o$ of $k$ integer offsets (see Definition \ref{def:o})
 \Require $S \sim \unif{s}$
 \Ensure $S \sim \unif{s}$
 \Ensure $W \sim \mathrm{Weighted}\{w_0, ...\}$
