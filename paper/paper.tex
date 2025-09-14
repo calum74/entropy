@@ -185,7 +185,7 @@ The function $f_{combine}$ in Definition \ref{def:combine}, allows us two combin
 \begin{lemma}
     If $X \sim \unif{n}$, $Y \sim \unif{m}$ and $X \indep Y$, then 
     $f_{combine}(X,Y) \sim \unif{nm}$.
-    \label{lem:combine}.
+    \label{lem:combine}
 \end{lemma}
 
 \begin{proof}
@@ -481,7 +481,7 @@ We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{
 \end{corollary}
 
 \begin{proof}
-    Algorithm \ref{alg:generate-uniform} loses up to $\epsilon_{max}$ entropy in its call to $\textsc{generate\_multiple}$ on line 2, and the $\textsc{divide}$ on line 3 does not lose entropy according to Lemma \ref{lem:divide-loss}.
+    Algorithm \ref{alg:generate-uniform} loses up to $\epsilon_{max}$ entropy in its call to $\textsc{generate\_multiple}$ on line 2, and the $\textsc{divide}$ on line 3 does not lose entropy according to Corollary \ref{cor:combine-entropy}.
 \end{proof}
 
 \begin{corollary}
