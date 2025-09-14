@@ -129,48 +129,4 @@ inline double internal_entropy(const random_device_generator &)
     return 0;
 }
 
-template <typename Source> struct alias_method
-{
-    alias_method(Source s) : m_source(s)
-    {
-    }
-
-    auto operator()(const auto &dist)
-    {
-        return m_source(dist);
-    }
-
-    auto operator()(const weighted_distribution &dist)
-    {
-        return dist.outputs()[m_source(uniform_distribution(0ul, dist.outputs().size() - 1))];
-    }
-
-    int operator()(const bernoulli_distribution &dist)
-    {
-        return m_source(uniform_distribution<size_t>(0ull, dist.denominator() - 1)) < dist.numerator();
-    }
-
-    template <std::integral T, T M, T N> auto operator()(const_bernoulli_distribution<T, M, N> &dist)
-    {
-        return m_source(const_uniform<0, N - 1>{}) < M;
-    }
-
-    Source m_source;
-
-    const auto &source() const
-    {
-        return m_source.source();
-    }
-};
-
-template <typename Source> auto internal_entropy(const alias_method<Source> &source)
-{
-    return internal_entropy(source.source());
-}
-
-template <typename Source> auto bits_fetched(const alias_method<Source> &source)
-{
-    return bits_fetched(source.source());
-}
-
 } // namespace entropy_store
