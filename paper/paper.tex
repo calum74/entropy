@@ -266,7 +266,7 @@ The function $f_{sample}$, in Definition \ref{def:sample}, divides the interval 
 \]
 
 \begin{definition}
-$f_{sample}: [0,n) \rightarrow \{0,1\} \times [0,\max(n,n-m))$ is defined as $f_{sample}(Z) = (Z<m, Z - m(Z\ge m))$. Assume that the operators $<$ and $\ge$ evaluate to $0$ or $1$.
+$f_{sample}: Z \mapsto (Z<m, Z - m(Z\ge m))$. The operators $<$ and $\ge$ evaluate to $0$ or $1$.
 \label{def:sample}
 \end{definition}
 
@@ -278,10 +278,10 @@ If $Z \sim \unif{n}$ and $f_{sample}(Z) = (X,Y)$, then $X \sim \bern{\frac{m}{n}
 \begin{proof}
     $\prob{X=0} = \prob{Z < m} = \frac{m}{n}$, $\prob{X=1} = \prob{Z \ge m} = \frac{n-m}{n} = 1 - \frac{m}{n} = 1 - \prob{X=0}$, therefore $X \sim \bern{\frac{m}{n}}$.
 
-    If $X=0$, $Z<m$, $\prob{Y=y} = \prob{Z=y | Z<m} = \frac{1}{m}$, therefore $Y \sim \unif{m}$. If $X=1$, $Z\ge m$, $\prob{Y=y} = \prob{Z = Y + m| Z\ge m} = \frac{1}{n-m}$, therefore $Y \sim \unif{n-m}$. In both cases $X \indep Y$.
+    If $X=0$, then $Z<m$ and $\prob{Y=y} = \prob{Z=y | Z<m} = \frac{1}{m}$, therefore $Y \sim \unif{m}$. If $X=1$ then $Z\ge m$ and $\prob{Y=y} = \prob{Z = Y + m| Z\ge m} = \frac{1}{n-m}$, therefore $Y \sim \unif{n-m}$. In both cases $X \indep Y$.
 \end{proof}
 
-Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} can be used to resize a uniform distribution or to generate a Bernoulli variable.
+Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} can be used to resize a uniform variable or to generate a Bernoulli variable.
 
 \begin{algorithm}
 \caption{Converting a uniform variable into a Bernoulli and a uniform variable}
@@ -338,13 +338,13 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
     Algorithms \ref{alg:combine}, \ref{alg:divide} and \ref{alg:sample} preserve entropy, from Corollary \ref{cor:combine-entropy} and Lemma \ref{lem:sample-entropy}.
 \end{corollary}
 
-Algorithms \ref{alg:combine} and \ref{alg:sample} appear as building blocks in von Neumann's rejection sampling algorithm and Lumbrusco's FDR algorithm. The reason why rejection sampling and FDR lose entropy is because they discard one or both outputs from the $\textsc{sample}()$ algorithm.
+Algorithms \ref{alg:combine} and \ref{alg:sample} could be used to implement von Neumann's rejection sampling algorithm \cite{neumann51} and Lumbrusco's FDR algorithm \cite{lumbroso2013optimal}. The reason why rejection sampling and FDR lose entropy is because they discard one or both outputs from the $\textsc{sample}$ algorithm.
 
 
 
-\subsection{Generating uniform variables using an entropy store}
+\subsection{Generating uniform variables}
 
-The basis of generating uniform variables (and other distributions) is to obtain a uniform variable $\sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is some integer. The trick is that we can use $\textsc{sample}$ to resize $S \sim \unif{s}$ very slightly to $S \sim \unif{s - s \mod n}$ with almost no entropy loss, and the resulting size will be divisible $n$.
+The basis of generating random variables is to first obtain a uniform variable $S \sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is some integer. The trick is that we can use $\textsc{sample}$ to resize $S \sim \unif{s}$ very slightly to $S \sim \unif{s - s \mod n}$ with almost no entropy loss, and the resulting size will be divisible $n$.
 
 Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
