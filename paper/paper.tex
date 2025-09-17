@@ -68,23 +68,26 @@ calum.grant@oxam.com}
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for generating discrete random variates from unbiased coins or dice using an \em entropy store \em to cache entropy between invocations. The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process.  For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao \cite{Knuth1976TheCO}, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
+    We present new arithmetic algorithms for generating discrete random variates, that are extremely efficient from an entropy perspective.
+    The method introduces an \em entropy store\em that is available to cache unused entropy between invocations, and allows the algorithm to use a more efficient entropy conversion strategy.
+    The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process. 
+    For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
 
 \section{Introduction}
 
 In this paper, we will study generating perfectly distributed integers using an entropy source. A typical example of this is using fair coin flips to roll a fair die or to perform a perfect shuffle of a deck of cards, but random numbers are ubiquitous in other areas such as security, AI, and simulations.
 
-The general problem is one of \em entropy conversion \em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $\entropy{X}$
+The general problem is one of \em entropy conversion\em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $\entropy{X}$
 \cite{shannon1948mathematical}.  
 A fundamental result is that you cannot get more entropy out than you put in, or $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
 We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{\entropy{f(X)}}{\entropy{X}}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in discrete units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in quantised units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
 
 To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. An entropy store allows us to make highly asymmetrical decisions that lose almost no entropy.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. By first looking at the available operations on a uniform variable, we can compose them in such a way as to minimise the entropy loss.
 
 The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is given in Theorem \ref{thm:loss}. 
 
@@ -115,9 +118,9 @@ We show that this algorithm is faster other random number generators when readin
 
 Entropy conversion is a well studied subject starting when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform variables (a "dice roll") from an unbiassed coin (a "coin flip") - shortly after Claude Shannon's seminal work on entropy \cite{shannon1948mathematical}. Von Neumann's rejection sampling algorithm works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
 
-Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, based on creating a binary decision tree based on the arithmetic coding of each output, and proved that no other binary decision tree could on average give fewer decisions.
+Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, using a binary decision tree based on an inverse Huffman encoding \cite{huffman} of each output, and proved that no other binary decision tree could on average give fewer decisions.
 
-The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al. \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
+The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. \cite{saad2025} Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher et al. \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or 'toll') for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
 
 Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but are very inefficient from an entropy perspective, by using fewer CPU division operations. Lemire's use case is for entropy that comes from a pseudorandom source that can be quickly generated.
 
@@ -126,7 +129,7 @@ The Knuth-Yao algorithm can be used to generate arbitrary distributions from bin
 
 The alias method devised by Walker \cite{walker1977efficient} and improved by Vose \cite{vose91} maps a uniform variable to an output, and then uses a second Bernoulli variable to look up an aliased output. This is $O(n)$ in setup time, and $O(1)$ in generation time, but is not optimal in terms of entropy efficiency.
 
-Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an asymptotically optimal entropy consumption. 
+Han and Hoshi \cite{han97} devised an optimal interval algorithm to convert biased or unbiased coin-flips to an arbitrary distribution, with an overhead of up to 3 bits of entropy per output.  The algorithm works by dividing the $[0,1)$ real interval according to the output distribution, and stops at bit n when the fetched binary number falls entirely within the output interval in the nth bit. Han and Hoshi show that this algorithm has an optimal entropy consumption. 
 Wanatabe \cite{wanatabe20} analyses this algorithm using an information spectrum, and Oohama \cite{oohama11, oohama2020performance} analyses the performance this algorithm. Han and Hoshi's algorithm can also be used to read biassed inputs and form part of a Markov chain.
 
 Saad \emph{et} al. \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) algorithm and Draper and Saad \cite{draper2025efficient} the Amplified Loaded Dice Roller (ALDR) algorithm to generate more efficient discrete distribution generating trees (DDG). They observe that DDG-based algorithms like Knuth-Yao can be very large and slow, so propose a table-based approach with optimizations, which creates a faster random distribution generator within 2 bits per sample of the output entropy for ALDR, and 6 bits per output for FLDR.
@@ -135,27 +138,27 @@ Saad \emph{et} al. \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) 
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu \emph{et} al. \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
-A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary large floating point precision or data structure sizes.
+A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,han97,devroye86,Knuth1976TheCO,lumbroso2013optimal} Batching spreads the entropy loss over the batch size. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. The fundamental limit to batching is that they do not scale well because they require arbitrary floating point precision or data structure sizes.
 
 Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em randomness recycler \em protocol which is a general purpose strategy to identify excess entropy in an algorithm and store it for the next state. This idea has been used to create entropy-optimal uniform \cite{lumbroso2013optimal, huber2024optimalrollingfairdice} or weighted \cite{huber2024optimalrollingfairdice} variables, but entropy is not recycled between invocations, so their method does not improve on the efficiency established by Knuth-Yao and Han-Hoshi.
 
 
 \section{Algorithms for entropy conversion}
 
-In this section we'll start with some basic building blocks (Algorithm \ref{alg:combine}-\ref{alg:generate-multiple}), and then use these to create an efficient generator for uniform variables (Algorithm \ref{alg:generate-uniform}).
+In this section we'll define some basic building blocks (Algorithm \ref{alg:combine}-\ref{alg:generate-multiple}), and then use these to create an efficient generator for uniform variables (Algorithm \ref{alg:generate-uniform}).
 
 We'll then build on Algorithm \ref{alg:generate-multiple} to create a generator for Bernoulli variables (Algorithm \ref{alg:generate-bernoulli}) and weighted variables (Algorithm \ref{alg:generate-weighted}). All of these algorithms are designed to have a 1 or near-1 entropy efficiency, and proofs of correctness and efficiency are contained throughout this section.
 
-We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0 ... n-1}$ to mean that $X$ has a discrete uniform distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. $\bern{p}$ is a Bernoulli distribution with parameter $p$.  The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. $A \indep B$ means that random variables $A$ and $B$ are independent. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $_{[...]}$ are array access.
+We'll use uppercase letters $X$, $Y$ and $Z$ for discrete random variables, and write $\entropy{X}$ for the Shannon entropy of this variable. Write $X \sim \unif{0 ... n-1}$ to mean that $X$ has a discrete uniform distribution of size $n$, or $X \sim \unif{n}$ for short. $\entropy{\unif{n}} = \log_2n$. $\bern{p}$ is a Bernoulli distribution with parameter $p$. $A \indep B$ means that random variables $A$ and $B$ are independent.  The interval $[a,b)$ means all integers in the range $a...b-1$. Write $\mathbb{P}$ for probability, $\mathbb{R} for the set of real numbers$, and lowercase $f$ as a function on random variables. $f^{-1}$ means the inverse function. In algorithms, $\div$ and $\mod$ are integer division and modulus operations, and subscripts $_{[...]}$ are array access.
 
 We'll say "uniform variable" to mean a uniformly distributed integer variable or variate.
 
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations preserve entropy. The contribution is how to arrange these transformations for efficient entropy conversion.
+At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations preserve entropy. The contribution is how to use these transformations for efficient entropy conversion.
 
-The function $f_{combine}$ in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f^{-1}_{combine}$ in given in Lemma \ref{lem:divide}. $f_{combine}$ and $f^{-1}_{combine}$ divide an interval of size $nm$ into $n$ intervals of size $m$ as follows:
+The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f^{-1}_{combine}$ is given in Lemma \ref{lem:divide}. $f_{combine}$ and $f^{-1}_{combine}$ divide an interval of size $nm$ into $n$ intervals of size $m$ as follows:
 
 \[
 \overbrace{    
@@ -169,12 +172,12 @@ The function $f_{combine}$ in Definition \ref{def:combine}, allows us two combin
 \]
 
 \begin{definition}
-    $f_{combine}: [0,n)\times [0,m) \rightarrow [0,nm)$ is defined as $f_{combine}(X,Y) = mX+Y$.
+    $f_{combine}: [0,n)\times [0,m) \rightarrow [0,nm)$ is defined as $f_{combine}: (X,Y) \mapsto mX+Y$.
     \label{def:combine}
 \end{definition}
 
 \begin{lemma}
-    $f_{combine}$ is a bijection with inverse $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
+    $f_{combine}$ is a bijection with inverse $f^{-1}_{combine}: Z \mapsto (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
     \label{lem:divide}
 \end{lemma}
 
@@ -205,11 +208,11 @@ The function $f_{combine}$ in Definition \ref{def:combine}, allows us two combin
 \end{proof}
 
 \begin{corollary}
-    The functions $f_{combine}$ and $f^{-1}_{combine}$ do not lose entropy.
+    $f_{combine}$ and $f^{-1}_{combine}$ do not lose entropy.
     \label{cor:combine-entropy}
 \end{corollary}
 
-\begin{proof}$f_{combine}$ and $f^{-1}_{combine}$ are bijections so must preserve entropy. More directly, if $f_{combine}(X,Y) = Z$, then $\entropy{X,Y} = \entropy{X} + \entropy{Y} = \log_2{n} + \log_2{m} = \log_2(nm) = \entropy{Z} = \entropy{f_{combine}(X,Y)}$.
+\begin{proof}$f_{combine}$ and $f^{-1}_{combine}$ are bijections so must preserve entropy. Also, $\entropy{X,Y} = \entropy{X} + \entropy{Y} = \log_2{n} + \log_2{m} = \log_2(nm) = \entropy{Z}$.
 \end{proof}
 
 Algorithm \ref{alg:combine} is an implementation of $f_{combine}$, and Algorithm \ref{alg:divide} is an implementation of $f^{-1}_{combine}$, with the postconditions established by Lemmas \ref{lem:combine} and \ref{lem:divide-postconditions}.
