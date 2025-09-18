@@ -346,9 +346,9 @@ Algorithms \ref{alg:combine} and \ref{alg:sample} could be used to implement von
 
 The basis of generating random variables is to first obtain a uniform variable $S \sim \unif{rn}$ where $n$ is the number you need to generate, and $r$ is some integer. The trick is that we can use $\textsc{sample}$ to resize $S \sim \unif{s}$ very slightly to $S \sim \unif{s - s \mod n}$ with almost no entropy loss, and the resulting size will be divisible $n$.
 
-Algorithm \ref{alg:generate-multiple} generates a uniform variable $\sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
+Algorithm \ref{alg:generate-multiple} generates a uniform variable $S \sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B$ is false), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B$ is true, and so the lost entropy in $B$ (on line 8) is very small.
 
-Algorithm \ref{alg:generate-uniform} calls $\textsc{generate\_multiple}$ to create a uniform variable $\sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $\unif{rn}$ into $\unif{r}$ and $\unif{n}$. $\unif{n}$ is our result, and $\unif{r}$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
+Algorithm \ref{alg:generate-uniform} generates a uniform variable $N \sim \unif{n}$ using an entropy source $\textsc{fetch}$ and an entropy store $S \sim \unif{s}$. Excess entropy is returned in $S$. The algorithm calls $\textsc{generate\_multiple}$ to create a uniform variable $S \sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $S$ into $S \sim \unif{r}$ and $N \sim \unif{n}$. $N$ is our result, and $S$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
 
 \begin{algorithm}
 \caption{Generating a uniform multiple}
@@ -438,16 +438,16 @@ If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then
 \end{theorem}
 
 \begin{proof}
-For each iteration $i$ of Algorithm \ref{alg:generate-uniform}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge s_{min}$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{s_{min}}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $B_i \sim \bern{p_i}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
+For each iteration $i$ of Algorithm \ref{alg:generate-multiple}, let $p_i = \frac{s_i \mod n}{s_i}$. But $(s_i \mod n) \le n-1$ and $s_i \ge s_{min}$, so $\frac{s_i \mod n}{s_i} \le \frac{n-1}{s_{min}}$, so $p_i \le p$. On each iteration, the entropy lost is equal to the entropy in the variable $B_i \sim \bern{p_i}$, which is given by the entropy equation for a Bernoulli distribution \cite{cover1999elements}:
 
 \begin{equation}
-H(B_i) = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
+\entropy{B_i} = -p_i\log_2p_i - (1-p_i)\log_2(1-p_i)
 \end{equation}
 
 Therefore, 
 
 \begin{equation}
-0 \le H(B_i) \le -p\log_2p - (1-p)\log_2(1-p) 
+0 \le \entropy{B_i} \le -p\log_2p - (1-p)\log_2(1-p) 
 \end{equation}
 
 by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is given by
@@ -459,7 +459,7 @@ by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is 
 \implies & m \le \frac{1}{1-p}
 \end{align}
 
-The total entropy $\epsilon$ lost by the algorithm is given by the number of iterations of the algorithm multiplied by the entropy lost in each iteration.
+The total entropy $\epsilon$ lost by the algorithm is given by the number of iterations $m$ of the algorithm multiplied by the entropy $\entropy{B_i}$ lost in each iteration.
 
 \begin{align}
 0 \le \epsilon
@@ -468,13 +468,13 @@ The total entropy $\epsilon$ lost by the algorithm is given by the number of ite
     = & -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 
-We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{sample}$ always succeeds with no entropy loss, so $\epsilon=0$.
+We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{sample}$ succeeds with no entropy loss, so $\epsilon=0$.
 \end{proof}
 
 \begin{corollary}
-    If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then the maximum entropy lost by Algorithm \ref{alg:generate-multiple} is
+    If $p = \frac{n-1}{s_{min}} \le \frac{1}{2}$, then the maximum entropy lost by Algorithms \ref{alg:generate-multiple} and \ref{alg:generate-uniform} is
 \begin{align}
-    \label{eq:epsilon_max}
+    \label{eq:epsilon-max}
     \epsilon_{max} = -\frac{p}{1-p}\log_2p - \log_2(1-p)
 \end{align}
 \end{corollary}
@@ -511,14 +511,14 @@ The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitra
 \end{corollary}
 
 \begin{proof}
-$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on (\ref{eq:epsilon_max}). Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
+$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on (\ref{eq:epsilon-max}). Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
 \end{proof}
 
 
 
 \subsection{Generating Bernoulli variables}
 
-Algorithm \ref{alg:generate-bernoulli} generates a Bernoulli variable. Line 1 ensures that the store $S \sim \unif{rn}$ so we can apply $\textsc{sample}$ (Algorithm \ref{alg:sample}) to extract $\unif{rm}$ or $\unif{n-rm}$ from $S$. We return the Bernoulli output $B$ and recycle the uniform variable into the entropy store.
+Algorithm \ref{alg:generate-bernoulli} generates a Bernoulli variable $B \sim \unif{\frac{m}{n}}$ using an entropy source $\textsc{fetch}$ and an entropy store $S \sim \unif{s}$. Excess entropy is returned in $S$. Line 1 ensures that the store $S \sim \unif{rn}$ so we can apply $\textsc{sample}$ (Algorithm \ref{alg:sample}) to extract $S \sim \unif{rm}$ or $S \sim \unif{n-rm}$ from $S$. We return the Bernoulli output $B$ and recycle the remaining $S$ as the new entropy store.
 
 \begin{algorithm}
 \caption{Generating a Bernoulli variable}
@@ -556,11 +556,11 @@ The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $\epsilon
 
 \subsection{Generating weighted integer variables}
 
-Algorithm \ref{alg:generate-weighted} shows how we can generate an arbitrary  distribution of $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, giving output probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$, where $n=\sum_i w_i$ is the total weight.
+Algorithm \ref{alg:generate-bernoulli} generates a weighted variable $W \sim \mathrm{Weighted}\{w_0, ..., w_{k-1}\}$ using an entropy source $\textsc{fetch}$ and an entropy store $S \sim \unif{s}$. Excess entropy is returned in $S$. The distribution has $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, giving output probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$, where $n=\sum_i w_i$ is the total weight.
 
 The algorithm works by mapping the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution. An implementation of this could be an array of size $n$ (constuction time $O(n)$, lookup time $O(1)$), or a binary search on an array of size $k$ (construction time $O(k)$, lookup time $O(\log k)$).
 
-We can divide the interval $[0,n)$ into $k$ unequal intervals of size $w_i$ as follows:
+We can divide the interval $[0,n)$ into $k$ intervals each of size $w_i$ as follows:
 
 \[
 \overbrace{
@@ -632,7 +632,7 @@ Algorithm \ref{alg:generate-weighted} generates a weighted variable by first cal
 \label{alg:generate-weighted}
 \begin{algorithmic}[1]
 \Require $S, s$ and $n$ are integers
-\Require An array $w$ of $k$ integer weights $w_i \ge 0$ totalling $n$.
+\Require An array $w$ of $k$ integer weights $w_i \ge 0$ totalling $n$
 \Require An array $t$ of $n$ integer outputs (see Definition \ref{def:t})
 \Require An array $o$ of $k$ integer offsets (see Definition \ref{def:o})
 \Require $S \sim \unif{s}$
@@ -654,23 +654,23 @@ Algorithm \ref{alg:generate-weighted} generates a weighted variable by first cal
 \end{lemma}
 
 \begin{proof}
-    By Lemma \ref{lem:distribution-conservation}, the only entropy-losing step in Algorithm \ref{alg:generate-weighted} is the call to $\textsc{generate\_multiple}$, which loses $\epsilon(\frac{n-1}{s_{min}})$ entropy.
+    By Lemma \ref{lem:distribution-conservation}, the only entropy-losing step in Algorithm \ref{alg:generate-weighted} is the call to $\textsc{generate\_multiple}$, which loses $\epsilon(\frac{n-1}{s_{min}})$ entropy by Theorem \ref{thm:loss}.
 \end{proof}
 
 \section {Evaluation}
 
 We can evaluate a random number generator based on its speed, memory footprint, setup time, entropy efficiency and quality of output distribution. \cite{saad2025}
 
-For entropy efficiency, we can compare entropy-store (ES) against entropy-optimal algorithms Knuth-Yao (KY) and the Interval Algorithm (IA).
+For entropy efficiency, we can compare entropy store against entropy-optimal algorithms Knuth-Yao (KY) and the Interval Algorithm (IA).
 
-Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform variables, comparing ES with von Neumann and Knuth-Yao generators. Consistent with theory, the entropy loss of von Neumann and Knuth-Yao generators depend on the number generated, with Knuth-Yao losing up to 2 bits per output.
+Figure \ref{fig:uniform-losses} shows the calculated entropy loss for generating uniform variables, comparing ES with von Neumann (vN) and KY generators. As expected (see for example \cite{bacher2017} for a detailed analysis), the entropy loss of vN and KY generators depend on the number generated, with KY losing up to 2 bits per output.
 
-This figure shows the entropy loss calculated using Equation \ref{eq:generate-uniform-efficiency} for a 32-bit and a 64-bit entropy buffer, with an increase in buffer size yielding a higher efficiency. We can also show sample real-world entropy losses confirming that $\epsilon_{max}$ is an upper bound.
+This figure shows the entropy loss calculated using Equation \ref{eq:epsilon-max} for a 32-bit and a 64-bit entropy buffer, with an increase in buffer size yielding a higher efficiency. We can also show sample real-world entropy losses confirming that $\epsilon_{max}$ is an upper bound.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.8\textwidth]{uniform_losses.png}
-\caption{Entropy losses for uniform variable generation.}
+\caption{Entropy losses generating $\unif{n}$.}
 \label{fig:uniform-losses}
 \end{figure}
 
@@ -679,11 +679,11 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.8\textwidth]{shuffling_efficiency.png}
-\caption{Entropy efficiency shuffling cards.}
+\caption{Entropy efficiency shuffling cards using the Fisher-Yates algorithm.}
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of the interval algorithm drops off significantly at lower entropy. Notice the "hair" on the $\bern{\frac{n}{1024}}$ line due to dyadic points being more efficient to generate with the IA. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly at lower entropy. Notice the spikes with IA due to dyadic outputs being more efficient to generate. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
 
 \begin{figure}[ht]
 \centering
@@ -695,19 +695,20 @@ When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficie
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.8\textwidth]{bernoulli_rate.png}
-\caption{Output rate for Bernoulli distributions.}
+\caption{Output rate for Bernoulli distribution $\bern{\frac{1}{n}}$.}
 \label{fig:bernoulli-rate}
 \end{figure}
 
+For practical purposes, Algorithms \ref{alg:generate-uniform}, \ref{alg:generate-bernoulli} and \ref{alg:generate-weighted} are $O(1)$.
+The setup for Algorithms \ref{alg:generate-uniform} and \ref{alg:generate-bernoulli} are $O(1)$, but Algorithm \ref{alg:generate-weighted} requires $O(n)$ setup time and space. Integer division and multiplication is actually $O(m \log m)$ \cite{harvey2021integer}, so for an $m$ bit ES the time per output is $O(m \log m)$. 
+
 Table~\ref{tab:speed} compares the speed of ES against various best in class random number generators. These numbers are heavily compiler and CPU dependent, so should not be taken too seriously.
 
-When reading entropy from a hardware random generator, rate of entropy input is the dominating factor and the ES is the fastest by a significant margin. When using a very fast pseudo-random source like Xorisho-128 \cite{blackman21}, we see that Lemire's algorithm \cite{lemire2019fast} dominates, as this is designed for speed and not entropy-efficiency.
+When reading entropy from a hardware random generator, rate of entropy input is the dominating factor and the ES is the fastest by a significant margin. When using a very fast pseudo-random source like Xorisho-128 \cite{blackman21}, we see that Lemire's algorithm \cite{lemire2019fast} dominates, as this is designed for speed over entropy efficiency.
 
-Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which can be slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was fastest for Bernoulli outputs in all cases because there is only one division operation needed per output.
+Speed is best understood in terms of CPU pipeline architecture. Branching, memory access, hardware random numbers and integer divmod operations are all relatively expensive operations \cite{Abel19a}. Table-based methods like FLDR \cite{saad2020fldr} and ALDR \cite{saad2025} perform memory access which can be slower than purely arithmetic methods. ES is likely to suffer due to its 2 integer divmod operations, but compilers can strength-reduce integer division to a multiplication and a shift \cite{granlund94}, which is shown in the "optimized" version of these algorithms in Table~\ref{tab:speed}. ES was the fastest for Bernoulli outputs in all cases because there is only one divmod operation needed per output.
 
-Overall, ES is most suited when generating truly random variables from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Using a 64-bit ES was detrimental because the consumed entropy does not significantly change, but the operations are slower.
-
-Integer division and multiplication is $O(n \log n)$ \cite{harvey2021integer}, so for an $m$ bit ES the complexity is $O(m \log m)$, but for practical purposes it is $O(1)$ in time and space per output.
+Overall, ES is most suited when generating true random variables from a hardware entropy source. When a pseudo-random source is used, then Lemire's algorithm is the fastest. Although a 64-bit ES is more efficient that a 32-bit ES, the slower 64-bit operations outweighed any theoretical benefits.
 
 \begin{table}[h!]
 \centering
@@ -749,9 +750,9 @@ ALDR                  & & 1.36 & 1.13 \\
 
 \section{Conclusion}
 
-We have introduced a new class of algorithm to generate random variables via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao and the Interval Algorithm can be overcome by using an entropy store. 
+We have introduced a new class of algorithm to generate random variables via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao \cite{Knuth1976TheCO} and the Interval Algorithm \cite{han97} can be overcome by using an entropy store. 
 
-A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized out.
+A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
 
 
