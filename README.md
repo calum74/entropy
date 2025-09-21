@@ -8,6 +8,39 @@ To get a reusable C++ implementation of entropy store, go to [entropy_store.hpp]
 
 You can also run some tests for example entropy.py in Python, and entropy.cpp in C++.
 
+## Jupyter notebook
+
+I use VScode with the Jupyter plugin. You need Python 3, and `pip3 install matploylib pandas jinja2`
+
+## Building C++
+
+Make sure you install Cmake and C++, and you check out submodules (some of the tests submodule other projects for testing purposes).
+
+```
+$ git submodule --init
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make test
+```
+
+Note that tests occasionally fail because of the tight tolerances on the output. This is normal, just re-run the tests again.
+
+## Running benchmarks
+
+Make sure you build in release mode for this: `cmake -DCMAKE_BUILD_TYPE=Release`, then run `./bench`
+
+## Building the paper
+
+Requires a full Latex installation, for example `sudo dnf install texlive-scheme-full`
+
+```
+cd paper
+biber paper.bcf
+pdflatex paper.tex
+```
+
 ## C++ Reference
 
 The implementation is in [entropy_store.hpp](entropy_store.hpp) which can be copied to your C++ project.
