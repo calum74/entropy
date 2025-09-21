@@ -87,7 +87,7 @@ int main(int argc, char **argv)
     count_totals(aldr_source{bits, uniform_distribution(1, 6)}, N, 0.69);
 
     std::cout << "ALDR: ";
-    count_totals(aldr_source{bits, weighted_distribution{1, 99}}, N, 0.69);
+    count_totals(aldr_source{bits, weighted_distribution{1, 99}}, N, 0.02);
 
     std::cout << "ALDR: ";
     count_totals(aldr_source{bits, weighted_distribution{1, 2, 3, 4, 5}}, N, 0.69);
