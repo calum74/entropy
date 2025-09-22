@@ -1,13 +1,24 @@
-\documentclass[12pt]{article}
+% Based on TIT-LaTeX-template-202312
+
+\documentclass[lettersize,onecolumn]{IEEEtran}
+%\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+%\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+%\usepackage{cite}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
 
 % Packages
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath, amssymb, amsthm}   % Math
-\usepackage{graphicx}           % Images
-% \usepackage{hyperref}           % Clickable links
+\usepackage{amssymb,amsthm}   % Math
 \usepackage{geometry}           % Page margins
-% \usepackage{cite}               % Citation formatting
-\usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{listings}
 \usepackage{color}
@@ -23,17 +34,7 @@
     sorting=nyt
 ]{biblatex}
 
-\addbibresource{references.bib}  % Bib file
-
-% Page setup
-\geometry{margin=1in}
-
-% Title
-\title{Efficient discrete random variate generation using an entropy store}
-\author{Calum Grant \\
-OxFORD Asset Management \\
-calum.grant@oxam.com}
-\date{\today}
+\addbibresource{references.bib}
 
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
@@ -65,6 +66,20 @@ calum.grant@oxam.com}
 
 \begin{document}
 
+% Title
+\title{Efficient discrete random variate generation using an entropy store}
+\author{Calum Grant}
+% \thanks{This paper was produced by the IEEE Publication Technology Group. They are in Piscataway, NJ.}% 
+%\thanks{Manuscript submitted Mmmmmm XX, 2025.}
+% The paper headers
+%\markboth{Journal of \LaTeX\ Class Files,~Vol.~1, No.~2, December~2023}%
+%{Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+
+% \IEEEpubid{0000--0000~\copyright~2023 IEEE}
+% Remember, if you use this you must call \IEEEpubidadjcol in the second
+% column for its text to clear the IEEEpubid mark.
+
+
 \maketitle
 
 \begin{abstract}
@@ -73,6 +88,10 @@ calum.grant@oxam.com}
     The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process. 
     For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
+
+\begin{IEEEkeywords}
+    Bernoulli distribution, discrete random variable, entropy conversion, entropy efficiency, entropy store, random number generation, uniform distribution, weighted distribution.
+\end{IEEEkeywords}
 
 \section{Introduction}
 
