@@ -67,7 +67,7 @@
 \begin{document}
 
 % Title
-\title{Efficient discrete random variate generation using an entropy store}
+\title{Efficient random number generation using an entropy store}
 \author{Calum Grant}
 % \thanks{This paper was produced by the IEEE Publication Technology Group. They are in Piscataway, NJ.}% 
 %\thanks{Manuscript submitted Mmmmmm XX, 2025.}
@@ -83,8 +83,9 @@
 \maketitle
 
 \begin{abstract}
-    We present new arithmetic algorithms for generating discrete random variates, that are extremely efficient from an entropy perspective.
-    The method introduces an \em entropy store \em that is available to cache unused entropy between invocations, and allows the algorithms to use a more efficient entropy conversion strategy.
+    We present new algorithms for generating random integers, that are extremely efficient from an entropy perspective.
+    This means that less entropy needs to be read from an external source for each random number generated.
+    The method introduces an \em entropy store \em that is available to cache unused entropy between invocations, and allows algorithms to use a more efficient strategy.
     The method can generate perfect random variates for any weighted integer distribution, whilst losing almost no entropy in the process. 
     For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have and efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
@@ -99,10 +100,10 @@ In this paper, we will study generating perfectly distributed integers from an e
 
 The general problem is one of \em entropy conversion\em, where entropy in one form needs to be converted to entropy in a different form using a function $f$ on a discrete random variable $X$ having Shannon entropy $\entropy{X}$
 \cite{shannon1948mathematical}.  
-A fundamental result is that you cannot get more entropy out than you put in, i.e. $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
+A fundamental property is that you cannot get more entropy out than you put in, i.e. $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
 We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{\entropy{f(X)}}{\entropy{X}}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in quantised units, and any excess entropy must be discarded. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in quantised units, and any excess entropy is unused. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
 
 To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
@@ -367,7 +368,7 @@ The first step is to obtain a uniform variable $S \sim \unif{rn}$ where $n$ is t
 
 Algorithm \ref{alg:generate-multiple} generates a uniform variable $S \sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B=0$), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B=1$, and so the lost entropy in $B$ (on line 8) is very small.
 
-Algorithm \ref{alg:generate-uniform} generates a uniform variable $N \sim \unif{n}$ using an entropy source $\textsc{fetch}$ and an entropy store $S \sim \unif{s}$. Excess entropy is returned in $S$. The algorithm calls $\textsc{generate\_multiple}$ to create a uniform variable $S \sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $S$ into $S \sim \unif{r}$ and $N \sim \unif{n}$. $N$ is our result, and $S$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix \ref{app:source-code}.
+Algorithm \ref{alg:generate-uniform} generates a uniform variable $N \sim \unif{n}$ using an entropy source $\textsc{fetch}$ and an entropy store $S \sim \unif{s}$. Excess entropy is returned in $S$. The algorithm calls $\textsc{generate\_multiple}$ to create a uniform variable $S \sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $S$ into $S \sim \unif{r}$ and $N \sim \unif{n}$. $N$ is our result, and $S$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix.
 
 \begin{algorithm}
 \caption{Generating a uniform multiple}
@@ -767,19 +768,18 @@ ALDR                  & & 1.36 & 1.13 \\
 
 
 
-\section{Conclusion}
+\section{Conclusion and further work}
 
 We have introduced a new class of algorithm to generate random variables via a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao \cite{Knuth1976TheCO} and the Interval Algorithm \cite{han97} can be overcome by using an entropy store. 
 
 A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
+Further work could include improving the speed, generating other types of distribution, and determining if the current algorithms are optimal or if further efficiency improvements are possible for a given store size.
 
 
 \printbibliography
 
 \appendix
-
-\section {Source code} \label{app:source-code}
 
 Source code for $\textsc{generate\_uniform}$, written in C.
 
