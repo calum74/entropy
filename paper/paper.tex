@@ -350,17 +350,21 @@ Algorithm \ref{alg:sample} implements $f_{sample}$. Algorithm \ref{alg:sample} c
     \end{align}
     The output entropy
     \begin{align}
-    &\entropy{f_{sample}(Z)} \\ 
-                    &= \entropy{X,Y} \\
-                    &= \entropy{X} + \entropy{Y} \\
-                    &= \entropy{X} + \prob{X=0}\entropy{Y|X=0} + \prob{X=1}\entropy{Y|X=1} \\
-                    &= -\tfrac{m}{n}\log_2\tfrac{m}{n} - \tfrac{n-m}{n}\log_2\tfrac{n-m}{n} + \tfrac{m}{n}\log_2{m} + \tfrac{n-m}{n}\log_2(n-m) \\
-                    &= -\tfrac{m}{n}\log_2m + \tfrac{m}{n}\log_2n - \tfrac{n-m}{n}\log_2(n-m) + \notag \\
-                    &\quad\quad   \tfrac{n-m}{n}\log_2{n} + \tfrac{m}{n}\log_2{m} + \tfrac{n-m}{n}\log_2(n-m) \\
-                    &= \tfrac{m}{n}\log_2n + \tfrac{n-m}{n}\log_2n \\
-                    &= (\tfrac{m}{n} + \tfrac{n-m}{n})\log_2n \\
-                    &= \log_2n \\
-                    &= \entropy{Z}
+     & \entropy{f_{sample}(Z)} \\ 
+                    =& \entropy{X,Y} \\
+                    =& \entropy{X} + \entropy{Y} \\
+                    =& \entropy{X} + \prob{X=0}\entropy{Y|X=0} + \notag \\
+                        & \quad \prob{X=1}\entropy{Y|X=1} \\
+                    =& -\tfrac{m}{n}\log_2\tfrac{m}{n} - \tfrac{n-m}{n}\log_2\tfrac{n-m}{n} + \notag \\
+                        & \quad \tfrac{m}{n}\log_2{m} + \tfrac{n-m}{n}\log_2(n-m) \\
+                    =& -\tfrac{m}{n}\log_2m + \tfrac{m}{n}\log_2n - \notag \\
+                        & \quad \tfrac{n-m}{n}\log_2(n-m) + \notag \\
+                        & \quad \tfrac{n-m}{n}\log_2{n} + \tfrac{m}{n}\log_2{m} + \notag \\
+                        & \quad  \tfrac{n-m}{n}\log_2(n-m) \\
+                    =& \tfrac{m}{n}\log_2n + \tfrac{n-m}{n}\log_2n \\
+                    =& (\tfrac{m}{n} + \tfrac{n-m}{n})\log_2n \\
+                    =& \log_2n \\
+                    =& \entropy{Z}
     \end{align}
     which equals the input entropy, so therefore $f_{sample}$ preserves entropy.
 \end{proof}
@@ -645,17 +649,20 @@ $f_{weighted}$ is a generalisation of $f_{combine}$ and $f_{sample}$. Although $
 \begin{proof}
     Let $q_i = \frac{w_i}{n} = \prob{X=i}$.
     \begin{align}
-    & \entropy{f_{weighted}(Z)} \\
-              & = \entropy{X,Y} \\
-              & =  \entropy{X} + \entropy{Y} \\
-               & = - \sum_i q_i \log_2q_i + \sum_i \prob{X=i}\entropy{Y|X=i} \\
-               & = - \sum_i q_i \log_2 \frac{w_i}{n} + \sum_i q_i\log_2 w_i \\
-               & = - \sum_i q_i(\log_2 w_i - \log_2 n) + \sum_i q_i\log_2 w_i \\
-               & = - \sum_i q_i\log_2 w_i + \sum_i q_i \log_2 n + \sum_i q_i\log_2 w_i \\
-               & = \sum_i q_i \log_2 n \\
-               & = \log_2 n \sum_i q_i \\
-               & = \log_2 n \\
-               & = \entropy{Z}
+    & \entropy{f_{weighted}(Z)} \notag \\
+               = & \entropy{X,Y} \\
+               = & \entropy{X} + \entropy{Y} \\
+                = & - \sum_i q_i \log_2q_i + \notag \\ 
+                    & \quad \sum_i \prob{X=i}\entropy{Y|X=i} \\
+                = & - \sum_i q_i \log_2 \frac{w_i}{n} + \sum_i q_i\log_2 w_i \\
+                = & - \sum_i q_i(\log_2 w_i - \log_2 n) + \notag \\ 
+                    & \quad \sum_i q_i\log_2 w_i \\
+                = & - \sum_i q_i\log_2 w_i + \sum_i q_i \log_2 n + \notag \\ 
+                    & \quad\sum_i q_i\log_2 w_i \\
+                = & \sum_i q_i \log_2 n \\
+                = & (\log_2 n) \sum_i q_i \\
+                = & \log_2 n \\
+                = & \entropy{Z}
     \end{align}
     Therefore the entropy of the input and outputs of $f_{weighted}$ is the same, and $f_{weighted}$ does not lose any entropy.
 \end{proof}
@@ -674,7 +681,7 @@ Algorithm \ref{alg:generate-weighted} generates a weighted variable by first cal
 \Ensure $S \sim \unif{s}$
 \Ensure $W \sim \mathrm{Weighted}\{w_0, ...\}$
 \Ensure $S \indep W$
-\Procedure{generate\_weighted}{$S, s, n, w, t, o$} 
+\Procedure{gen\_weighted}{$S, s, n, w, t, o$} 
     \State $S, s, r \gets \textsc{generate\_multiple}(S, s, n)$
     \State $W \gets t_{[S \div r]}$
     \State $s \gets r * w_{[W]}$
