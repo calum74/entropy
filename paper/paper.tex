@@ -118,7 +118,7 @@ For example to roll a 6-sided die with a 32-bit entropy store (holding at least 
 
 \subsection {Contribution}
 
-We present new algorithms, called \em entropy store algorithms\em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, $n$ is the size of the weighted distribution $W$. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are usually constant.  A weighted distribution covers other discrete distribution types such as uniform, rational weights, dyadic and Bernoulli distributions.
+We present new algorithms, called \em entropy store algorithms\em, that have lower setup costs and higher amortised entropy efficiency than classical algorithms. Table \ref{tab:entropy-store} summarises the algorithm, where $m$ is the number of bits in each integer, $n$ is the size of the weighted distribution $W$. $\epsilon$ is defined in Theorem \ref{thm:loss} and graphed in Figure \ref{fig:uniform-losses}. These characteristics are essentially optimal since $m$ and $n$ are usually constant.
 
 \begin{table}[h!]
 \centering
@@ -182,7 +182,7 @@ We'll say "uniform variable" to mean a uniformly distributed integer variable or
 
 \subsection{Basic operations}
 
-At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations preserve entropy. The contribution is how to use these transformations for efficient entropy conversion.
+At the basis of the ES is the ability to transform a uniform variable into different forms.  We can divide a uniform variable into (a) two uniform variables, (b) a Bernoulli variable and a uniform variable, (c) a weighted variable and a uniform variable. These transformations preserve entropy. The contribution is how to combine these transformations for efficient entropy conversion.
 
 The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combine two uniform variables $X$ and $Y$ into a single uniform variable $Z$. Its inverse $f_{divide}$ is given in Definition \ref{def:divide}. $f_{combine}$ and $f_{divide}$ divide an interval of size $nm$ into $n$ intervals of size $m$ as follows:
 
@@ -383,7 +383,7 @@ The first step is to obtain a uniform variable $S \sim \unif{rn}$ where $n$ is t
 
 Algorithm \ref{alg:generate-multiple} generates a uniform variable $S \sim \unif{rn}$, by combining binary or uniform entropy into an existing store (line 4) until it reaches a minimum size $s_{min}$ (line 3). Then it resizes $S$ to be a multiple of $n$ on line 8, and if successful, returns the result on line 10. If it fails ($B=0$), then repeat. The reason this is efficient is because when $n$ is much smaller than $s_{min}$, it is overwhelmingly likely that $B=1$, and so the lost entropy in $B$ (on line 8) is very small. Algorithm \ref{alg:generate-multiple} terminates with probability 1.
 
-Algorithm \ref{alg:generate-uniform} generates a uniform variable $N \sim \unif{n}$ using an entropy source and an entropy store $S \sim \unif{s}$. Unused entropy is returned in $S$. The algorithm calls $\textsc{generate\_multiple}$ to create a uniform variable $S \sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $S$ into $S \sim \unif{r}$ and $N \sim \unif{n}$. $N$ is our result, and $S$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in Appendix.
+Algorithm \ref{alg:generate-uniform} generates a uniform variable $N \sim \unif{n}$ using an entropy source and an entropy store $S \sim \unif{s}$. Unused entropy is returned in $S$. The algorithm calls $\textsc{generate\_multiple}$ to create a uniform variable $S \sim \unif{rn}$, then calls $\textsc{divide}$ (Algorithm \ref{alg:divide}) to split $S$ into $S \sim \unif{r}$ and $N \sim \unif{n}$. $N$ is our result, and $S$ is the new entropy store. A C implementation of Algorithm \ref{alg:generate-uniform} is given in the Appendix.
 
 \begin{algorithm}
 \caption{Generating a uniform multiple}
@@ -595,7 +595,7 @@ The entropy loss of Algorithm \ref{alg:generate-bernoulli} is given by $\epsilon
 
 \subsection{Generating weighted integer variables}
 
-Algorithm \ref{alg:generate-weighted} generates a weighted variable $X \sim \mathrm{Weighted}\{w_0, ..., w_{k-1}\}$ using an entropy source and an entropy store $S \sim \unif{s}$. Unused entropy is returned in $S$. The distribution has $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, giving output probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$, where $n=\sum_i w_i$ is the total weight.
+Algorithm \ref{alg:generate-weighted} generates a weighted variable $W \sim \mathrm{Weighted}\{w_0, ..., w_{k-1}\}$ using an entropy source and an entropy store $S \sim \unif{s}$. Unused entropy is returned in $S$. The distribution has $k$ outcomes where each outcome has integer weight $\{w_0, w_1, ..., w_{k-1}\}$, giving output probabilities $\{\frac{w_0}{n}, \frac{w_1}{n}, ..., \frac{w_{k-1}}{n}\}$, where $n=\sum_i w_i$ is the total weight.
 
 The algorithm works by mapping the $n$ outcomes of a uniform distribution to the $k$ outputs of the weighted distribution using a lookup table. An implementation of this could be an array of size $n$ (constuction time $O(n)$, lookup time $O(1)$), or a binary search on an array of size $k$ (construction time $O(k)$, lookup time $O(\log k)$).
 
@@ -716,7 +716,7 @@ This figure shows the entropy loss calculated using Equation \ref{eq:epsilon-max
 \label{fig:uniform-losses}
 \end{figure}
 
-Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $n$ cards using the Fisher-Yates algorithm \cite{durstenfeld1964algorithm, fisher1953statistical, knuth2014art}. This is a good demonstration of the entropy efficiency under a real-world workload. Applying Equation \ref{eq:epsilon-max} shows that shuffling a deck of 52 cards can be done with an entropy loss of $\le 1.7 \times 10^{-5}$ bits, or an entropy efficiency of $\ge 0.99999992$.
+Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses when applied to the shuffling a deck of $N$ cards using the Fisher-Yates algorithm \cite{durstenfeld1964algorithm, fisher1953statistical, knuth2014art}. This is a good demonstration of the entropy efficiency under a real-world workload. The total entropy loss of ES is $\sum_{n=2}^N \epsilon(\frac{n-1}{s_{min}})$, so with a 32-bit buffer, shuffling a deck of 52 cards can be done with an entropy loss of $\le 1.7 \times 10^{-5}$ bits, or an entropy efficiency of $\ge 0.99999992$.
 
 \begin{figure}[ht]
 \centering
@@ -725,7 +725,7 @@ Figure \ref{fig:shuffling-efficiency} shows the overall impact of entropy losses
 \label{fig:shuffling-efficiency}
 \end{figure}
 
-When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly at lower entropy. Notice the spikes with IA due to dyadic outputs being more efficient to generate. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms to not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
+When generating Bernoulli variables, we see in Figure \ref{fig:bernoulli-efficiency} that the entropy efficiency of IA drops off significantly at lower entropy. IA has spikes at the dyadic points that are more efficient to generate. IA must fetch between 1 and 2 bits per output on average. By contrast, ES algorithms do not necessarily fetch any bits to generate an output, as there may be enough entropy in the store already, so ES just shrinks the size of its store to generate an output. Figure \ref{fig:bernoulli-rate} shows that IA cannot significantly increase its output rate for low-entropy outputs.
 
 \begin{figure}[ht]
 \centering
