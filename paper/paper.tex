@@ -85,11 +85,12 @@
 \maketitle
 
 \begin{abstract}
-    We present new algorithms for generating random integers, that are extremely efficient from an entropy perspective.
+    We present new algorithms for generating random integers from entropy input, that are extremely efficient from an entropy perspective.
     This means that less entropy needs to be read from an external source for each random number generated.
     The method introduces an \em entropy store \em that is available to cache unused entropy between invocations, and allows algorithms to use a more efficient strategy.
     The method can generate perfect random variates for any weighted integer distribution, and is asymptotically optimal. 
-    For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have an efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the classical limits on entropy efficiency established by Knuth and Yao, and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
+    For example we can shuffle a deck of 52 cards using just $\approxeq 225.58102$ bits of entropy, yielding an entropy  efficiency of $\approxeq 0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have an efficiency of $\approxeq 0.81$. An entropy store allows us to bypass the limits of classical algorithms that do not store entropy,
+    and has practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -222,8 +223,7 @@ The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combi
 \end{lemma}
 
 \begin{proof}
-    Let $Z = mX+Y$, so $Z \in [0,nm)$. $\prob{X=x,Y=y} = \prob{X=x}\mathbb{P}(Y=y) = \frac{1}{n}\frac{1}{m} = \frac{1}{nm}$. Since $f_{combine}$ is a bijection then it means that all $z$ values occur with $\prob{Z=z} = \frac{1}{nm}$, so $Z \sim \unif{nm}$.
-    
+    Let $Z = mX+Y$, so $Z \in [0,nm)$. $\prob{z=Z} = \prob{z=mX+Y} = \sum_{x=0}^{n-1}\prob{z=mX+Y|X=x}\prob{X=x} = \frac{1}{m}\prob{X=x} = \frac{1}{m}\frac{1}{n} = \frac{1}{mn}$. Therefore, $Z$ is uniformly distributed over $[0,nm)$.
 \end{proof}
 
 \begin{lemma}
@@ -232,9 +232,7 @@ The function $f_{combine}$, in Definition \ref{def:combine}, allows us two combi
 \end{lemma}
 
 \begin{proof}
-    $\prob{X=x,Y=y} = \frac{1}{nm}$. $\prob{X=x} = \sum_{y}\prob{X=x,Y=y} = m\frac{1}{nm} = \frac{1}{n}$. $\prob{Y=y} = \sum_{x}\prob{X=x,Y=y} = n\frac{1}{nm} = \frac{1}{m}$. Therefore $X\sim \unif{n}$ and $Y\sim \unif{m}$.
-
-    $\mathbb{P}(X=x,Y=y) = \frac{1}{nm} = \mathbb{P}(X=x)\mathbb{P}(Y=y)$, so $X \indep Y$.
+    $\prob{X=x} = \prob{X = \lfloor \frac{Z}{m}\rfloor} = \frac{1}{n}$. $\prob{Y=y} = \prob{Y = Z \mod m} = \frac{1}{m}$.
 \end{proof}
 
 \begin{corollary}
@@ -486,7 +484,7 @@ For each iteration $i$ of Algorithm \ref{alg:generate-multiple}, let $p_i = \fra
 Therefore, 
 
 \begin{equation}
-0 \le \entropy{B_i} \le -p\log_2p - (1-p)\log_2(1-p) 
+\entropy{B_i} \le -p\log_2p - (1-p)\log_2(1-p) 
 \end{equation}
 
 by Lemma \ref{lem:shannon-inequality}. The expected number of iterations $m$ is given by
@@ -545,14 +543,17 @@ We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{
 
 To illustrate Equation \ref{eq:generate-uniform-efficiency}, if $s_{min}=2^{31}$ and $n=6$, then $\eta \ge 0.99999997$. This means that even with a modest entropy buffer, we can get very good entropy efficiency.
 
-\begin{corollary}
-The entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} is arbitrarily close to 1.
-\end{corollary}
+\begin{lemma}
+    As $s_{min} \rightarrow \infty$, $\eta_{min} \rightarrow 1$.
+\end{lemma}
 
 \begin{proof}
-$\epsilon(\frac{n-1}{s_{min}}) \rightarrow 0$ as $s_{min} \rightarrow \infty$, using L'H\^opital's Rule on Equation \ref{eq:epsilon-max}. Therefore $\eta \rightarrow 1$ as $s_{min} \rightarrow \infty$.
+As $s_{min} \rightarrow \infty$, $p = \frac{n-1}{s_{min}} \rightarrow 0$. $p\log_2p \rightarrow 0$ as $p \rightarrow 0$ by applying L'H\^opital's Rule, therefore $\epsilon_{max} \rightarrow 0$ in Equation \ref{eq:epsilon-max}. In Equation \ref{eq:generate-uniform-efficiency}, $\eta_{min} \rightarrow 1$ as $\epsilon_{max} \rightarrow 0$.
 \end{proof}
 
+\begin{corollary}
+By increasing $s_{min}$, the entropy efficiency $\eta$ of Algorithm \ref{alg:generate-uniform} can be arbitrarily close to 1.
+\end{corollary}
 
 
 \subsection{Generating Bernoulli variables}
