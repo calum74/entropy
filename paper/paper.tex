@@ -110,7 +110,7 @@ Whilst this problem has been studied extensively, there are theoretical limits o
 
 To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put back any unused entropy into the store. By first looking at the available operations on a uniform variable, we can compose them in such a way as to minimise the entropy loss.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put any left over entropy back into the store. By first looking at the available operations on a uniform variable, we can compose them in such a way as to minimise the entropy loss.
 
 The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and a precise bound is given in Theorem \ref{thm:loss}. 
 
