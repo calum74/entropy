@@ -1,132 +1,28 @@
+To do:
+- Read Kozen & Soloviev's paper
+- Note that entropy store is not new
+- Obviously talk about this in the related work
+- Look at their open question and see if I answer it
+- Adjust my "contribution" section
+- Conclusion - is efficiency of $1 - \Theta(md^{-m})$ optimal
+
+
+## Comparison with standard batching
+
+Batching offers a way for algorithms to spread the 2-bit overhead of conversion across $k$ outputs, thereby reducing the entropy loss per output to $2/k$. Batching has an efficiency of $1-\Theta(m^{-1})$ [XX] (4.XX), which is optimal for a restart protocol where lost entropy is not preserved between batches.
+
+Although both standard batching and ES both converge to an efficiency of 1 with an increase in buffered entropy, they do not converge at the same rate. ES converges to $1$ at a rate of $\Theta(m2^{-m})$ (see Theorem XX), which is obviously much faster than batching. It is an open question as to whether a faster rate of convergence is possible.
+
+# XXX
+$$\epsilon = \frac{2^{-k}(n-1)}{1-2^{-k}(n-1)}\log_2(2^{-k}(n-1)) + \log_2(1-2^{-k}(n-1))$$
+
+$$ = 2^{-k}(\frac{n-1}{1-2^{-k}(n-1)})(\log_2(2^{-k}) + \log_2(n-1))) + \log_2(1-2^{-k}(n-1))$$
+
+
+
+Reminder
+
 # Next steps
-
-Paper
-Proofs:
-- [x] Lemma 4 (correctess of f_sample)
-- [x] Lemma 5 (entropy of f_sample) easy
-- [x] Lemma 6 (generate uniform) easy
-- [x] Lemma 8 correctness of gen_bernoulli via f_sample
-- [x] Lemma 9 entropy loss gen_bernoulli (easy)
-- [ ] Lemma 10 correctness of f_weighted (hard - extensio
-
-
-Ensure that the implementation aligns with the new variable namimg and arguments
-Re-check references, particularly the mathematics.
-
-
-Knuth – The Art of Computer Programming, Vol. 2: Seminumerical Algorithms
-
-Donald E. Knuth’s Volume 2, Seminumerical Algorithms, is one of the classic references on random number generation and transformations. It extensively covers how to generate and manipulate uniform random deviates—particularly, it explores how to extract multiple independent random variables from a single uniform stream (e.g., random bits or integers) through methods like subdivision, modular arithmetic, and rejection sampling 
-library.sciencemadness.org
-.
-
-Specifically, Chapter 3 focuses on random number generation and includes sections on transforming uniform distributions—covering essentially the kind of mapping you've constructed (e.g., your formulas for 
-𝑋
-X and 
-𝑌
-Y). Hence, if you're looking to cite a textbook that presents this construction in a formal and foundational context:
-
-Knuth, D. E. (1997). The Art of Computer Programming, Volume 2: Seminumerical Algorithms (3rd ed.). Reading, MA: Addison-Wesley.—See Chapter 3, particularly around section 3.4–3.5 
-library.sciencemadness.org
-.
-
-That would serve as a robust, academically respected citation.
-
-
-Code tidy!
-
-Think about more efficient division. For example
-
-- Remove more junk from entropy_store
-    - bits()
-    - cmath
-
-- Extract algorithms
-- Maybe abstract a random variable
-- Separate out the validation code and assertions?
-
-
-- [ ] Talk about cryptographically secure
-
-- [x] Cite Xoshiro https://vigna.di.unimi.it/papers.php#BlVSLPNG
-- [ ] Cite Fill&Huber "The randomness recycler", and "Huber" "Perfect simulation"
-
-
-Previous work: Huber: Randomness recycler, talk about the randomness recycler protocol
-
-
-# Thoughts
-
-- [ ] Talk about "pairs (x,y)" and the bijection more.
-
-## More ideas
-
-
-# Repartitioning
-
-- Talk about repartitioning
-- Talk about needing to bootstrap the entropy store from binary.
-- Define "generation" and "extraction"
-
-Rename algorithms?
- - conv_uu_to_u
- - conv_u_to_uu
- - conv_u_to_ub
- - conv_ub_to_u
- - conv_u_to_u
- - conv_ubin_to_u
-
-- Have a table of conversions?
-
-At the heart of ESA is the ability to manipulate a uniform variable, implemented as a pair of integers (its value and its size). To do this we can \em partition \em the range $[0,n)$ into smaller subranges, where each subrange $i$ has a uniform distribution $[0,w_i)$, and the subranges are distributed according to a weighted distribution.
-
-    Picture here
-
-We have two special cases of this. The first is where the range is a composite number $nm$, in which case we can partition the range $[0,nm)$ into $n$ equal ranges of $m$ as follows:
-
-    Picture here
-
-This allows us to partition a uniform variable $Uniform\{nm\}$ into two independent
-
-The second case is where we have two subranges, and we can partition the range $[0,n)$ into subranges $n$ and $n-m$ as follows:
-
-
-Crucially, these partitionings are reversible, meaning you can take two 
-
-
-
-Idea: Under a particular workload, one of the divmods can be avoided
-
-
-
-Fundamentally, the size of the distribution leaks information and causes correlations.
-
-
-Set up the README
-
-
-
-- sample.cpp - how to use the library
-
-Paper:
-- Continue proof of $f_{sample}$ and delete other proofs.
-- Put brace underneath showing the other distribution
-
-Definition: $f_{distribute}: [0,n) \rightarrow [0,k) \times [0,w_i)$ is defined as $f_{distribute}(Z) = (\max i : s_{i+1} < Z, Z - s_i)$.
-
-Lemma: If $X \sim Weighted\{w_0, ..., w_{k-1}\}$ and $Y \sim Uniform\{w_X\}$, then $f^{-1}_{distribute}(X,Y) = s_X + Y$.
-
-Proof:
-$f^{-1}_{distribute}(f_{distribute}(Z)) = f^{-1}_{distribute}(\max i : s_{i+1} < Z, Z - s_i) = s_i + Z - s_i = Z$. $f_{distribute}(f^{-1}_{distribute}(X,Y)) = f_{distribute}(s_X+Y) = (\max i : s_{i+1} < s_X+Y, s_X + Y - s_i) = (X,Y)$.
-
-Lemma: If $Z \sim Uniform\{n\}$ then $X \sim Weighted\{w_0, ..., w_{k-1}\}$ and $Y \sim Uniform \{w_X\}$. They are independent.
-
-
-
-
-
-
-Lemma: $f_{distribute}$ is a bijection.
 
 
 Unused references:
@@ -144,16 +40,9 @@ Unclassified:
     \cite{norman1972computer}
 
 idiv:
-Cite as {Abel19a}
+    Cite as {Abel19a}
 
-Treat Bernoulli distribitions separately.
-Maybe mention Bernoulli distributions can be generated in O(1) space.
 
-Data on CPU instructions shows 
-
-            Alder Lake-P     
-32-bit      10-15
-64-bit      14-18
 
 Random Number Generation and Monte Carlo Methods" by James E. Gentle (2nd ed., 2003)
 Chapter 1 introduces methods for generating uniform deviates over a finite set.
@@ -183,215 +72,6 @@ link.springer.com
 +4
 .
 
-Gentle discusses both the theory behind these constructions and practical implementation details.
-
-
-
-TODO: Ef(X)  = f(EX) if f is a convex function. This is called Jensen's inequality.
-
-
-
-
-
-We can split up a $Z \sim Uniform\{n\}$ into two independent distributions $Y$ and $Z$.
-
-\begin{equation}
-    123
-\end{equation}
-
-
-\[
-\overbrace{
-\underbrace{a_0 ... a_{m-1}}_m\underbrace{a_m ... a_{n-1}}_{n-m}}^n
-\]
-
-Splitting up $s$:
-
-XX Use r as the remainder
-
-\[
-\overbrace{
-    \underbrace{
-        \underbrace{a_0 ... a_{m-1}}_m
-        \underbrace{a_n ... a_{2m-1}}_m
-        ...        
-        \underbrace{a_{n(m-1)} ... a_{nm-1}}_m
-        }_{nm}
-    \underbrace{a_{nm} ... a_{nm+r-1}}_r
-    }^{nm+r}
-\]
-
-
-
-Paper:
-- Background work: More about batching, particularly multiplication, FLDR, 
-    More about Bernoulli distributions
-- Contributions:
-  - Layout the table a bit better
-  - Flexibility in reading entropy, particularly from Markov processes
-  - Efficient for outputting exact Bernoulli distributions
-  - Achieve entropy-optimality
-  - Generates precise output distributions without floating point approximations
-
-Algorithms:
-- Define $f_{sample}$ and its inverse.
-- Note that $f_{distribute}$ generalises $f_{combine}$ and $f_{sample}$.
-- Proof of $f^{-1}_{distribute}$
-
-*Definition:* $f_{sample}: [0,n) \rightarrow \{0,1\}\times\mathbb{N}_0:$
-
-$$
-f_{sample}(X) = 
-\begin{cases}
-(0,X), & \text{if } X < m \\
-(1,X-m), & \text{otherwise}
-\end{cases}
-$$
-
-*Lemma:* $f_{sample}$ is a bijection with inverse 
-
-$$
-f^{-1}_{sample}(Y,Z) = 
-\begin{cases}
-Z, & \text{if } Y=0 \\
-Z+m, & \text{otherwise}
-\end{cases}
-$$
-
-*Lemma:* If $f_{sample}(X) \rightarrow (Y, Z)$, and $X \sim Uniform\{n\}$, then $Y \sim Bernoulli\{\frac{m}{n}\}$ and $Z \sim Uniform\{w\}$ for some $w$.
-
-*Lemma:* If $f^{-1}_{sample}(Y,Z) \rightarrow X$, and $Y \sim Bernoulli\{\frac{m}{n}\}$ and $Z \sim Uniform\{w\}$, then $X \sim Uniform\{n\}$.
-
-
-*Definition:* $f_{combine}: [0,n) \times [0,m) \rightarrow [0,mn): f_{combine}(X,Y) = mX+Y$.
-
-*Lemma:* $f_{combine}$ is a bijection with inverse $f^{-1}_{combine}(Z) = (\lfloor \frac{Z}{m} \rfloor, Z \mod m)$.
-
-
-
-*Lemma:* $f_{distribute}$ is a bijection.
-
-The inverse of $f_{distribute}$ is given by $f^{-1}_{distribute}(Y,Z) = \sum_{i<Y}w_i + Z$
-
-## Three bijections
-
-The functions $f_{combine}$, $f_{sample}$, $f_{distribute}$ provide different ways of splitting up a uniform distribution of size $n$ into two smaller distributions containing the same entropy as the original distribution.
-
-$f_{divide,m}$:         $X=Z \text{ div } m \sim Uniform\{\frac{n}{m}\}$,     $Y=Z \mod m \sim Uniform\{m\}$,    $Z=mX+Y \sim Uniform\{n\}$.
-
-$f_{sample,m}$:          $X = Z \ge m \sim Bernoulli\{\frac{m}{n}\}$,        $Y=Z-Xm \sim Uniform$,        $Z=mX+Y \sim Uniform\{n\}$.
-
-$f_{distribute,w}$:      $X=max(j:\sum_{i<j}w_i<Z) \sim Weighted$,   $Y=Z - \sum_{i<X}w_i \sim Uniform\{w_i\}$,     $Z=\sum_{i<Y}w_i + Z \sim Uniform\{n\}$.
-
-$f_{divide}$ splits a uniform distribution of size $n$ into a uniform distribution of size $m$ and uniform distribution of size $\frac{n}{m}$. $m$ must divide into $n$ exactly.
-
-$f_{sample}$ splits a uniform distribution of size $n$ into a Bernoulli distribution and a uniform distribution. $f_{sample}$ is used as the basis of Lumbrusco's fast dice roller and von Neumann's rejection sampling algorithms.
-
-$f_{distribute}$ splits a uniform distributions into a weighted distribution and a uniform distribution. 
-
-Because these functions are bijections, we have the inverse functions $f^{-1}_{divide}$ which combines two uniform distributions, $f^{-1}_{sample}$ and $^{-1}_{distribute}$ which combines smaller uniform distributions with entropy to create a larger uniform distribution.
-
-# Missing proofs
-
-*Definition:* $f_{divide,m}(Z) = (Z \text{ div } m, Z \text{ mod } m)$.
-
-*Lemma:* $f^{-1}_{divide,m}(X,Y) = mX+Y$.
-
-Proof: $f^{-1}_{divide}(f_{divide}(Z)) = f^{-1}_{divide}(Z \text{ div } m, Z \text{ mod } m) = m(Z\text{ div } m) + (Z \text{ mod } m) = Z$. $f_{divide}(f^{-1}_{divide}(X,Y)) = f_{divide}(mX+Y) = ((mX+Y)\text{ div } m, (mX+Y)\text{ mod } m) = (X,Y)$.
-
-*Lemma:* If $f_{divide}: Z \mapsto (X,Y)$, and $Z \sim Uniform\{n\}$, then $X \sim Uniform\{\frac{n}{m}\}$ and $Y \sim Uniform\{m\}$, and $X$ and $Y$ are independent.
-
-*Lemma:* If $f^{-1}_{divide}: (X,Y) \mapsto Z$, and $X \sim Uniform\{\frac{n}{m}\}$ and $Y \sim Uniform\{m\}$, then $Z \sim Uniform\{n\}$.
-
-
-*Definition:* $f_{sample,m}(Z) = (Z \ge m, Z-(Z\ge m)m)$. This is shorthand for saying that $Z\ge m \equiv 1$ if $Z\ge m$, $0$ otherwise.
-
-*Lemma:* $f^{-1}_{sample,m}(X,Y) = mX+Y$
-
-Proof: $f^{-1}_{sample}(f_{sample}(Z)) = f^{-1}_{sample}(Z \ge m, Z-(Z\ge m)m) = m(Z \ge m) + Z-(Z\ge m)m = Z$. $f_{sample}(f^{-1}_{sample}(X,Y)) = f_{sample}(mX+Y) = ((mX+Y) \ge m, (mX+Y)-((mX+Y)\ge m)m) = (X, Y).$
-
-*Definition:* $f_{distribute}(Z) = (\max j : \sum_{i<j} w_i < Z, Z - \sum_{i<j} w_i)$
-
-*Lemma:* $f^{-1}_{distribute} (X,Y) = \sum_{i<X}w_i + Y$
-
-Proof: $f^{-1}_{distribute}(f_{distribute}(Z)) = f^{-1}_{distribute}(\max j : \sum_{i<j} w_i < Z, Z - \sum_{i<j} w_i) = Z - \sum_{i<j} w_i + \sum_{i<j} w_i = Z.$
-
-$f_{distribute}(f^{-1}_{distribute}(X,Y)) = f_{distribute}(\sum_{i<X}w_i + Y) = (\max j : \sum_{i<j} w_i < (\sum_{i<X}w_i + Y), (\sum_{i<X}w_i + Y) - \sum_{i<j} w_i) = (\max j : \sum_{i<j} w_i < (\sum_{i<X}w_i), Y) = (X,Y).$
-
-
-
-
-
-
-# Contributions
-
-Outline: Three bijections f_{sample}, f_{distribute} and f_{divide} give us a way to reorganise a uniform distribution into smaller uniform and Bernoulli distributions. Because they are bijections, then are invertible and therefore entropy-preserving.
-
-
-
-
-
-A new way to extract 
-
-A new way to generate Bernoulli variables, yielding an entropy output 
-
-
-Hard-coded division algorithm
-
-
-
-
-template<int N>
-struct divider
-{
-    static std::pair<int,int> divmod(int x)
-    {
-        int div = (x * inverse<N>::value)>>32;
-        auto mod = x - div*N;
-        return {div, mod};
-    }
-};
-
-
-
-
-
-
-1. Knuth–Yao (multi-sample tree / optimal discrete distribution sampling)
-Original source:
-Knuth, D. E., & Yao, A. C. (1976).
-The complexity of nonuniform random number generation.
-In Algorithms and Complexity: New Directions and Recent Results, pp. 357–428. Academic Press.
-📘 [Cited widely as the foundational work on optimal sampling.]
-
-Description:
-Introduced the Discrete Distribution Generating (DDG) tree, which underlies the Knuth–Yao algorithm.
-
-Although the algorithm is per-sample, they describe how to simulate distributions with arbitrary precision, and the approach generalizes to multi-sample blocks to approach entropy.
-
-📚 2. Inverse Arithmetic Coding (a.k.a. entropy coding for random sampling)
-Key reference:
-Han, T. S., & Hoshi, M. (1997).
-Interval algorithm for random number generation.
-IEEE Transactions on Information Theory, 43(2), 599–611.
-https://doi.org/10.1109/18.556266
-
-Description:
-This paper describes how to simulate a general distribution by generating a real number in 
-[
-0
-,
-1
-)
-[0,1) using fair bits, and decoding it via an interval (like in arithmetic coding).
-
-Equivalent to inverse arithmetic coding — a universal, near-optimal algorithm for generating sequences with minimal expected randomness.
-
-Also see:
-Cover, T. M., & Thomas, J. A. (2006).
-Elements of Information Theory (2nd ed.). Wiley.
-
-Chapter 5 (Entropy and Source Coding) covers arithmetic coding and related ideas.
 
 📚 3. Alias Method for Sampling Discrete Distributions
 Original paper:
@@ -399,593 +79,302 @@ Walker, A. J. (1974).
 New fast method for generating discrete random numbers with arbitrary frequency distributions.
 Electronics Letters, 10(8), 127–128.
 
-Extended work:
-Walker, A. J. (1977).
-An efficient method for generating discrete random variables with general distributions.
-ACM Transactions on Mathematical Software, 3(3), 253–256.
-https://doi.org/10.1145/355744.355749
-
-Description:
-The alias method is a preprocessing technique that allows constant-time sampling from discrete distributions using uniform randomness.
-
-Can be adapted to work with bit streams, allowing for efficient near-entropy sampling when block bits are used (e.g., use 16-bit uniform integers).
-
-Bonus: Unified Perspectives
-Luc Devroye (1986).
-Non-Uniform Random Variate Generation. Springer.
-https://luc.devroye.org/rnbookindex.html
-
-Chapters 2–5 cover all classical methods: Knuth–Yao, inversion, rejection, and alias.
-
-Still considered the definitive reference on random generation methods.
-
-🔖 Summary Table
-Method	Key References
-Knuth–Yao	Knuth & Yao (1976)
-Inverse Arithmetic Coding	Han & Hoshi (1997), Cover & Thomas (2006)
-Alias Method	Walker (1974, 1977)
-Unified treatment	Devroye (1986)
-
-
-Here are some recent advances in optimal and practical sampling from discrete distributions using fair coin flips, all supported by scholarly research:
-
-📈 1. Fast Loaded Dice Roller (FLDR) — Near-Optimal, Practical Sampler
-Saad, Freer, Rinard & Mansinghka (2020)
-
-Developed FLDR, which uses linear preprocessing and consumes on average only 
-𝐻
-(
-𝑃
-)
-+
-6
-H(P)+6 bits of entropy per sample.
-
-Highly efficient in both time and space, outperforming traditional alias and interval samplers 2–10× in runtime 
-frontiersin.org
-+13
-arxiv.org
-+13
-arxiv.org
-+13
-.
-
-🧮 2. Entropy-Optimal Rejection Sampling
-Draper & Saad (2025)
-
-Introduced a family of rejection samplers that achieve expected entropy consumption within [H(P), H(P) + 2), while using linearithmic time and space.
-
-This is the first known algorithm matching entropy bounds without exponential storage 
-reddit.com
-+5
-arxiv.org
-+5
-arxiv.org
-+5
-.
-
-🎲 3. Optimised Knuth–Yao for Dice & General Distributions
-Huber & Vargas (2024)
-
-Showed a simple linear-space implementation for fair dice sampling (and extendable to general distributions).
-
-Improves upon the original Knuth–Yao bound with better average-case performance 
-dl.acm.org
-+12
-arxiv.org
-+12
-arxiv.org
-+12
-.
 
 ℹ️ 4. Optimal Approximate Sampling
 Saad, Freer, Rinard & Mansinghka (2020, POPL)
 
-Provided a theoretical and practical framework for entropy-optimal approximate sampling under finite-precision constraints.
-
-Sample implementations closely match Shannon–entropy rates, with empirical demonstrations on a wide array of distributions 
-arxiv.org
-+4
-arxiv.org
-+4
-github.com
-+4
-.
-
-👓 Summary Table
-Algorithm	Entropy Usage	Space	Time
-FLDR (Saad et al., 2020)	
-𝐻
-(
-𝑃
-)
-+
-6
-H(P)+6 bits	Linear	Fast
-Efficient Rejection (Draper & Saad, 2025)	
-∈
-[
-𝐻
-(
-𝑃
-)
-,
-𝐻
-(
-𝑃
-)
-+
-2
-)
-∈[H(P),H(P)+2) bits	Linearithmic	Efficient
-Knuth–Yao Optimized (Huber & Vargas, 2024)	Slightly better than original bound	Linear	Simple
-Approximate Sampling (POPL 2020)	Achieves theoretical entropy limits in practice	Dependent on precision	Practical
-
-✅ Takeaway
-Recent innovations have significantly improved the trade-off between entropy efficiency, space, and speed:
-
-FLDR focuses on near-optimal entropy with high speed and low memory.
-
-Draper & Saad’s method achieves within 2 bits of optimal entropy using modest resources.
-
-Optimized Knuth–Yao implementations deliver improved performance using linear memory.
-
-Approximate sampling frameworks enable entropy-optimal performance with finite precision.
-
-If you'd like more details or pointers to code and implementations — I’d be happy to share!
-
-
-Great question! Yes — there are practical algorithms designed to extract unbiased bits from samples drawn from an arbitrary integer-valued distribution with some entropy.
-
-What you’re asking about
-You have a random source producing integers with some unknown or arbitrary distribution.
-
-You want to extract unbiased (fair) random bits from this source, i.e., bits that are uniformly distributed and independent.
-
-This is often called randomness extraction or entropy extraction.
-
-Key ideas
-Von Neumann extractor (simple but limited)
-Originally designed for biased coin flips, it looks at pairs of bits:
-
-If the pair is 01, output 0
-
-If the pair is 10, output 1
-
-If 00 or 11, discard and move on.
-This extracts unbiased bits but only works if the source is binary and independent trials. It’s not efficient for arbitrary integer distributions or correlated data.
-
-Generalization to arbitrary alphabets
-For integer distributions with known or unknown bias, several approaches exist:
-
-Elias’ algorithm (1972): Generalizes Von Neumann’s idea to multi-symbol alphabets.
-
-Peres’ algorithm (1992): An improvement over Von Neumann that extracts more entropy from biased coin flips.
-
-Elias–Peres algorithm: For finite alphabets.
-
-Universal randomness extractors
-More generally, randomness extractors (from theoretical CS) convert "weak" sources of entropy into nearly uniform bits, often needing a small truly random seed. But these are mostly theoretical and sometimes complex.
-
-Arithmetic coding-based extractors
-If you know the distribution exactly, you can encode the sequence via arithmetic coding, and the output bits will be nearly uniform. This is close to optimal entropy extraction.
-
-Practical algorithms in the real world
-In practice, a common approach if you can model or estimate the distribution is to use something like:
-
-Hashing (cryptographic hash functions) on blocks of samples — this "mixes" the entropy and can output nearly uniform bits. This is a practical approach in randomness extraction used in cryptography.
-
 Trevisan’s extractor and variants — more theoretical, but some practical constructions exist.
-
-Summary
-Yes, practical algorithms exist, especially if you have some knowledge about or can estimate the distribution.
-
-For arbitrary integer distributions, classical methods generalize Von Neumann’s idea (Elias, Peres).
-
-For known distributions, arithmetic coding or entropy coding can yield nearly uniform bits.
-
-For unknown or complex distributions, universal extractors or cryptographic hash-based extractors are practical.
-
-Example references and algorithms
-Von Neumann (1951) “Various techniques used in connection with random digits”
-
-Elias (1972) “The efficient construction of an unbiased random sequence”
-
-Peres (1992) “Iterating Von Neumann’s procedure for extracting random bits”
 
 R. Canetti, D. Micciancio, M. Naor (2001) “Adaptive extraction and privacy amplification”
 
-If you want, I can help you with a concrete algorithm or code to extract unbiased bits from a specific integer distribution sample you have! Would you like that?
-
-
-
-
-
-Sure! The idea of using arithmetic coding as a means to extract nearly uniform bits from a known or estimated distribution is a beautiful connection between source coding and randomness extraction.
-
-Key references connecting arithmetic coding to randomness extraction:
-Shannon's source coding theorem (1948) and the foundation of entropy coding
-
-This underpins the idea that the entropy of a source is the theoretical limit for compressibility, and thus the amount of extractable randomness.
-
-Han and Hoshi (1997):
-“Interval Algorithm for Random Number Generation”
-
-Introduces an interval algorithm (related to arithmetic coding) that can generate unbiased bits from arbitrary distributions.
-
-Link: https://ieeexplore.ieee.org/document/614777
-
-D. Han and M. Hoshi (1997), IEEE Transactions on Information Theory, Vol. 43, No. 2
-
-They develop the Interval Algorithm, which encodes a random variable with arbitrary distribution into bits with expected length close to entropy, effectively performing randomness extraction via arithmetic coding principles.
-
-C. S. Wallace (1990), “The JPEG Still Picture Compression Standard”
-
-While primarily about compression, it uses arithmetic coding principles, which conceptually relate to entropy extraction from known distributions.
-
 F. P. Calude (2002), “Information and Randomness: An Algorithmic Perspective”
 
-Discusses algorithmic randomness and relates data compression (including arithmetic coding) to extraction of algorithmic randomness.
-
-Intuition
-Arithmetic coding represents the probability distribution as an interval on [0,1). Encoding an input sequence narrows this interval. The bits representing the position inside this interval approximate uniform bits — thus, you can view arithmetic coding as an extractor.
-
-Summary
-If you know the exact distribution, arithmetic coding can convert your integer samples into a bitstream nearly uniform.
-
-This approach is almost optimal for entropy extraction.
-
-The foundational work by Han and Hoshi (1997) explicitly connects arithmetic coding to random number generation (unbiased bits extraction).
-
-If you want, I can help you find the actual paper PDF or help implement a simplified version of this algorithm!
-
-
-
-
-🎯 1. Trevisan's Extractor (1999)
-✨ Key Idea:
-Uses hard functions and pseudorandom generators (PRGs) to avoid needing a lot of seed randomness. It's incredibly seed-efficient.
-
-🔧 High-Level Structure:
-Input: A weak random source 
-𝑥
-∈
-{
-0
-,
-1
-}
-𝑛
-x∈{0,1} 
-n
-  with high min-entropy (say ≥ 
-𝑘
-k).
-
-Seed: A short truly random string 
-𝑠
-∈
-{
-0
-,
-1
-}
-𝑑
-s∈{0,1} 
-d
- .
-
-Output: 
-𝑚
-m nearly uniform bits.
-
-How it works:
-Trevisan's method relies on the fact that if you have a hard-to-compute function, you can use it to fool a predictor, thus simulating randomness.
-
-It constructs 
-𝑚
-m output bits by:
-
-Using the seed 
-𝑠
-s to select subsets of bits from the input 
-𝑥
-x,
-
-Applying a hardcore predicate (based on a one-bit extractor or error-correcting code) on each subset to generate an output bit.
-
-Building blocks:
-Error-Correcting Codes (ECC): To spread out entropy.
-
-Hard-Core Predicates: Securely extract a single bit.
-
-Combinatorial Designs: Used to select input subsets for each bit while minimizing overlap (to ensure independence).
-
-Complexity:
-Seed length 
-𝑑
-=
-𝑂
-(
-log
-⁡
-2
-𝑛
-)
-d=O(log 
-2
- n)
-
-Output length 
-𝑚
-=
-𝑘
-Ω
-(
-1
-)
-m=k 
-Ω(1)
-  (polynomial fraction of entropy)
-
-🎯 2. Guruswami–Umans–Vadhan (GUV) Extractor (2007)
-✨ Key Idea:
-Constructs explicit, high-rate extractors using algebraic techniques, especially list-decodable codes and lossless condensers.
-
-🔧 High-Level Structure:
-It uses algebraic function fields, Reed-Solomon codes, and polynomial evaluation to efficiently condense and extract entropy.
-
-The GUV extractor first condenses the weak source into a smaller, high-entropy source using a lossless condenser, then extracts using a simple extractor like a universal hash function.
-
-Building blocks:
-Lossless Condensers: Compress the entropy without losing it (i.e., 
-(
-𝑛
-,
-𝑘
-)
-→
-(
-𝑛
-′
-,
-𝑘
-)
-(n,k)→(n 
-′
- ,k), with 
-𝑛
-′
-<
-𝑛
-n 
-′
- <n).
 
 Universal Hashing: Extract uniform bits from high-min-entropy blocks.
-
-List-Decodable Codes: Help guarantee low statistical distance from uniform.
-
-Properties:
-Seed length: 
-𝑑
-=
-𝑂
-(
-log
-⁡
-𝑛
-)
-d=O(logn)
-
-Extracts almost all of the entropy: 
-𝑚
-≈
-𝑘
-m≈k
-
-Efficient and explicit (i.e., constructible in poly time)
-
-Works for high min-entropy (e.g., 
-𝑘
-≥
-polylog
-(
-𝑛
-)
-k≥polylog(n))
-
-🔬 Key Comparison
-Feature	Trevisan’s Extractor	GUV Extractor
-Seed length	
-𝑂
-(
-log
-⁡
-2
-𝑛
-)
-O(log 
-2
- n)	
-𝑂
-(
-log
-⁡
-𝑛
-)
-O(logn)
-Efficiency	Less practical, more theoretical	Highly efficient
-Output quality	Good (polynomial entropy)	Almost optimal (close to 
-𝑘
-k)
-Tools used	ECC, combinatorial designs	Lossless condensers, polynomials
-Min-entropy required	
-𝑘
-=
-polylog
-(
-𝑛
-)
-k=polylog(n)	
-𝑘
-=
-polylog
-(
-𝑛
-)
-k=polylog(n)
-Seeded?	Yes	Yes
-
-🤖 Why Are These Useful?
-These extractors are crucial in:
-
-Cryptography (e.g., key generation from weak sources),
-
-Distributed computing,
-
-Secure hardware,
-
-Simulating randomness in deterministic environments.
-
-They are especially useful when:
-
-You have a source of weak randomness (like a biased coin),
-
-You can afford a short uniform seed (from hardware RNG or external source),
-
-You need many high-quality random bits.
 
 📘 Further Reading
 Trevisan (1999), "Extractors and pseudorandom generators"
 
 Guruswami, Umans, Vadhan (2007), "Unbalanced Expanders and Randomness Extractors from Parvaresh-Vardy Codes"
 
-Lecture notes by Salil Vadhan and Luca Trevisan
+Bacher:
 
-
-
-
-
-Certainly! Split-source extractors are a fundamental concept in randomness extraction, especially in scenarios where two independent sources of weak randomness are available. They are a subclass of multi-source extractors, and are often the simplest and most studied case.
-
-🔖 Key References on Split-Source Extractors
-Here are the foundational and influential papers:
-
-🔹 1. "Extracting Randomness from Two Independent Sources"
-Authors: Anup Rao
-Conference: STOC 2006
-Link: DOI
-
-First construction of a two-source extractor that works with polylogarithmic entropy from each source.
-
-Introduces key techniques that influenced future extractors.
-
-🔹 2. "A New Condenser/Extractor and its Applications"
-Authors: Anup Rao
-Conference: CCC 2008
-Link: DOI
-
-Gives improved constructions of two-source and split-source extractors.
-
-Uses graph-based methods to amplify randomness.
-
-🔹 3. "Explicit Two-Source Extractors and Resilient Functions"
-Authors: Gil Cohen
-Conference: CCC 2015
-Link: arXiv
-
-First explicit extractor for two sources with logarithmic min-entropy.
-
-🔹 4. Survey: "Extractors and Pseudorandom Generators"
-Author: Salil Vadhan
-Book Chapter: Handbook of Randomized Computing, 2001
-PDF Link
-
-Excellent overview of extractors, including split-source and multi-source extractors.
-
-Explains connections to dispersers, expanders, and condensers.
-
-🔹 5. "An Optimal-Entropy Lossless Condenser"
-Authors: Dvir, Gabizon, and Wigderson
-Conference: IEEE CCC 2007
-Link: DOI
-
-Related work: discusses how to condense randomness from multiple sources, which is useful in building extractors.
-
-📘 Definition: Split-Source Extractor
-A split-source extractor is a function:
-
-Ext
-:
-{
-0
-,
-1
+- [ ] This is a summary paper describing 
+@article{DBLP:journals/corr/DevroyeG15,
+  author       = {Luc Devroye and
+                  Claude Gravel},
+  title        = {Sampling with arbitrary precision},
+  journal      = {CoRR},
+  volume       = {abs/1502.02539},
+  year         = {2015},
+  url          = {http://arxiv.org/abs/1502.02539},
+  eprinttype    = {arXiv},
+  eprint       = {1502.02539},
+  timestamp    = {Mon, 13 Aug 2018 16:46:32 +0200},
+  biburl       = {https://dblp.org/rec/journals/corr/DevroyeG15.bib},
+  bibsource    = {dblp computer science bibliography, https://dblp.org}
 }
-𝑛
-×
-{
-0
-,
-1
+
+@misc{devroye2020randomvariategenerationusing,
+      title={Random variate generation using only finitely many unbiased, independently and identically distributed random bits}, 
+      author={Luc Devroye and Claude Gravel},
+      year={2020},
+      eprint={1502.02539},
+      archivePrefix={arXiv},
+      primaryClass={cs.IT},
+      url={https://arxiv.org/abs/1502.02539}, 
 }
-𝑛
-→
-{
-0
-,
-1
+
+Lumbrisco's PhD Thesis
+[18] J´er´emie Lumbroso. Probabilistic Algorithms for Data Sreaming and Random Generation. PhD thesis, Universit´e Pierre et Marie Curie - Paris 6,
+2012.
+
+[15] Donald E. Knuth and Andrew C. Yao. Algorithms and Complexity: New
+Directions and Recent Results, chapter The complexity of nonuniform random number generation, pages 357–428. Academic Press, New York, 1976.
+
+Tidy up the name of Knuth Ervin
+
+[7] Luc Devroye and Claude Gravel. The expected bit complexity of the Von
+Neumann rejection algorithm. Statistics and Computing, 27(3):699–710,
+2017.
+    https://link.springer.com/article/10.1007/s11222-016-9648-z
+
+Another citation for the optimality of Knuth-Yao
+@article{horibe2003entropy,
+  title={Entropy and an optimal random number transformation (Corresp.)},
+  author={Horibe, Yasuichi},
+  journal={IEEE Transactions on Information Theory},
+  volume={27},
+  number={4},
+  pages={527--529},
+  year={2003},
+  publisher={IEEE}
 }
-𝑚
-Ext:{0,1} 
-n
- ×{0,1} 
-n
- →{0,1} 
-m
- 
-such that if 
-𝑋
-X and 
-𝑌
-Y are two independent sources with min-entropy 
-𝑘
-k, then:
 
-Ext
-(
-𝑋
-,
-𝑌
-)
-≈
-𝜖
-Uniform
-(
-{
-0
-,
-1
+[5] Thomas M. Cover and Joy A. Thomas. Elements of Information Theory,
+Wiley, New-York, 1991.
+
+[6] Luc Devroye. Non-Uniform Random Variate Generation. Springer-Verlag,
+1986.
+
+@article{durstenfeld1964algorithm,
+  title={Algorithm 235: random permutation},
+  author={Durstenfeld, Richard},
+  journal={Communications of the ACM},
+  volume={7},
+  number={7},
+  pages={420},
+  year={1964},
+  publisher={ACM New York, NY, USA}
 }
-𝑚
-)
-Ext(X,Y)≈ 
-ϵ
-​
- Uniform({0,1} 
-m
- )
-That is, even though 
-𝑋
-X and 
-𝑌
-Y are not uniformly random individually, the output is statistically close to uniform, assuming enough entropy.
 
-💡 Applications
-Cryptography (especially privacy amplification)
+Random article on generating perumutations
+https://www.tandfonline.com/doi/abs/10.1080/00207168908803745
+@article{kimble1989observations,
+  title={Observations on the generation of permutations from random sequences},
+  author={Kimble, Gerald W},
+  journal={International Journal of Computer Mathematics},
+  volume={29},
+  number={1},
+  pages={11--19},
+  year={1989},
+  publisher={Taylor \& Francis}
+}
 
-Distributed systems where two parties have independent randomness
+Another rejection-sampling algorithm - don't know how efficient it is?
+@article{koo2014converting,
+  title={Converting random bits into random numbers},
+  author={Koo, Bonwook and Roh, Dongyoung and Kwon, Daesung},
+  journal={The Journal of Supercomputing},
+  volume={70},
+  number={1},
+  pages={236--246},
+  year={2014},
+  publisher={Springer}
+}
 
-Secure multiparty computation
+https://dl.acm.org/doi/abs/10.1145/2669372
+@article{langr2014algorithm,
+  title={Algorithm 947: Paraperm---Parallel Generation of Random Permutations with MPI},
+  author={Langr, Daniel and Tvrd{\'\i}k, Pavel and Dytrych, Tom{\'a}{\v{s}} and Draayer, Jerry P},
+  journal={ACM Transactions on Mathematical Software (TOMS)},
+  volume={41},
+  number={1},
+  pages={1--26},
+  year={2014},
+  publisher={ACM New York, NY, USA}
+}
 
+Random permutations - irrelevant?
+https://scholar.google.com/scholar_lookup?doi=10.1111%2Fj.2517-6161.1968.tb00751.x
+@article{plackett1968random,
+  title={Random permutations},
+  author={Plackett, Robin L},
+  journal={Journal of the Royal Statistical Society Series B: Statistical Methodology},
+  volume={30},
+  number={3},
+  pages={517--534},
+  year={1968},
+  publisher={Oxford University Press}
+}
+
+
+https://dl.acm.org/doi/abs/10.1145/363269.363619
+@article{robson1969algorithm,
+  title={Algorithm 362: Generation of random permutations [G6]},
+  author={Robson, John Michael},
+  journal={Communications of the ACM},
+  volume={12},
+  number={11},
+  pages={634--635},
+  year={1969},
+  publisher={ACM New York, NY, USA}
+}
+
+[4] R. T. Kneusel, “Random and pseudorandom sequences,” in Random Numbers and Computers. Cham: Springer,
+2018, ch. 1, pp. 1–25. DOI: 10.1007/978-3-319-77697-2_1.
+
+[5] T. M. Cover and J. A. Thomas, Elements of Information Theory, 2nd ed. Hoboken: John Wiley & Sons, Inc.,
+2006. DOI: 10.1002/047174882X
+
+[9] P. Baidya, R. Paul, S. Mandal, and S. K. Debnath, “Efficient implementation of Knuth Yao sampler on
+reconfigurable hardware,” IEEE Computer Architecture Letters, vol. 23, no. 2, pp. 195–198, Sep. 2024. DOI:
+10.1109/LCA.2024.3454490.
+
+[10] F. A. Saad, C. E. Freer, M. C. Rinard, and V. K. Mansinghka, “Optimal approximate sampling from discrete
+probability distributions,” Proceedings of the ACM on Programming Languages, vol. 4, no. POPL, Jan. 2020.
+DOI: 10.1145/3371104.
+
+[11] L. Devroye, Non-Uniform Random Variate Generation. New York: Springer-Verlag, 1986. DOI: 10.1007/978-
+1-4613-8643-8.
+
+[13] W. Hörmann, J. Leydold, and G. Derflinger, Automatic Nonuniform Random Variate Generation (Statistics
+and Computing). Berlin: Springer-Verlag, 2004. DOI: 10.1007/978-3-662-05946-3.
+
+[15] J. Leydold, UNU.RAN—Universal non-uniform random number generators, Nov. 2009. [Online]. Available:
+https://statmath.wu.ac.at/unuran/.
+
+[19] J. von Neumann, “Various techniques used in connection with random digits,” in Monte Carlo Method,
+ser. National Bureau of Standards Applied Mathematics Series 12, A. S. Householder, G. E. Forsythe, and
+H. H. Germond, Eds., Washington, DC: U.S. Government Printing Office, Jun. 1951, ch. 13, pp. 36–38.
+
+[22] F. A. Saad, C. E. Freer, M. C. Rinard, and V. K. Mansinghka, “The fast loaded dice roller: A near-optimal
+exact sampler for discrete probability distributions,” in Proceedings of the 23rd International Conference on
+Artificial Intelligence and Statistics, ser. Proceedings of Machine Learning Research, vol. 108, PMLR, 2020.
+
+[23] A. J. Walker, “An efficient method for generating discrete random variables with general distributions,” ACM
+Transactions on Mathematical Software, vol. 3, no. 3, pp. 253–256, Sep. 1977. DOI: 10.1145/355744.355749.
+
+[24] M. D. Vose, “A linear algorithm for generating random numbers with a given distribution,” IEEE Transactions
+on Software Engineering, vol. 17, no. 9, pp. 972–975, Sep. 1991. DOI: 10.1109/32.92917.
+
+[25] T. Uyematsu and Y. Li, “Two algorithms for random number generation implemented by using arithmetic
+of limited precision,” IEICE Transactions on Fundamentals of Electronics, Communications and Computer
+Sciences, vol. 86, no. 10, pp. 2542–2551, Oct. 2003.
+
+[26] J. Lumbroso, “Optimal discrete uniform generation from coin flips, and applications,” arXiv, no. 1304.1916,
+Apr. 2013. DOI: 10.48550/arXiv.1304.1916.
+
+[27] M. Huber and D. Vargas, “Optimal rolling of fair dice using fair coins,” arXiv, no. 2412.20700, Dec. 2024.
+DOI: 10.48550/arXiv.2412.20700.
+
+[28] F. A. Saad and W. Lee, “Random variate generation with formal guarantees,” Proceedings of the ACM on
+Programming Languages, vol. 9, no. PLDI, Jun. 2025, Forthcoming.
+
+[30] L. Devroye and C. Gravel, “Random variate generation using only finitely many unbiased, independently and
+identically distributed random bits,” arXiv, no. 1502.02539v6, Nov. 2020. DOI: 10.48550/arXiv.1502.02539.
+
+[34] S. Zimmerman, “An optimal search procedure,” The American Mathematical Monthly, vol. 66, no. 8, pp. 690–
+693, Oct. 1959. DOI: 10.1080/00029890.1959.11989389.
+
+[35] J. E. Norman and L. E. Cannon, “A computer program for the generation of random variables from any
+discrete distribution,” Journal of Statistical Computation and Simulation, vol. 1, no. 4, pp. 331–348, 1972.
+DOI: 10.1080/00949657208810026.
+
+[38] P. Elias, “The efficient construction of an unbiased random sequence,” Annals of Mathematical Statistics,
+vol. 43, no. 3, pp. 865–870, Jun. 1972. DOI: 10.1214/aoms/1177692552.
+
+[39] J. Abrahams, “Generation of discrete distributions from biased coins,” IEEE Transactions on Information
+Theory, vol. 42, no. 5, pp. 1541–1546, Sep. 1996. DOI: 10.1109/18.532895.
+
+[40] J. R. Roche, “Efficient generation of random variables from biased coins,” in Proceedings of the IEEE
+International Symposium on Information Theory, Piscataway: IEEE Press, 1991, pp. 169–169. DOI: 10.1109/
+ISIT.1991.695225.
+
+[42] D. Kozen, “Optimal coin flipping,” in Horizons of the Mind. A Tribute to Prakash Panangaden: Essays
+Dedicated to Prakash Panangaden on the Occasion of His 60th Birthday, ser. Lecture Notes in Computer
+Science, vol. 8464, Cham: Springer, 2014, pp. 407–426. DOI: 10.1007/978-3-319-06880-0_21.
+
+43] S.-I. Pae, “A generalization of Peres’s algorithm for generating random bits from loaded dice,” IEEE Transactions on Information Theory, vol. 61, no. 2, pp. 751–757, Feb. 2015. DOI: 10.1109/TIT.2014.2381223
+
+44] S.-I. Pae, “Binarization trees and random number generation,” IEEE Transactions on Information Theory,
+vol. 66, no. 4, pp. 2581–2587, Apr. 2020. DOI: 10.1109/TIT.2019.2962480
+
+++++ [45] D. Kozen and M. Soloviev, “Coalgebraic tools for randomness-conserving protocols,” in Proceedings of the
+17th International Conference on Relational and Algebraic Methods in Computer Science, ser. Lecture Notes
+in Computer Science, vol. 11194, Cham: Springer, 2018, pp. 298–313. DOI: 10.1007/978-3-030-02149-8_18.
+
+@article{KOZEN2022100734,
+title = {Coalgebraic tools for randomness-conserving protocols},
+journal = {Journal of Logical and Algebraic Methods in Programming},
+volume = {125},
+pages = {100734},
+year = {2022},
+issn = {2352-2208},
+doi = {https://doi.org/10.1016/j.jlamp.2021.100734},
+url = {https://www.sciencedirect.com/science/article/pii/S2352220821000973},
+author = {Dexter Kozen and Matvey Soloviev},
+keywords = {Randomness, Entropy, Protocol, Reduction, Transducer, Coalgebra},
+abstract = {We propose a coalgebraic model for constructing and reasoning about state-based protocols that implement efficient reductions among random processes. We provide basic tools that allow efficient protocols to be constructed in a compositional way and analyzed in terms of the tradeoff between state and loss of entropy. We show how to use these tools to construct various entropy-conserving reductions between processes.}
+}
+
+
+47] Q. F. Stout and B. Warren, “Tree algorithms for unbiased coin tossing with a biased coin,” The Annals of
+Probability, vol. 12, no. 1, pp. 212–222, Feb. 1984. DOI: 10.1214/aop/1176993384.
+
+++++ S. Pae, M. C. Loui, Optimal random number generation from a biased
+coin, in: Proc. 16th ACM-SIAM Symposium on Discrete Algorithms, Vancouver, Canada, 2005, pp. 1079–1088.
+
+++++ @article{gryszka2021biased,
+  title={From biased coin to any discrete distribution},
+  author={Gryszka, Karol},
+  journal={Periodica Mathematica Hungarica},
+  volume={83},
+  number={1},
+  pages={71--80},
+  year={2021},
+  publisher={Springer}
+}
+
+1. P. Elias, The efficient construction of an unbiased random sequence. Ann. Math. Statist. 43(3), 865–870
+(1972)
+
+T. Itoh, Simulating fair dice with biased coins. Inf. Comput. 126(1), 78–82 (1996)
+
+ D. E. Knuth, A. C.-C. Yao, The Complexity of Nonuniform Random Number Generation. In: J. F. Traub
+(eds), Algorithms and Complexity: New Directions and Recent Results Proceedings of a Symposium, New
+York, NY, Carnegie-Mellon University, Computer Science Department, pp. 357–428 , Academic Press,
+Cambridge (1976)
+
+6. M. C. Loui, S.-I. Pae, Optimal random number generation from a biased coin. In: Proceedings of the
+sixteenth annual ACM-SIAM symposium on Discrete algorithms. Society for Industrial and Applied
+Mathematics, p. 1079–1088 (2005)
+
+9. J. von Neumann, Various techniques used in connection with random digits. John von Neumann Collected
+Works 5, 768–770 (1963)
+
+14. Q. F. Stout, B. Warren, Tree algorithms for unbiased coin tossing with a biased coin. Ann. Probab. 12(1),
+212–222 (1984)
+
+[22] R. Durrett, Probability: Theory and Examples, Cambridge University
+Press, 2010.
+
+@article{jerrum2024fundamentals,
+  title={Fundamentals of partial rejection sampling},
+  author={Jerrum, Mark},
+  journal={Probability Surveys},
+  volume={21},
+  pages={171--199},
+  year={2024},
+  publisher={The Institute of Mathematical Statistics and the Bernoulli Society}
+}
