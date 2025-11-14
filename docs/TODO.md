@@ -6,6 +6,9 @@ To do:
 - Adjust my "contribution" section
 - Conclusion - is efficiency of $1 - \Theta(md^{-m})$ optimal
 
+Rename "for different algorithms" to something more elegant
+
+Define Theta notation
 
 ## Comparison with standard batching
 

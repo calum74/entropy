@@ -10,6 +10,8 @@ This follows from Theorem XX, where we keep $n$ constant. The number of bits $m$
 
 From the definition of $p = \frac{n-1}{s_{min}} = \frac{b(n-1)}{2^m} = 2^{-m}b(n-1) = \Theta(2^{-m})$.
 
+Also,
+
 $$-\log_2 p = -\log_2 (2^{-m}b(n-1))$$
 
 $$= -\log_2 (2^{-m}) - \log_2(b(n-1)) $$
@@ -19,7 +21,7 @@ We also have
 
 $$1-p = \Theta(1)$$
 
-and an the expansion of $\log(1+p)$ yields
+An the expansion of $\log(1+p)$ yields
 
 $$\frac{p}{1+p} \le \log (1+p) \le p$$
 
@@ -44,7 +46,7 @@ QED
 
 ## Corollary
 
-Asymptotic efficiency of 1.
+As $s_{min} \rightarrow \inf$, $\eta \rightarrow 1$ 
 
 ## Comparison with batching
 
