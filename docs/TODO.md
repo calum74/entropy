@@ -5,10 +5,28 @@ To do:
 - Look at their open question and see if I answer it
 - Adjust my "contribution" section
 - Conclusion - is efficiency of $1 - \Theta(md^{-m})$ optimal
+- Logs are base 2
+- Define Bern
+- H_out not in itallics
+- The letter $m$ has been reused too many times
+  Number of bits
+  Bernoulli/sample
+
+- $k$ is taken by the size of the weighted distribution.
 
 Rename "for different algorithms" to something more elegant
 
 Define Theta notation
+
+Summary of notation section:
+
+- $n$ is the number of bits
+- $x$, $y$ indicate ranges
+- $k$ is the number of weighted outcomes
+- Uppercase $X$, $Y$, $Z$ are distributions
+- $b$ is the size of the input alphabet (usually 2)
+- $s$, $s_{min}$, $s_{max}$
+- $p$ is the probability of rejection, calculated as $\frac{y-1}{s}$
 
 ## Comparison with standard batching
 
@@ -317,7 +335,7 @@ vol. 66, no. 4, pp. 2581–2587, Apr. 2020. DOI: 10.1109/TIT.2019.2962480
 17th International Conference on Relational and Algebraic Methods in Computer Science, ser. Lecture Notes
 in Computer Science, vol. 11194, Cham: Springer, 2018, pp. 298–313. DOI: 10.1007/978-3-030-02149-8_18.
 
-@article{KOZEN2022100734,
+@article{kozen2022,
 title = {Coalgebraic tools for randomness-conserving protocols},
 journal = {Journal of Logical and Algebraic Methods in Programming},
 volume = {125},
