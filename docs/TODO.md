@@ -2,15 +2,12 @@ To do:
 - Read Kozen & Soloviev's paper
 - Note that entropy store is not new
 - Obviously talk about this in the related work
-- Look at their open question and see if I answer it
+
 - Adjust my "contribution" section
 - Conclusion - is efficiency of $1 - \Theta(md^{-m})$ optimal
 - Logs are base 2
-- Define Bern
-- H_out not in itallics
-- The letter $m$ has been reused too many times
-  Number of bits
-  Bernoulli/sample
+- No trucation errors
+- TRNG = true random number generators
 
 - $k$ is taken by the size of the weighted distribution.
 
@@ -331,11 +328,11 @@ Science, vol. 8464, Cham: Springer, 2014, pp. 407–426. DOI: 10.1007/978-3-319-
 44] S.-I. Pae, “Binarization trees and random number generation,” IEEE Transactions on Information Theory,
 vol. 66, no. 4, pp. 2581–2587, Apr. 2020. DOI: 10.1109/TIT.2019.2962480
 
-++++ [45] D. Kozen and M. Soloviev, “Coalgebraic tools for randomness-conserving protocols,” in Proceedings of the
+DONE [45] D. Kozen and M. Soloviev, “Coalgebraic tools for randomness-conserving protocols,” in Proceedings of the
 17th International Conference on Relational and Algebraic Methods in Computer Science, ser. Lecture Notes
 in Computer Science, vol. 11194, Cham: Springer, 2018, pp. 298–313. DOI: 10.1007/978-3-030-02149-8_18.
 
-@article{kozen2022,
+DONE @article{kozen2022,
 title = {Coalgebraic tools for randomness-conserving protocols},
 journal = {Journal of Logical and Algebraic Methods in Programming},
 volume = {125},
@@ -399,3 +396,280 @@ Press, 2010.
   year={2024},
   publisher={The Institute of Mathematical Statistics and the Bernoulli Society}
 }
+
+
+
+++++ @article{saad2019sampling,
+author = {Saad, Feras A. and Freer, Cameron E. and Rinard, Martin C. and Mansinghka, Vikash K.},
+title = {Optimal approximate sampling from discrete probability distributions},
+year = {2019},
+issue_date = {January 2020},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {4},
+number = {POPL},
+url = {https://doi.org/10.1145/3371104},
+doi = {10.1145/3371104},
+abstract = {This paper addresses a fundamental problem in random variate generation: given access to a random source that emits a stream of independent fair bits, what is the most accurate and entropy-efficient algorithm for sampling from a discrete probability distribution (p1, …, pn), where the probabilities of the output distribution (p̂1, …, p̂n) of the sampling algorithm must be specified using at most k bits of precision? We present a theoretical framework for formulating this problem and provide new techniques for finding sampling algorithms that are optimal both statistically (in the sense of sampling accuracy) and information-theoretically (in the sense of entropy consumption). We leverage these results to build a system that, for a broad family of measures of statistical accuracy, delivers a sampling algorithm whose expected entropy usage is minimal among those that induce the same distribution (i.e., is “entropy-optimal”) and whose output distribution (p̂1, …, p̂n) is a closest approximation to the target distribution (p1, …, pn) among all entropy-optimal sampling algorithms that operate within the specified k-bit precision. This optimal approximate sampler is also a closer approximation than any (possibly entropy-suboptimal) sampler that consumes a bounded amount of entropy with the specified precision, a class which includes floating-point implementations of inversion sampling and related methods found in many software libraries. We evaluate the accuracy, entropy consumption, precision requirements, and wall-clock runtime of our optimal approximate sampling algorithms on a broad set of distributions, demonstrating the ways that they are superior to existing approximate samplers and establishing that they often consume significantly fewer resources than are needed by exact samplers.},
+journal = {Proc. ACM Program. Lang.},
+month = dec,
+articleno = {36},
+numpages = {31},
+keywords = {discrete random variables, random variate generation}
+}
+
+@article{saad2025,
+author = {Saad, Feras A. and Lee, Wonyeol},
+title = {Random Variate Generation with Formal Guarantees},
+year = {2025},
+issue_date = {June 2025},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {9},
+number = {PLDI},
+url = {https://doi.org/10.1145/3729251},
+doi = {10.1145/3729251},
+abstract = {Generating random variates is a fundamental operation in diverse areas of computer science and is supported in almost all modern programming languages. Traditional software libraries for random variate generation are grounded in the idealized "Real-RAM" model of computation, where algorithms are assumed to be able to access uniformly distributed real numbers from the unit interval and compute with infinite-precision real arithmetic. These assumptions are unrealistic, as any software implementation of a Real-RAM algorithm on a physical computer can instead access a stream of individual random bits and computes with finite-precision arithmetic. As a result, existing libraries have few theoretical guarantees in practice. For example, the actual distribution of a random variate generator is generally unknown, intractable to quantify, and arbitrarily different from the desired distribution; causing runtime errors, unexpected behavior, and inconsistent APIs. This article introduces a new approach to principled and practical random variate generation with formal guarantees. The key idea is to first specify the desired probability distribution in terms of a finite-precision numerical program that defines its cumulative distribution function (CDF), and then generate exact random variates according to this CDF. We present a universal and fully automated method to synthesize exact random variate generators given any numerical CDF implemented in any binary number format, such as floating-point, fixed-point, and posits. The method is guaranteed to operate with the same precision used to specify the CDF, does not overflow, avoids expensive arbitrary-precision arithmetic, and exposes a consistent API. The method rests on a novel space-time optimal implementation for the class of generators that attain the information-theoretically optimal Knuth and Yao entropy rate, consuming the least possible number of input random bits per output variate. We develop a random variate generation library using our method in C and evaluate it on a diverse set of "continuous" and "discrete" distributions, showing competitive runtime with the state-of-the-art GNU Scientific Library while delivering higher accuracy, entropy efficiency, and automation.},
+journal = {Proc. ACM Program. Lang.},
+month = jun,
+articleno = {152},
+numpages = {25},
+keywords = {algorithm design and analysis, entropy, probabilistic programming}
+}
+
+[16] Thomas L. Draper and Feras A. Saad. 2025. Efficient Rejection Sampling in the Entropy-Optimal Range. arXiv:2504.04267
+
+[25] Poorva Garg, Steven Holtzen, Guy Van den Broeck, and Millstein Todd. 2024. Bit Blasting Probabilistic Programs. Proc.
+ACM Program. Lang. 8, PLDI, Article 182 (2024), 24 pages. https://doi.org/10.1145/3656412
+
+[37] Donald E. Knuth and Andrew C. Yao. 1976. The Complexity of Nonuniform Random Number Generation. In Algorithms
+and Complexity: New Directions and Recent Results, Joseph F. Traub (Ed.). Academic Press, Inc., Orlando, FL, 357–428.
+
+[53] Feras A. Saad, Cameron E. Freer, Martin C. Rinard, and Vikash K. Mansinghka. 2020. The Fast Loaded Dice Roller: A
+Near-optimal Exact Sampler for Discrete Probability Distributions. In Proceedings of the 23rd International Conference
+on Artificial Intelligence and Statistics (Proceedings of Machine Learning Research, Vol. 108). PMLR, Norfolk, 1036–1046.
+
+[54] Feras A. Saad, Cameron E. Freer, Martin C. Rinard, and Vikash K. Mansinghka. 2020. Optimal Approximate Sampling
+from Discrete Probability Distributions. Proceedings of the ACM on Programming Languages 4, POPL, Article 36 (Jan.
+2020), 31 pages. https://doi.org/10.1145/3371104
+
+[63] Tomohiko Uyematsu and Yuan Li. 2003. Two Algorithms for Random Number Generation Implemented by Using
+Arithmetic of Limited Precision. IEICE Transactions on Fundamentals of Electronics, Communications and Computer
+Sciences 86, 10 (Oct. 2003), 2542–2551.
+
+[65] John von Neumann. 1951. Various Techniques Used in Connection with Random Digits. In Monte Carlo Method, A. S.
+Householder, G. E. Forsythe, and H. H. Germond (Eds.). National Bureau of Standards Applied Mathematics Series,
+Vol. 12. U. S. Government Printing Office, Washington, Chapter 13, 36–38.
+
+Roy et al 2013?
+Pae and Loui 2006?
+Limited precisioin samplers
+Kozen 2014
+Han and Verdu 1993
+
+Maybe cite:
+
+++++ @article{abrahams2002generation,
+  title={Generation of discrete distributions from biased coins},
+  author={Abrahams, Julia},
+  journal={IEEE Transactions on Information Theory},
+  volume={42},
+  number={5},
+  pages={1541--1546},
+  year={2002},
+  publisher={IEEE}
+}
+
+@ARTICLE{532895,
+  author={Abrahams, J.},
+  journal={IEEE Transactions on Information Theory}, 
+  title={Generation of discrete distributions from biased coins}, 
+  year={1996},
+  volume={42},
+  number={5},
+  pages={1541-1546},
+  keywords={Cost function;Power generation;Random number generation;Arithmetic;Performance analysis;Algorithm design and analysis;Information theory;Application software;Australia},
+  doi={10.1109/18.532895}
+}
+
+
+++++  @article{stout1984tree,
+  title={Tree algorithms for unbiased coin tossing with a biased coin},
+  author={Stout, Quentin F and Warren, Bette},
+  journal={The Annals of Probability},
+  volume={12},
+  number={1},
+  pages={212--222},
+  year={1984},
+  publisher={Institute of Mathematical Statistics}
+}
+
+https://projecteuclid.org/journals/annals-of-probability/volume-12/issue-1/Tree-Algorithms-for-Unbiased-Coin-Tossing-with-a-Biased-Coin/10.1214/aop/1176993384.pdf
+
+[4] HOEFFDING, WASSILY and SIMONS, GORDON (1970). Unbiased coin tossing with a biased coin.
+Ann. Math. Statist. 41 341-352.
+
+[3] ELIAS, PETER (1972). The efficient construction of an unbiased random sequence. Ann. Math.
+Statist. 43.865-870.
+
+++ @Inbook{Kozen2014,
+author="Kozen, Dexter",
+editor="van Breugel, Franck
+and Kashefi, Elham
+and Palamidessi, Catuscia
+and Rutten, Jan",
+title="Optimal Coin Flipping",
+bookTitle="Horizons of the Mind. A Tribute to Prakash Panangaden: Essays Dedicated to Prakash Panangaden on the Occasion of His 60th Birthday",
+year="2014",
+publisher="Springer International Publishing",
+address="Cham",
+pages="407--426",
+abstract="This paper studies the problem of simulating a coin of arbitrary real bias q with a coin of arbitrary real bias p with minimum loss of entropy. We establish a lower bound that is strictly greater than the information-theoretic bound. We show that as a function of q, it is an everywhere-discontinuous self-similar fractal. We provide efficient protocols that achieve the lower bound to within any desired accuracy for {\$}(3-{\backslash}sqrt 5)/2 < p < 1/2{\$}and achieve it exactly for p{\thinspace}={\thinspace}1/2.",
+isbn="978-3-319-06880-0",
+doi="10.1007/978-3-319-06880-0_21",
+url="https://doi.org/10.1007/978-3-319-06880-0_21"
+}
+
++++ @inproceedings{oohama2005explicit,
+  title={Explicit expression of the interval algorithm for random number generation based on number systems},
+  author={Oohama, Yasutada},
+  booktitle={IEEE Information Theory Workshop, 2005.},
+  pages={5--pp},
+  year={2005},
+  organization={IEEE}
+}
+
+Talks about irrational bernoulli outputs
++++ @article{Mendo02012025,
+author = {Luis Mendo},
+title = {Simulating a coin with irrational bias using rational arithmetic},
+journal = {Communications in Statistics - Simulation and Computation},
+volume = {54},
+number = {1},
+pages = {302--318},
+year = {2025},
+publisher = {Taylor \& Francis},
+doi = {10.1080/03610918.2024.2425702},
+URL = { 
+        https://doi.org/10.1080/03610918.2024.2425702
+},
+eprint = {     
+        https://doi.org/10.1080/03610918.2024.2425702
+}
+}
+
+@article{cenzer2023randomness,
+  title={Randomness extraction in computability theory},
+  author={Cenzer, Douglas and Porter, Christopher P},
+  journal={Computability},
+  volume={12},
+  number={1},
+  pages={1--21},
+  year={2023},
+  publisher={SAGE Publications Sage UK: London, England}
+}
+
+Perhaps not worth citing:
+https://arxiv.org/pdf/1511.02273
+@article{devroye2017expected,
+  title={The expected bit complexity of the von Neumann rejection algorithm},
+  author={Devroye, Luc and Gravel, Claude},
+  journal={Statistics and Computing},
+  volume={27},
+  number={3},
+  pages={699--710},
+  year={2017},
+  publisher={Springer}
+}
+
+Question on the efficiency 
+[1] Paresh Baidya et al. “Efficient Implementation of Knuth Yao Sampler
+on Reconfigurable Hardware”. In: IEEE Computer Architecture Letters
+(2024).
+
+Probably not:
+Koo, B., Roh, D. & Kwon, D. Converting random bits into random numbers. J Supercomput 70, 236–246 (2014). https://doi.org/10.1007/s11227-014-1202-1
+
+Maybe?
+@article{ryabko2002fast,
+  title={Fast and efficient construction of an unbiased random sequence},
+  author={Ryabko, Boris Ya and Matchikina, Elena},
+  journal={IEEE Transactions on Information Theory},
+  volume={46},
+  number={3},
+  pages={1090--1093},
+  year={2002},
+  publisher={IEEE}
+}
+
+@ARTICLE{841190,
+  author={Ryabko, B.Y. and Matchikina, E.},
+  journal={IEEE Transactions on Information Theory}, 
+  title={Fast and efficient construction of an unbiased random sequence}, 
+  year={2000},
+  volume={46},
+  number={3},
+  pages={1090-1093},
+  keywords={Complexity theory},
+  doi={10.1109/18.841190}
+}
+
+True Random number generators
+Book chapter. Could motivate where true random numbers are needed.
+https://link.springer.com/chapter/10.1007/978-3-319-10683-0_12
+
+Streaming Algorithms for Optimal Generation of
+Random Bits
+Hongchao Zhou, and Jehoshua Bruck, Fellow, IEEE
+
+https://arxiv.org/pdf/1209.0730
+@article{zhou2012streaming,
+  title={Streaming algorithms for optimal generation of random bits},
+  author={Zhou, Hongchao and Bruck, Jehoshua},
+  journal={arXiv preprint arXiv:1209.0730},
+  year={2012}
+}
+
+Talks about amount of error (also, no PDF)
+@article{ryabko2002efficient,
+  title={An Efficient Generation Method for Uniformly Distributed Random Numbers},
+  author={Ryabko, B Ya and Matchikina, EP},
+  journal={Problems of Information Transmission},
+  volume={38},
+  number={1},
+  pages={20--25},
+  year={2002},
+  publisher={Springer}
+}
+
+@article{juels2002turn,
+  title={How to turn loaded dice into fair coins},
+  author={Juels, Ari and Jakobsson, Markus and Shriver, Elizabeth and Hillyer, Bruce K},
+  journal={IEEE Transactions on Information Theory},
+  volume={46},
+  number={3},
+  pages={911--921},
+  year={2002},
+  publisher={IEEE}
+}
+
++++ [4] M. Blum, “Independent unbiased coin flip from a correlated biased source — a finite state markov chain,” Combinatorica, vol. 6, no. 2,
+pp. 97–108, 1986.
+
+ALREADY DONE W. Hoeffding and G. Simons, “Unbiased coin tossing with a biased coin,” The Annals of Mathematical Statistics, vol. 41, no. 2, pp.
+341–352, 1970.
+
++++ roche91
+Not cited anywhere
+
+This is a preprint.
+Jult 21, 2025. Why!!!!!
+
+@article{draper2025efficient,
+  title={Efficient Online Random Sampling via Randomness Recycling},
+  author={Draper, Thomas L and Saad, Feras A},
+  journal={arXiv preprint arXiv:2505.18879},
+  year={2025}
+}
+
+Gazumped by Draper and Saad. Fuck.

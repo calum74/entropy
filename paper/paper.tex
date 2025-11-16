@@ -88,10 +88,8 @@
 
 \begin{abstract}
     We present new algorithms for generating random integers from entropy input, that are extremely efficient from an entropy perspective.
-    % This means that less entropy needs to be read from an external source for each random number generated.
-    The method introduces an \em entropy store \em that is available to cache unused entropy between invocations, and allows algorithms to be more efficient.
-    The method can generate perfect random variates for any weighted integer distribution,
-    and converges to optimal efficiency much more quickly than traditional batching techniques.
+    The method introduces an \em entropy store \em that is available to cache unused entropy between invocations, and makes rejection sampling much more efficient.
+    This allows us to bypass theoretical limits of discrete distribution generating trees, and converges to asymptotic efficiency much faster than traditional batching approaches.
     For example we can shuffle a deck of 52 cards with an entropy  efficiency of about $0.99999992$ using a 32-bit entropy store, compared with classical algorithms that only have an efficiency of about $0.81$. The algorithms are simple and efficient to implement, and have practical applications when generating variates directly from hardware-based entropy which is often a performance bottleneck.    
 \end{abstract}
 
@@ -108,13 +106,13 @@ The general problem is one of \em entropy conversion\em, where entropy in one fo
 A fundamental property is that you cannot get more entropy out than you put in, i.e. $\entropy{X} \ge \entropy{f(X)}$. \cite{cover1999elements} 
 We will be mainly focussed on improving the \em efficiency \em of entropy conversion, defined as $\eta = \frac{\entropy{f(X)}}{\entropy{X}}$.
 
-Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in quantised units, and any excess entropy is unused. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{cover1999elements, Knuth1976TheCO}
+Whilst this problem has been studied extensively, there are theoretical limits on efficiency because algorithms must always fetch entropy in quantised units, and any excess entropy is unused. An optimal algorithm for generating uniform variables from coin flips must fetch up to 2 extra bits of entropy per output.  \cite{knuth1976complexity}
 
 To mitigate these entropy losses, it is possible to generate random variables in batches. The major drawback with batching schemes is that they do not scale very well and have limits on their capacity and efficiency.
 
-In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put any left over entropy back into the store. By first looking at the available operations on a uniform variable, we can compose them in such a way as to minimise the entropy loss.
+In this paper we will explore a fundamentally different approach, by allowing entropy conversion algorithms access to an \em entropy store \em (ES) in the form of a large uniformly distributed integer variable, and allow the algorithm to put any left over entropy back into the store. By first looking at the available operations on a uniform variable, we can compose them in such a way as to minimise the entropy loss to far below optimal algorithms like Knuth-Yao \cite{knuth1976complexity}.
 
-The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and an exact calculation is given in Theorem \ref{thm:loss}. For $n$ bits of stored entropy, the entropy loss is $\Theta(n2^{-n})$ and the efficiency is $1-\Theta(n2^{-n})$, which exceeds prior art which has efficiency $1-\Theta(n^{-1})$ \cite{kozen2022}.
+The entropy efficiency depends only on the ratio of the size of the store to the size of the number generated, and an exact calculation is given in Theorem \ref{thm:loss}. For $n$ bits of stored entropy, the entropy loss is $\Theta(n2^{-n})$ and the efficiency is $1-\Theta(n2^{-n})$, which exceeds traditional batching techniques which have efficiency $1-\Theta(n^{-1})$ \cite{kozen2022}.
 
 For example to roll a 6-sided die with a 32-bit entropy store has an entropy efficiency of $>0.99999997$. To shuffle a deck of 52 cards with a 32-bit entropy store has an entropy efficiency $>0.99999992$.
 
@@ -145,11 +143,11 @@ We show that this algorithm is faster other random number generators when readin
 
 \subsection{Related work}
 
-Entropy conversion is a well studied subject starting when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform variables (a "dice roll") from an unbiassed coin (a "coin flip") - shortly after Claude Shannon's seminal work on entropy \cite{shannon1948mathematical}. Von Neumann's rejection sampling algorithm works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
+Entropy conversion is a well studied subject starting when Von Neumann \cite{neumann51} proposed the first known algorithm for generating perfectly uniform variables (a "dice roll") from an unbiassed coin (a "coin flip") - shortly after Claude Shannon's initial work on entropy \cite{shannon1948mathematical}. Von Neumann's rejection sampling algorithm works by fetching the smallest power of 2 greater or equal to the number being generated. If the number is in range, return it, otherwise retry. This algorithm is elegant but not optimal in its entropy efficiency.
 
-Knuth and Yao \cite{Knuth1976TheCO} devised an optimal algorithm, using a binary decision tree based on an inverse Huffman encoding \cite{huffman52} of each output, and proved that no other binary decision tree could on average use fewer decisions.
+Knuth and Yao \cite{knuth1976complexity} devised an optimal algorithm, using a discrete distribution generating tree based on an inverse Huffman encoding \cite{huffman52} of each output, and proved that no other binary decision tree could on average use fewer decisions.
 
-The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. \cite{saad2025} Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher \emph{et al.} \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or "toll") for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss.
+The drawbacks with the original Knuth-Yao algorithm are the setup and space costs: the decision trees are explicitly constructed can get quite large. \cite{saad2020optimalsampling, saad2025} Lumbruso \cite{lumbroso2013optimal} devised an optimal dice rolling algorithm, that is no more efficient than Knuth-Yao, but requires no setup and is simple to implement. Bacher \emph{et al.} \cite{bacher2017} analyse the Von Neumann and Knuth-Yao algorithms from an entropy perspective, using Lumbruso's implementation, with a particular focus on generating unbiased permutations from unbiased coin flips. There are always up to 2 bits of entropy loss (or "toll") for each uniform variable generated, depending on the number being generated. Only exact powers of 2 can be generated without entropy loss. \cite{knuth1976complexity}
 
 Lemire \cite{lemire2019fast} compares different practical uniform generators, and describes a uniform generator that is efficient from a CPU perspective, but is very inefficient from an entropy perspective, by avoiding CPU division operations. Lemire's use case is for entropy that comes from a pseudorandom source that can be quickly generated.
 
@@ -166,9 +164,9 @@ Saad \emph{et al.} \cite{saad2020fldr} introduce Fast Loaded Dice Roller (FLDR) 
 
 Universal hashing can be used to turn unknown distributions into fair bits. Vembu \emph{et} al. \cite{vembu95} analyse the maximum rate at which entropy can be extracted. Goldreich's Leftover hash lemma \cite{goldreich2004foundations} calculates the length of possible output. Trevisan \cite{trevisan2001extractors} implements a universal hash extractor for unknown distributions with a known entropy. 
 
-A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,devroye86,han97,Knuth1976TheCO,kozen2022,lumbroso2013optimal} Batching spreads the entropy loss over the batch size, but does not recycle entropy beyond the batch, so is still constrained by the Knuth-Yao limit. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. Batching does not always scale well because it requires arbitrary floating point precision or data structure sizes, particularly for the less optimised algorithms.
+A common proposal to reach asymptotic efficiency for random number generation is to use batching to generate multiple outputs at the same time. \cite{bacher2017,devroye86,han97,knuth1976complexity,kozen2022,lumbroso2013optimal} Batching spreads the entropy loss over the batch size, but does not recycle entropy beyond the batch, so is still constrained by the Knuth-Yao limit. However batching schemes suffer from increased size and complexity, and are less flexible because you must plan beforehand which numbers to generate. Batching does not always scale well because it requires arbitrary floating point precision or data structure sizes, particularly for the less optimised algorithms. Batching for random permutations is still an open problem. \cite{bacher2017}
 
-Kozen and Soloviev \cite{kozen2022} show that the efficiency of batching $k$ outputs is $1 - \Theta(k^{-1})$ in the general case, as well as developing an algebra and methods for combining randomness conversions, leveraging the efficiency gains of batching.
+Kozen and Soloviev \cite{kozen2022} show that the efficiency of batching $k$ outputs is $1 - \Theta(k^{-1})$ in the general case, as well as developing a coalgebra and methods for combining randomness conversions, leveraging the efficiency gains of batching.
 
 Fill and Huber \cite{fill2000randomness, huber2016perfect}, describe the \em randomness recycler \em protocol which is a general purpose strategy to identify excess entropy in an algorithm and store it for the next state. This idea has been used to create entropy-optimal uniform \cite{lumbroso2013optimal, huber2024optimalrollingfairdice} or weighted \cite{huber2024optimalrollingfairdice} variables, but entropy is not recycled between invocations, so their method does not improve on the efficiency established by Knuth-Yao and Han-Hoshi.
 
@@ -539,8 +537,8 @@ We can also end up in the situation where $(s \mod n) = 0$ already, so $\textsc{
 \begin{proof}
 \begin{align}
     \eta & = \frac{\Entropy_{out}}{\Entropy_{in}}
-          = \frac{\Entropy_{out}}{\Entropy_{out}+\epsilon} 
-          \ge \frac{\log x}{\log x + \epsilon_{max}}
+          = \frac{\Entropy_{out}}{\Entropy_{out}+\epsilon_{max}} 
+          = \frac{\log x}{\log x + \epsilon_{max}}
 \end{align}
 \end{proof}
 
@@ -613,8 +611,8 @@ The efficiency, defined in \eqref{eq:generate-uniform-efficiency}, and substitut
 
 \begin{align}
 \eta_{min} 
-    & = \frac{\Entropy_{out}}{\Entropy_{out} + \epsilon} \\
-    & = 1 - \frac{\epsilon}{\Entropy_{out} + \epsilon} \\
+    & = \frac{\Entropy_{out}}{\Entropy_{out} + \epsilon_{max}} \\
+    & = 1 - \frac{\epsilon_{max}}{\Entropy_{out} + \epsilon_{max}} \\
     & = 1 - \frac{\Theta(n2^{-n})}{\Theta(1)} \\
     & = 1 - \Theta(n2^{-n})
 \end{align}
@@ -874,7 +872,7 @@ ALDR                  & & 1.36 & 1.13 \\
 \section{Conclusion and further work}
 
 We have introduced a new class of algorithm to generate random variables using a uniform entropy store, and shown that by recycling unused entropy between outputs we can achieve arbitrarily low entropy losses. 
-We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao \cite{Knuth1976TheCO} and the Interval Algorithm \cite{han97} can be overcome by using an entropy store, and that the efficiency converges to 1 faster than with traditional batching. 
+We have shown that the entropy efficiency limits of classical algorithms like Knuth-Yao \cite{knuth1976complexity} and the Interval Algorithm \cite{han97} can be overcome by using an entropy store, and that the efficiency converges to 1 faster than with traditional batching. 
 
 A big benefit of ES is that no setup step is needed for uniform and Bernoulli outputs, and that the same ES can be shared between different output types. ES is fastest when generating outputs from a hardware entropy source and for Bernoulli outputs, but is still competitive on pseudorandom entropy sources, particularly if the division operations can be optimized.
 
