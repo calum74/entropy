@@ -2,9 +2,9 @@
 
 A C++ library for generating random integer distributions using minimal entropy.
 
-This library is distributed as a single C++ file [src/entropy_store.hpp], and is used by copying this file into your C++ project.
+This library is distributed as a single C++ file [entropy_store.hpp](src/entropy_store.hpp), and is used by copying this file into your C++ project.
 
-A demo and tutorial of this library can be found in [tests/sample.cpp].
+A demo and tutorial of this library can be found in [sample.cpp](tests/sample.cpp).
 
 ## Citing this work
 
