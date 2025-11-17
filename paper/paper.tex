@@ -878,7 +878,18 @@ A big benefit of ES is that no setup step is needed for uniform and Bernoulli ou
 
 Further work could include improving the speed, generating other distributions, and determining if the current algorithms are optimal or if further efficiency improvements are possible for a given store size.
 
+\section{Addendum}
 
+This paper was almost complete by the time I was completing the final literature review, when I came across this preprint by Draper and Saad \cite{draper2025efficient2}, published on ArXiv just a few months earlier. The similiarites with this work are striking, and unfortunately because it was very new I had not come across it before. Of course I have followed Saad and Draper's work with interest, and none of their work up to that point had come anywhere near what I was working on. But now most equations, diagrams and algorithms are old news. Whilst validating, it's also a shame as of course as researchers we try to avoid treading on each other's toes.
+
+A major point of difference is whether we need to count the buffered entropy against our own efficiency, as indicated by the $O(1/k)$ term in the entropy consumption. I would argue that as there are no real limits on the batch size - it is an online algorithm after all - and we can just assume that the entropy buffer is already full and count it as part of the input, and we only need to measure our delta against the entropy buffer.
+
+Of course I wish Draper and Saad the very best, they had no reason to suspect I was already working on this as well, it is just one of those things that happens.
+
+Further implementation and notes can be found at
+\texttt{https://github.com/calum74/entropy}
+
+- Calum Grant, 17th November 2025
 
 \printbibliography
 
