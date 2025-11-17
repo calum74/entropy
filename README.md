@@ -6,10 +6,6 @@ This library is distributed as a single C++ file [entropy_store.hpp](src/entropy
 
 A demo and tutorial of this library can be found in [sample.cpp](tests/sample.cpp).
 
-## Citing this work
-
-The theoretical background to this library can be found on [ArXiv].
-
 ## Building C++
 
 Make sure you install CMake and C++, and you check out submodules (some of the tests submodule other projects for testing purposes).
